@@ -1,0 +1,93 @@
+---
+title: WiFi
+description: WiFi Connectivity & Recovery Architecture
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "The device must be self-healing." We assume Wi-Fi connectivity is ephemeral and fragile. The system is designed to provide a secure, frustration-free recovery path even when the device is completely offline and "headless".
+</Callout>
+
+## The Connectivity Lifeline
+
+Distiller is a headless device. Without a network connection, it is effectively bricked from the user's perspective. Therefore, our connectivity logic is not just a feature—it is the device's survival instinct.
+
+We employ a **Dual-Mode Architecture**:
+1.  **Primary**: Wi-Fi (High bandwidth, global access)
+2.  **Emergency**: Bluetooth Low Energy (Local, secure bridge)
+
+When Wi-Fi fails, the device doesn't just wait; it actively seeks help via BLE.
+
+---
+
+## The Recovery Journey
+
+### 1. The Stable State
+In the ideal state, the device is invisible. It maintains a persistent websocket connection to our servers.
+- **Device**: Quietly hums, displaying system vitals.
+- **App**: Shows a green "Online" indicator. User trusts the link is alive.
+
+### 2. The Loss (Entropy)
+Wi-Fi is lost. Maybe the router restarted, the password changed, or the device moved to a new office.
+- **The Philosophy**: Do not panic immediately. Transients happen. The device retries silently for 2 minutes.
+- **The Escalation**: If the silence persists, the device declares a "Hard Offline" state. It switches its E-ink display to a distress signal: a large QR code.
+
+### 3. The Bridge (BLE)
+This is the critical "Voice of the User" moment. The user sees the distress signal (Physical E-ink or App Alert) and intervenes.
+- **Why BLE?**: Accessing a headless device without Wi-Fi is impossible via standard means. BLE provides a secure, local "side-channel" to inject new credentials.
+- **The Interaction**: The user is near the device. The app creates a secure tunnel over BLE. The device effectively uses the phone's eyes to see the world (scanning networks).
+
+### 4. The Restoration
+The user selects a new network on their phone.
+- **The Handover**: Credentials are encrypted and passed through the BLE tunnel.
+- **The Verification**: The device attempts to connect while the user watches.
+- **Success**: The BLE bridge is dismantled. The device returns to the Stable State.
+
+---
+
+## Key Design Behaviors
+
+| Behavior | Logic & "Why" |
+| :--- | :--- |
+| **Auto-Discovery** | When offline, the device must shout. It enables Bluetooth advertising automatically so the app can find it without the user pressing physical buttons (which might not exist or be reachable). |
+| **Credential Persistence** | **Smart Cache**. If the device moves back to a known location (Home -> Office -> Home), it shouldn't ask for help. It checks its cache first. Respect the user's time. |
+| **Security** | **Trust, but Verify**. Even over BLE, we must prevent "drive-by" reconfigurations by neighbors. We require the device-specific Password (set at onboarding) to establish the bridge. |
+| **Stateless Recovery** | The QR code is a permanent "Reset" button. Whether online or offline, scanning it triggers the recovery flow. The user should never feel "stuck" in a bad state. |
+
+---
+
+## States of Mind
+
+We map the technical states to the user's perception of the device.
+
+### Device (E-ink Display)
+| State | User Perception | Information Goal |
+| :--- | :--- | :--- |
+| **Stable** | "It's working." | Show value (Dashboard, IP). Don't distract. |
+| **Transient** | "It's thinking." | Reassurance ("Reconnecting..."). Don't alarm yet. |
+| **Hard Offline** | "I need help." | Call to Action. The QR code must be the dominant visual element. |
+| **Provisioning** | "I'm listening." | Feedback. "Connecting to [SSID]...". Show effort. |
+
+### Mobile App (The Controller)
+| State | User Role | Interface Goal |
+| :--- | :--- | :--- |
+| **Stable** | Observer | Green light. Everything is nominal. |
+| **Warning** | Monitor | Yellow light. "Weak connection". Prepare for intervention. |
+| **Offline** | Rescuer | Red light. "Action Required". Guide user to the device. |
+| **BLE Bridge** | Operator | The Controller. The app is now the device's brain. Clean, step-by-step wizard. |
+
+---
+
+## The Safety Net (Failure Handling)
+
+What happens when even the recovery fails? (e.g., Wrong password, Captive Portal).
+
+**The Auto-Hotspot Fallback**
+If the configuration fails (e.g., user enters wrong Wi-Fi password over BLE), the device does not silently die. It:
+1.  Reports the error over BLE if still connected.
+2.  If BLE disconnects, it **Reverts to Hotspot Mode**.
+3.  The App detects the hotspot and prompts: *"That didn't work. Try a different network?"*
+
+**Why?**
+We never leave the user in a dead end. Every failure state must loop back to an actionable state (Manual Entry or Select Network).

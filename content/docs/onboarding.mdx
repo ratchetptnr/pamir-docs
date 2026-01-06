@@ -1,0 +1,120 @@
+---
+title: Onboarding
+description: Complete device setup flow with all edge cases and error scenarios
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  The onboarding experience must be foolproof. A user should be able to set up their Distiller device in under 2 minutes, with clear guidance at every step and graceful recovery from any error.
+</Callout>
+
+## Overview
+
+This document covers the complete onboarding flow for the Distiller device. The app handles two primary scenarios:
+
+1. **New Device Setup** - First-time provisioning of a fresh device
+2. **Existing Device Login** - Connecting to an already-configured device
+
+---
+
+## Entry Points
+
+When the app launches, users are presented with three options:
+
+| Option | Description |
+| :--- | :--- |
+| **Setup New Device** | For unboxing a fresh Distiller. Guides through hotspot connection, WiFi provisioning, and PIN creation. |
+| **Login to Existing** | For users who already have a configured device. Scan QR and enter PIN. |
+| **Demo Mode** | Skip setup entirely and explore the app with simulated data. |
+
+---
+
+## New Device Setup Flow
+
+### Phase 1: Power On Instructions
+User is instructed to plug in the Distiller and wait for the LED to blink, indicating the device is broadcasting its setup hotspot.
+
+### Phase 2: QR Code Scanning
+The app requests camera permission and scans the QR code displayed on the device's E-ink screen. This QR contains the hotspot credentials.
+
+**Edge Cases Handled**:
+- Camera permission denied → Prompt to open Settings or enter manually
+- QR scan timeout (5s) → Show troubleshooting tips and manual entry option
+
+### Phase 3: Hotspot Connection
+The app prompts iOS to join the Distiller's hotspot network using the scanned credentials.
+
+**Edge Cases Handled**:
+- User taps Cancel → Explain connection is required, offer retry
+- Connection timeout → Offer retry or manual WiFi guide
+- Phone already on strong WiFi → Prompt to disconnect first
+
+### Phase 4: Device Handshake
+The app verifies communication with the device over the hotspot.
+
+**Edge Cases Handled**:
+- Connection lost → Auto-retry countdown with manual retry option
+- Version mismatch → Prompt to update device or app
+- Device already configured → Switch to login flow
+
+### Phase 5: WiFi Provisioning
+The device scans for available networks and presents them to the user.
+
+**Edge Cases Handled**:
+- No networks found → Auto-retry with manual entry option
+- Hidden network → Manual SSID entry form
+
+### Phase 6: Device Configuration
+User enters WiFi password, names the device, and creates a 6-digit security PIN.
+
+### Phase 7: Provisioning & Reconnection
+The configuration is sent to the device. The phone reconnects to home WiFi while the device attempts to join.
+
+**Edge Cases Handled**:
+- Provisioning failed → Retry option or cancel to start over
+- 60s timeout waiting for device → Option to try different network
+
+### Phase 8: Final Connection
+User scans the device's new QR code (now showing the connection URL) to complete setup.
+
+---
+
+## Existing Device Login Flow
+
+### Phase 1: Device Verification
+User confirms their device is powered on and connected to the network.
+
+### Phase 2: QR Code Scanning
+App scans the QR code on the device's E-ink screen to get the connection URL.
+
+**Edge Cases Handled**:
+- Camera denied → Manual URL entry
+- Scan timeout → Troubleshooting tips
+
+### Phase 3: PIN Authentication
+User enters their 6-digit device PIN.
+
+**Edge Cases Handled**:
+- Wrong PIN → Retry (up to 3 attempts)
+- Too many failed attempts → Factory reset instructions
+- Device offline → Troubleshooting tips with retry
+
+---
+
+## Success States
+
+Both flows converge at the **Projects Page** upon successful completion:
+- **New Device**: "Setup Complete!" → Projects
+- **Existing Device**: "Login Complete!" → Projects
+- **Demo Mode**: Direct to Projects with simulated data
+
+---
+
+## Key Design Principles
+
+1. **Never Dead-End**: Every error state has a clear path forward (retry, alternative method, or cancel with guidance)
+2. **Progressive Disclosure**: Only show complexity when needed (manual entry only after scan fails)
+3. **Respect User Time**: Auto-retry with countdown shows we're working on it
+4. **Clear Feedback**: Processing states show what's happening ("Joining hotspot...", "Device connecting to WiFi...")
+5. **Security First**: PIN is required for all device access; forgotten PIN requires factory reset

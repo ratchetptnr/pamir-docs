@@ -1,0 +1,63 @@
+---
+title: Bluetooth
+description: Bluetooth Architecture & Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "The Radio has a Split Personality." It must serve two masters: the **System** (for survival/recovery) and the **User** (for connecting peripherals). The architecture manages this conflict seamlessly without user intervention.
+</Callout>
+
+## The Dual-Role Architecture
+
+Distiller uses a single Bluetooth radio to perform two fundamentally different jobs. Understanding this duality is key to understanding the user experience.
+
+| Role | Purpose | User Mental Model | Behavior |
+| :--- | :--- | :--- | :--- |
+| **System Role** | **Survival**. The lifeline for the App to rescue the device when Wi-Fi fails. | "The Invisible Guard" | **Hidden** but listening. Only reveals itself when disaster strikes (Wi-Fi loss). |
+| **Peripheral Role** | **Play**. Connecting external sensors (Heart Rate Monitors, Scales) for user projects. | "The Connector" | **On-Demand**. Active only when the user explicitly taps "Enable Pairing". |
+
+---
+
+## 1. System Role: The Invisible Guard
+
+This is the default state of the machine. The radio is powered on but advertising is silent. It waits for a trigger event to enter "Rescue Mode".
+
+**The Trigger**: A "Hard Offline" event (Wi-Fi lost > 30s).
+**The Action**: The device automatically becomes **Discoverable**. It flashes a QR code on the E-ink display.
+**The Goal**: Allow the Mobile App to find and connect to the device *without* user interaction (no pairing buttons).
+
+## 2. Peripheral Role: The Connector
+
+This is the user-facing side of Bluetooth. When you write code on Distiller to talk to a BLE heart rate monitor, you are using this role.
+
+**The Trigger**: User taps "Enable Pairing Mode" in the Dashboard.
+**The Action**: The device scans for nearby peripherals for 60 seconds.
+**The Goal**: Enable the "Pocket IDE" experience, allowing the device to physically interact with the world.
+
+---
+
+## Security Model: Trust, but Verify
+
+Bluetooth is inherently promiscuous. Anyone nearby can see a discoverable device. Our security model acknowledges this reality.
+
+### The Handshake (Open)
+We allow *anyone* to initiate a BLE connection (the "Handshake"). This ensures that in an emergency, your phone can find the device instantly without struggling with OS-level pairing dialogs.
+
+### The Gatekeeper (Locked)
+Once the connection is established, the device is **deaf** to commands until it receives the **Device Password**.
+- **Can I see the device name?** Yes.
+- **Can I change the Wi-Fi?** No (Password Required).
+- **Can I reboot it?** No (Password Required).
+
+---
+
+## Golden Rules
+
+These are the immutable laws of the Distiller Bluetooth system.
+
+1.  **Radio is ALWAYS ON**: The user cannot disable Bluetooth via the UI. It is the only path back from a "bricked" state.
+2.  **System Trumps User**: If Wi-Fi is lost, the System Role takes over immediately, canceling any active Peripheral scanning. Survival comes first.
+3.  **No Physical Reset**: We do not rely on a physical "Reset Button". The BLE-based recovery flow *is* the reset button.
+4.  **Timeouts Protect Privacy**: "Discovery Mode" (for peripherals) always times out after 60 seconds. The device never broadcasts its presence indefinitely unless it is in distress.
