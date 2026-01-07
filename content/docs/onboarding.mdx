@@ -1,120 +1,120 @@
 ---
 title: Onboarding
-description: Complete device setup flow with all edge cases and error scenarios
+description: Device setup and login flows
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout'
 
 <Callout title="Product Philosophy">
-  The onboarding experience must be foolproof. A user should be able to set up their Distiller device in under 2 minutes, with clear guidance at every step and graceful recovery from any error.
+  **Setup must be straightforward.** Users should connect their Distiller in under 2 minutes with clear guidance at every step. Every error state provides a clear path forward.
 </Callout>
 
 ## Overview
 
-This document covers the complete onboarding flow for the Distiller device. The app handles two primary scenarios:
+The Distiller app handles two setup paths:
 
-1. **New Device Setup** - First-time provisioning of a fresh device
+1. **New Device Setup** - First-time configuration of a fresh device
 2. **Existing Device Login** - Connecting to an already-configured device
 
 ---
 
 ## Entry Points
 
-When the app launches, users are presented with three options:
+When the app launches, users choose:
 
-| Option | Description |
+| Option | Purpose |
 | :--- | :--- |
-| **Setup New Device** | For unboxing a fresh Distiller. Guides through hotspot connection, WiFi provisioning, and PIN creation. |
-| **Login to Existing** | For users who already have a configured device. Scan QR and enter PIN. |
-| **Demo Mode** | Skip setup entirely and explore the app with simulated data. |
+| **Setup New Device** | Configure a new Distiller (hotspot connection, WiFi setup, PIN creation) |
+| **Login to Existing** | Connect to a device that's already set up (QR scan + PIN) |
+| **Demo Mode** | Explore the app with simulated data (no device needed) |
 
 ---
 
-## New Device Setup Flow
+## New Device Setup
 
-### Phase 1: Power On Instructions
-User is instructed to plug in the Distiller and wait for the LED to blink, indicating the device is broadcasting its setup hotspot.
+### Step 1: Power On
+User plugs in the Distiller and waits for the LED to blink. This signals the device is broadcasting its setup hotspot.
 
-### Phase 2: QR Code Scanning
-The app requests camera permission and scans the QR code displayed on the device's E-ink screen. This QR contains the hotspot credentials.
+### Step 2: QR Code Scan
+The app scans the QR code on the device's E-ink screen to get hotspot credentials.
 
-**Edge Cases Handled**:
-- Camera permission denied → Prompt to open Settings or enter manually
-- QR scan timeout (5s) → Show troubleshooting tips and manual entry option
+**Backup paths**:
+- Camera permission denied → Prompt to open Settings, or enter credentials manually
+- QR scan fails → Show troubleshooting tips, offer manual entry
 
-### Phase 3: Hotspot Connection
-The app prompts iOS to join the Distiller's hotspot network using the scanned credentials.
+### Step 3: Hotspot Connection
+The app connects to the Distiller's hotspot network.
 
-**Edge Cases Handled**:
-- User taps Cancel → Explain connection is required, offer retry
-- Connection timeout → Offer retry or manual WiFi guide
-- Phone already on strong WiFi → Prompt to disconnect first
+**Backup paths**:
+- User cancels → Explain why connection is needed, offer retry
+- Connection timeout → Retry or manual WiFi guide
+- Phone on strong WiFi → Prompt to disconnect first
 
-### Phase 4: Device Handshake
-The app verifies communication with the device over the hotspot.
+### Step 4: Device Check
+The app verifies communication with the device.
 
-**Edge Cases Handled**:
-- Connection lost → Auto-retry countdown with manual retry option
+**Backup paths**:
+- Connection lost → Auto-retry with countdown
 - Version mismatch → Prompt to update device or app
-- Device already configured → Switch to login flow
+- Already configured → Switch to login flow
 
-### Phase 5: WiFi Provisioning
-The device scans for available networks and presents them to the user.
+### Step 5: WiFi Network Selection
+The device scans for WiFi networks and shows the list.
 
-**Edge Cases Handled**:
-- No networks found → Auto-retry with manual entry option
+**Backup paths**:
+- No networks found → Auto-retry, offer manual entry
 - Hidden network → Manual SSID entry form
 
-### Phase 6: Device Configuration
-User enters WiFi password, names the device, and creates a 6-digit security PIN.
+### Step 6: Device Details
+User enters WiFi password, names the device, and creates a 6-digit PIN.
 
-### Phase 7: Provisioning & Reconnection
-The configuration is sent to the device. The phone reconnects to home WiFi while the device attempts to join.
+### Step 7: Configuration Send
+The app sends config to the device. Phone reconnects to home WiFi while device attempts to join.
 
-**Edge Cases Handled**:
-- Provisioning failed → Retry option or cancel to start over
-- 60s timeout waiting for device → Option to try different network
+**Backup paths**:
+- Send failed → Retry or start over
+- Device timeout (60s) → Option to try different network
 
-### Phase 8: Final Connection
-User scans the device's new QR code (now showing the connection URL) to complete setup.
+### Step 8: Final Connection
+User scans the device's updated QR code (now showing connection URL) to finish setup.
 
 ---
 
-## Existing Device Login Flow
+## Existing Device Login
 
-### Phase 1: Device Verification
-User confirms their device is powered on and connected to the network.
+### Step 1: Device Check
+User confirms device is powered on and connected to network.
 
-### Phase 2: QR Code Scanning
-App scans the QR code on the device's E-ink screen to get the connection URL.
+### Step 2: QR Code Scan
+App scans QR code on device to get connection URL.
 
-**Edge Cases Handled**:
+**Backup paths**:
 - Camera denied → Manual URL entry
 - Scan timeout → Troubleshooting tips
 
-### Phase 3: PIN Authentication
+### Step 3: PIN Entry
 User enters their 6-digit device PIN.
 
-**Edge Cases Handled**:
+**Backup paths**:
 - Wrong PIN → Retry (up to 3 attempts)
-- Too many failed attempts → Factory reset instructions
-- Device offline → Troubleshooting tips with retry
+- Too many failures → Factory reset instructions
+- Device offline → Troubleshooting with retry
 
 ---
 
-## Success States
+## Completion
 
-Both flows converge at the **Projects Page** upon successful completion:
-- **New Device**: "Setup Complete!" → Projects
-- **Existing Device**: "Login Complete!" → Projects
-- **Demo Mode**: Direct to Projects with simulated data
+All paths lead to the **Projects Page**:
+- New Device: "Setup Complete!" → Projects
+- Existing Device: "Login Complete!" → Projects
+- Demo: Direct to Projects with simulated data
 
 ---
 
-## Key Design Principles
+## Design Principles
 
-1. **Never Dead-End**: Every error state has a clear path forward (retry, alternative method, or cancel with guidance)
-2. **Progressive Disclosure**: Only show complexity when needed (manual entry only after scan fails)
-3. **Respect User Time**: Auto-retry with countdown shows we're working on it
-4. **Clear Feedback**: Processing states show what's happening ("Joining hotspot...", "Device connecting to WiFi...")
-5. **Security First**: PIN is required for all device access; forgotten PIN requires factory reset
+1. **Clear Path Forward**: Every error has a retry option or alternative method
+2. **Show Complexity When Needed**: Manual entry appears only when automatic methods fail
+3. **Respect Time**: Auto-retry shows progress, not just waiting
+4. **Clear Status**: Processing states explain what's happening ("Connecting to device...")
+5. **Security Required**: PIN protects device access; forgot PIN requires factory reset
