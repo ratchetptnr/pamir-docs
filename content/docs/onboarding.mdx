@@ -4,6 +4,7 @@ description: Device setup and login flows
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
 
 <Callout title="Product Philosophy">
   **Setup must be straightforward.** Users should connect their Distiller in under 2 minutes with clear guidance at every step. Every error state provides a clear path forward.
@@ -13,7 +14,7 @@ import { Callout } from 'fumadocs-ui/components/callout'
 
 The onboarding flow handles device discovery via Bluetooth, WiFi configuration, and security setup.
 
-```mermaid
+<Mermaid chart={`
 flowchart TD
     Start([User unboxes Distiller]) --> PowerOn[User powers on device]
     PowerOn --> DisplayQR[Display: QR code]
@@ -96,7 +97,7 @@ flowchart TD
     style CameraError fill:#ffebee
     style ManualSSID fill:#e3f2fd
     style ManualDeviceID fill:#e3f2fd
-```
+`} />
 
 ---
 
