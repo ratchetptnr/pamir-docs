@@ -1,13 +1,17 @@
 {
     "title": "Documentation",
     "pages": [
+        "---Getting Started---",
         "index",
         "onboarding",
+        "---Connectivity---",
         "wifi",
         "bluetooth",
+        "---Hardware---",
         "display",
         "audio",
         "led",
+        "---System---",
         "system",
         "storage",
         "performance",
