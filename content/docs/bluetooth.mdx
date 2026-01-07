@@ -4,19 +4,67 @@ description: Bluetooth Architecture & Philosophy
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
 
 <Callout title="Product Philosophy">
   "The Radio has a Split Personality." It must serve two masters: the **System** (for survival/recovery) and the **User** (for connecting peripherals). The architecture manages this conflict seamlessly without user intervention.
 </Callout>
 
-## The Dual-Role Architecture
+## State Machine
 
-Distiller uses a single Bluetooth radio to perform two fundamentally different jobs. Understanding this duality is key to understanding the user experience.
+The Bluetooth radio transitions between states based on device status and user actions.
 
-| Role | Purpose | User Mental Model | Behavior |
-| :--- | :--- | :--- | :--- |
-| **System Role** | **Survival**. The lifeline for the App to rescue the device when Wi-Fi fails. | "The Invisible Guard" | **Hidden** but listening. Only reveals itself when disaster strikes (Wi-Fi loss). |
-| **Peripheral Role** | **Play**. Connecting external sensors (Heart Rate Monitors, Scales) for user projects. | "The Connector" | **On-Demand**. Active only when the user explicitly taps "Enable Pairing". |
+<Mermaid chart={`
+flowchart LR
+    subgraph "Bluetooth Radio States"
+    Off["Radio Off"]
+    Hidden["Hidden (On, Not Discoverable)"]
+    Discoverable["Discoverable (Pairing Mode)"]
+    Connected["Connected"]
+    end
+    
+    Off -->|"Device Boot"| Hidden
+    Off -->|"Wi-Fi Lost + Force Recovery"| Discoverable
+    Hidden -->|"Wi-Fi Lost > 30s"| Discoverable
+    Hidden -->|"User Taps 'Enable Pairing'"| Discoverable
+    Discoverable -->|"Paired Successfully"| Connected
+    Discoverable -->|"Timeout 60s"| Hidden
+    Connected -->|"Disconnected"| Hidden
+    Connected -->|"Wi-Fi Restored"| Hidden
+`} />
+
+---
+
+## Recovery Flow (Wi-Fi Loss)
+
+When Wi-Fi dies, the radio automatically enables discovery mode to allow app-based recovery.
+
+<Mermaid chart={`
+flowchart TD
+    Online["Device Online (Wi-Fi OK)"] --> WifiLost{"Wi-Fi Lost?"}
+    WifiLost -->|No| Online
+    WifiLost -->|Yes| Scanning["Scanning for Known Networks"]
+    Scanning --> Found{"Found Known SSID?"}
+    Found -->|Yes| Online
+    Found -->|"No (30s timeout)"| EnableBLE["Auto-Enable BLE Discovery"]
+    EnableBLE --> ShowQR["E-ink: Show QR + 'Offline'"]
+    ShowQR --> AppConnect["App Connects via BLE"]
+    AppConnect --> Authenticate{"Device Password OK?"}
+    Authenticate -->|No| Reject["Reject Command"]
+    Reject --> AppConnect
+    Authenticate -->|Yes| ProvisionWiFi["App Sends New Wi-Fi Creds"]
+    ProvisionWiFi --> Connecting["Attempting Wi-Fi Join"]
+    Connecting --> Success{"Success?"}
+    Success -->|Yes| DisableBLE["Disable BLE Discovery"]
+    DisableBLE --> Online
+    Success -->|No| ShowError["Show Error, Retry"]
+    ShowError --> ProvisionWiFi
+    
+    classDef recovery fill:#e3f2fd,stroke:#1565c0,color:#1565c0
+    classDef security fill:#ffebee,stroke:#c62828,color:#c62828
+    class EnableBLE,ShowQR,AppConnect,ProvisionWiFi recovery
+    class Authenticate,Reject security
+`} />
 
 ---
 

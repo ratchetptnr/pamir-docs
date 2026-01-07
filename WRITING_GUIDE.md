@@ -77,9 +77,9 @@ End with immutable design principles or "Golden Rules."
 - **Declarative**: "This is the critical 'Voice of the User' moment."
 
 ### Terminology
-- Use **metaphors** for abstract concepts: "The Invisible Guard", "The Connector", "The Safety Net"
-- Frame states as **narratives**: "Stable State" → "Loss (Entropy)" → "Bridge" → "Restoration"
-- Bold key terms on first use: **Dual-Mode Architecture**, **Smart Cache**, **Trust, but Verify**
+- Use **simple, descriptive names** for abstract concepts: "Hidden Bluetooth", "Connection Link", "Backup Path"
+- Frame states as **clear steps**: "Working" → "Disconnected" → "Recovery" → "Restored"
+- Bold key terms on first use: **Dual-Mode Architecture**, **Smart Cache**, **Security Check**
 
 ### Structure Elements
 - **Horizontal rules (`---`)** to separate major sections
@@ -96,7 +96,9 @@ End with immutable design principles or "Golden Rules."
 ```markdown
 ## Security Model: Trust, but Verify
 
-Bluetooth is inherently promiscuous. Anyone nearby can see a discoverable device. Our security model acknowledges this reality.
+<Callout title="Product Philosophy">
+  **Visibility is the default.** We assume the device is always discoverable.
+</Callout>
 
 ### The Handshake (Open)
 We allow *anyone* to initiate a BLE connection. This ensures that in an emergency, your phone can find the device instantly without struggling with OS-level pairing dialogs.

@@ -4,20 +4,63 @@ description: WiFi Connectivity & Recovery Architecture
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
 
 <Callout title="Product Philosophy">
   "The device must be self-healing." We assume Wi-Fi connectivity is ephemeral and fragile. The system is designed to provide a secure, frustration-free recovery path even when the device is completely offline and "headless".
 </Callout>
 
-## The Connectivity Lifeline
+## Recovery Flow
 
-Distiller is a headless device. Without a network connection, it is effectively bricked from the user's perspective. Therefore, our connectivity logic is not just a feature—it is the device's survival instinct.
+This diagram shows how the device transitions from online to offline states and how the BLE bridge enables recovery.
 
-We employ a **Dual-Mode Architecture**:
-1.  **Primary**: Wi-Fi (High bandwidth, global access)
-2.  **Emergency**: Bluetooth Low Energy (Local, secure bridge)
-
-When Wi-Fi fails, the device doesn't just wait; it actively seeks help via BLE.
+<Mermaid chart={`
+flowchart TD
+    Online(["Device Online"]) --> WifiLoss{"Wi-Fi Lost?"}
+    
+    WifiLoss -->|Yes| AttemptRetry["Background SSID Scan"]
+    AttemptRetry --> RetryCheck{"Found Known SSID?"}
+    
+    RetryCheck -->|Yes| Reconnect["Auto-Reconnect"]
+    Reconnect --> Online
+    
+    RetryCheck -->|"No / Timeout 2m"| OfflineState["Display OFFLINE + QR"]
+    OfflineState --> AppDetect["App: Heartbeat Failed"]
+    
+    AppDetect --> UserAction{"User Near Device?"}
+    UserAction -->|Yes| ScanQR["User scans QR"]
+    UserAction -->|No| WaitState["App: Show 'Offline'"]
+    
+    ScanQR --> BLECall["App: Search for BLE"]
+    BLECall --> BLEConnect["Establish BLE Tunnel"]
+    
+    BLEConnect --> ListWifi["App: Show Networks"]
+    ListWifi --> SelectNetwork["User selects Network"]
+    SelectNetwork --> SendCreds["App: Send Credentials"]
+    
+    SendCreds --> Provisioning["Attempting Wi-Fi Join"]
+    Provisioning --> ProvisionResult{"Join Success?"}
+    
+    ProvisionResult -->|Yes| TerminateBLE["Success: Drop BLE"]
+    TerminateBLE --> Online
+    
+    ProvisionResult -->|No| ErrorMsg["Show Error Message"]
+    ErrorMsg --> ListWifi
+    
+    classDef default fill:#fff,stroke:#333,stroke-width:2px,color:#333
+    classDef state fill:#f8f9fa,stroke:#333,stroke-width:3px,color:#333
+    classDef action fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#1565c0
+    classDef decision fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#ef6c00
+    classDef error fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#c62828
+    classDef success fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32
+    
+    class Online,OfflineState state
+    class WifiLoss,RetryCheck,UserAction,ProvisionResult decision
+    class AttemptRetry,Reconnect,ScanQR,BLECall,BLEConnect action
+    class ListWifi,SelectNetwork,SendCreds,Provisioning,TerminateBLE action
+    class ErrorMsg,AppDetect error
+    class Reconnect,TerminateBLE success
+`} />
 
 ---
 
