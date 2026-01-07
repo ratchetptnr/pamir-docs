@@ -9,112 +9,165 @@ import { Callout } from 'fumadocs-ui/components/callout'
   **Setup must be straightforward.** Users should connect their Distiller in under 2 minutes with clear guidance at every step. Every error state provides a clear path forward.
 </Callout>
 
-## Overview
+## Flow Overview
 
-The Distiller app handles two setup paths:
+The onboarding flow handles device discovery via Bluetooth, WiFi configuration, and security setup.
 
-1. **New Device Setup** - First-time configuration of a fresh device
-2. **Existing Device Login** - Connecting to an already-configured device
+```mermaid
+flowchart TD
+    Start([User unboxes Distiller]) --> PowerOn[User powers on device]
+    PowerOn --> DisplayQR[Display: QR code]
 
----
+    DisplayQR --> AppLaunch[App launches]
 
-## Entry Points
+    AppLaunch --> CameraCheck{Camera permission granted?}
+    CameraCheck -->|No| CameraError[Show camera permission modal]
+    CameraError --> CameraChoice{User choice}
+    CameraChoice -->|Open Settings| CameraSettings[User grants permission]
+    CameraSettings --> CameraCheck
+    CameraChoice -->|Manual Entry| ManualDeviceID[Enter Device ID manually]
+    ManualDeviceID --> BLECheck
 
-When the app launches, users choose:
+    CameraCheck -->|Yes| ScanQR[User scans QR code]
+    ScanQR --> BLECheck{Bluetooth enabled?}
+    BLECheck -->|No| BLEError[Show BT permission modal]
+    BLEError --> BLESettings[User fixes BT]
+    BLESettings --> BLECheck
 
-| Option | Purpose |
-| :--- | :--- |
-| **Setup New Device** | Configure a new Distiller (hotspot connection, WiFi setup, PIN creation) |
-| **Login to Existing** | Connect to a device that's already set up (QR scan + PIN) |
-| **Demo Mode** | Explore the app with simulated data (no device needed) |
+    BLECheck -->|Yes| BLESearch[App searching for Distiller]
 
----
+    BLESearch --> BLEScan{Device found in 15s?}
+    BLEScan -->|No| BLERetry[Auto-retry scan]
+    BLERetry --> BLEScan2{Device found?}
+    BLEScan2 -->|No| BLETroubleshoot[Show troubleshooting]
+    BLETroubleshoot --> UserAction1{User action}
+    UserAction1 -->|Scan Again| BLESearch
+    UserAction1 -->|Give up| EndFail([Setup abandoned])
 
-## New Device Setup
+    BLEScan -->|Yes| BLEConnect[BLE connection established]
+    BLEScan2 -->|Yes| BLEConnect
 
-### Step 1: Power On
-User plugs in the Distiller and waits for the LED to blink. This signals the device is broadcasting its setup hotspot.
+    BLEConnect --> WiFiList[App shows WiFi network list]
+    WiFiList --> NetworkChoice{User action}
+    NetworkChoice -->|Select from list| SelectNetwork[User selects network]
+    NetworkChoice -->|Network not listed| ManualSSID[User enters SSID manually]
+    ManualSSID --> EnterWiFiPass
+    SelectNetwork --> EnterWiFiPass[User enters WiFi password]
+    EnterWiFiPass --> SendCreds[App sends credentials]
 
-### Step 2: QR Code Scan
-The app scans the QR code on the device's E-ink screen to get hotspot credentials.
+    SendCreds --> BLEActive{BLE still connected?}
+    BLEActive -->|No| BLELost[Connection lost message]
+    BLELost --> DisplayQR
 
-**Backup paths**:
-- Camera permission denied → Prompt to open Settings, or enter credentials manually
-- QR scan fails → Show troubleshooting tips, offer manual entry
+    BLEActive -->|Yes| WiFiAttempt{WiFi connection result}
 
-### Step 3: Hotspot Connection
-The app connects to the Distiller's hotspot network.
+    WiFiAttempt -->|Wrong password| WrongPass[Password error]
+    WrongPass --> RetryCount{Retry count}
+    RetryCount -->|Less than 2| EnterWiFiPass
+    RetryCount -->|2 or more| WrongPassHelper[Show helper text]
+    WrongPassHelper --> EnterWiFiPass
 
-**Backup paths**:
-- User cancels → Explain why connection is needed, offer retry
-- Connection timeout → Retry or manual WiFi guide
-- Phone on strong WiFi → Prompt to disconnect first
+    WiFiAttempt -->|Timeout| WiFiTimeout[Timeout error]
+    WiFiTimeout --> TimeoutOptions{User choice}
+    TimeoutOptions -->|Try Again| SendCreds
+    TimeoutOptions -->|Different Network| WiFiList
 
-### Step 4: Device Check
-The app verifies communication with the device.
+    WiFiAttempt -->|Success| WiFiSuccess[WiFi connected]
 
-**Backup paths**:
-- Connection lost → Auto-retry with countdown
-- Version mismatch → Prompt to update device or app
-- Already configured → Switch to login flow
+    WiFiSuccess --> AppSecure[App shows Secure device]
 
-### Step 5: WiFi Network Selection
-The device scans for WiFi networks and shows the list.
+    AppSecure --> NamePassword[Name and password entry]
+    NamePassword --> SubmitCreds[Tap Continue]
 
-**Backup paths**:
-- No networks found → Auto-retry, offer manual entry
-- Hidden network → Manual SSID entry form
+    SubmitCreds --> SetupComplete[Setup complete]
 
-### Step 6: Device Details
-User enters WiFi password, names the device, and creates a 6-digit PIN.
+    SetupComplete --> End([User enters main app])
 
-### Step 7: Configuration Send
-The app sends config to the device. Phone reconnects to home WiFi while device attempts to join.
-
-**Backup paths**:
-- Send failed → Retry or start over
-- Device timeout (60s) → Option to try different network
-
-### Step 8: Final Connection
-User scans the device's updated QR code (now showing connection URL) to finish setup.
-
----
-
-## Existing Device Login
-
-### Step 1: Device Check
-User confirms device is powered on and connected to network.
-
-### Step 2: QR Code Scan
-App scans QR code on device to get connection URL.
-
-**Backup paths**:
-- Camera denied → Manual URL entry
-- Scan timeout → Troubleshooting tips
-
-### Step 3: PIN Entry
-User enters their 6-digit device PIN.
-
-**Backup paths**:
-- Wrong PIN → Retry (up to 3 attempts)
-- Too many failures → Factory reset instructions
-- Device offline → Troubleshooting with retry
+    style Start fill:#e1f5e1
+    style End fill:#e1f5e1
+    style EndFail fill:#ffcdd2
+    style DisplayQR fill:#fff4e6
+    style SetupComplete fill:#d4edff
+    style BLEError fill:#ffebee
+    style BLETroubleshoot fill:#ffebee
+    style WrongPass fill:#ffebee
+    style WiFiTimeout fill:#ffebee
+    style BLELost fill:#ffebee
+    style CameraError fill:#ffebee
+    style ManualSSID fill:#e3f2fd
+    style ManualDeviceID fill:#e3f2fd
+```
 
 ---
 
-## Completion
+## Happy Path: Screen States
 
-All paths lead to the **Projects Page**:
-- New Device: "Setup Complete!" → Projects
-- Existing Device: "Login Complete!" → Projects
-- Demo: Direct to Projects with simulated data
+This table shows what the user sees on both the mobile app and the device screen during a successful setup.
+
+| Step | User Action | 📱 Mobile App | 📟 Device (E-ink) |
+| :--- | :--- | :--- | :--- |
+| **1. Power On** | Powers on device | (Not open yet) | **QR Code**<br/>"Scan to Setup"<br/>ID: A4F2 |
+| **2. Permission** | Grants Camera access | **Camera Permission**<br/>"Allow Camera Access" | Unchanged (QR) |
+| **3. Scan** | Scans QR code | **QR Scanner**<br/>Camera Viewfinder | Unchanged (QR) |
+| **4. Discovery** | Waits (Auto) | **Searching...**<br/>"Looking for Distiller..." | Unchanged (QR) |
+| **5. Connected** | Taps Continue | **Device Found**<br/>"Found Distiller-A4F2" | **Connected**<br/>"App Connected"<br/>Waiting for WiFi... |
+| **6. Network** | Selects WiFi & enters password | **Select WiFi**<br/>List of networks | Unchanged (Connected) |
+| **7. Provisioning** | Waits (Auto) | **Connecting...**<br/>"Connecting Distiller to WiFi..." | **Connecting**<br/>"Connecting to [SSID]..." |
+| **8. Success** | Taps Continue | **WiFi Connected!**<br/>Success animation | **Online**<br/>Connected to [SSID]<br/>192.168.1.45 |
+| **9. Security** | Sets Name & Password | **Secure Device**<br/>"Name your Distiller" | Unchanged (Online) |
+| **10. Complete** | Taps Go to App | **All Set!**<br/>Desktop Link shown | **Ready**<br/>distiller-a4f2.devices...<br/>(QR updates to access link) |
+
+---
+
+## Key Recovery Paths
+
+### Camera Access Denied
+**When**: Pre-check when app launches  
+**Recovery**: Modal with "Open Settings" or "Enter Device ID Manually"  
+**Fallback**: Manual entry using 4-character code from device screen
+
+### Bluetooth Off or Denied
+**When**: Pre-check after QR scan  
+**Recovery**: Modal with "Open Settings" to enable Bluetooth  
+**Device**: Unchanged (still showing QR)
+
+### Device Not Found
+**When**: 15-second scan timeout  
+**Recovery**: One auto-retry, then show troubleshooting screen  
+**User Options**: Scan Again or Give Up
+
+### Hidden Network
+**When**: User taps "My network isn't listed"  
+**Recovery**: Manual SSID entry screen, then proceed normally
+
+### Connection Lost During Setup
+**When**: BLE disconnects while sending credentials  
+**Recovery**: Show "Connection lost. Scan QR again"  
+**Device**: Returns to QR code automatically
+
+### Wrong WiFi Password
+**When**: WiFi auth fails  
+**Recovery**: Return to password entry with network pre-selected  
+**Helper**: After 2 attempts, show "Password is case-sensitive"
+
+### Connection Timeout
+**When**: 30-second WiFi timeout or other failure  
+**Recovery**: Options menu with Try Again, Different Network, or Need Help
+
+---
+
+## Device Behavior Notes
+
+**App Closed Mid-Setup**: Device immediately returns to QR code. User scans again to start fresh.
+
+**Already Set Up**: After first setup, QR code changes from setup link to access link. Scanning launches the login screen.
 
 ---
 
 ## Design Principles
 
-1. **Clear Path Forward**: Every error has a retry option or alternative method
-2. **Show Complexity When Needed**: Manual entry appears only when automatic methods fail
+1. **Clear Path Forward**: Every error has retry or alternative method
+2. **Show Complexity When Needed**: Manual entry appears only when automatic fails
 3. **Respect Time**: Auto-retry shows progress, not just waiting
-4. **Clear Status**: Processing states explain what's happening ("Connecting to device...")
-5. **Security Required**: PIN protects device access; forgot PIN requires factory reset
+4. **Clear Status**: Processing states explain what's happening
+5. **Security Required**: PIN protects device; forgot PIN requires factory reset
