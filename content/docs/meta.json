@@ -1,6 +1,30 @@
 {
     "title": "Documentation",
     "pages": [
-        "index"
+        "index",
+        {
+            "type": "separator",
+            "title": "Overview"
+        },
+        "onboarding",
+        {
+            "type": "separator",
+            "title": "Connectivity"
+        },
+        "wifi",
+        "bluetooth",
+        {
+            "type": "separator",
+            "title": "Settings"
+        },
+        "display",
+        "audio",
+        "led",
+        "system",
+        "storage",
+        "performance",
+        "updates",
+        "security",
+        "notifications"
     ]
 }
