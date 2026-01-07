@@ -4,6 +4,15 @@
         "index",
         "onboarding",
         "wifi",
-        "bluetooth"
+        "bluetooth",
+        "display",
+        "audio",
+        "led",
+        "system",
+        "storage",
+        "performance",
+        "updates",
+        "security",
+        "notifications"
     ]
 }

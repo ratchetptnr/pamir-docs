@@ -1,20 +1,138 @@
 ---
 title: Introduction
-description: Internal documentation for Pamir/Distiller development team.
+description: The office where your AI agents work.
 ---
 
-# Pamir Documentation
+import { Callout } from 'fumadocs-ui/components/callout'
 
-Welcome to the internal documentation for the Pamir/Distiller development team.
+<Callout title="Core Philosophy">
+  "Humans will not want to babysit AI." Pamir is built for a future where you delegate to agents, not supervise them. Where agents work autonomously and only interrupt when they genuinely need you.
+</Callout>
 
-## What's Documented
+## The Computer for Agents
 
-- **Onboarding** - Complete device setup flow with all edge cases and error scenarios
-- **WiFi Configuration** - Network connectivity, reconfiguration, and recovery flows
-- **Bluetooth (BLE)** - BLE architecture, GATT service specification, and provisioning
+Computing was designed for humans. Screens, keyboards, mice—every interface assumes a person is sitting there, watching, clicking, waiting.
 
-<Cards>
-  <Card title="Onboarding Flow" href="/docs/onboarding" />
-  <Card title="WiFi Architecture" href="/docs/wifi" />
-  <Card title="Bluetooth Architecture" href="/docs/bluetooth" />
-</Cards>
+**But the future of work isn't humans using computers. It's humans directing agents, and agents using computers.**
+
+Pamir is the computer agents use.
+
+---
+
+## The Problem We're Solving
+
+AI agents are capable of real work—coding, analysis, research, system administration. People are already trusting them with meaningful tasks.
+
+But agents have nowhere to work.
+
+They live in:
+- **Chat windows** that disappear when you close the tab
+- **IDEs** that require your laptop to stay open
+- **Cloud functions** with no memory, no context, no continuity
+
+**Agents are homeless.** They're capable of doing work but have no persistent place to do it.
+
+---
+
+## What Pamir Is
+
+**Pamir is the office where your agents work.**
+
+Not a tool you use. Not software you run. An *environment* where autonomous agents live, work, and only interrupt you when they genuinely need something.
+
+### The Core Idea
+
+You have agents. They have tasks. Pamir gives them a place to execute those tasks independently while you go live your life.
+
+- **Persistent**: Your agent's workspace doesn't disappear when you close your laptop
+- **Always-on**: Agents can work overnight, over weekends, across days
+- **Sovereign**: It's yours. Your agents, your data, your control
+- **Physical**: Agents can interact with the real world through hardware
+- **Notification-driven**: Agents reach out when they need you, not the other way around
+
+**It's the difference between having a contractor work in your living room versus having an office where your team works while you're elsewhere.**
+
+---
+
+## The Shift
+
+### Era 1: Humans work, computers assist
+Spreadsheets, word processors, development tools. The computer amplifies human capability. Human always in control, always present.
+
+### Era 2: Agents work, humans supervise ← *We are here*
+AI writes code, generates content, analyzes data. Human provides direction and intervention. Still requires constant human presence.
+
+### Era 3: Agents work, humans delegate ← *Pamir is built for this*
+Agents handle entire workflows autonomously. Humans provide goals and constraints. Human presence is intermittent, as-needed.
+
+**Most tools are built for Era 1. Some are adapting to Era 2. Pamir is designed from first principles for Era 3.**
+
+---
+
+## The Mobile-First Insight
+
+In the agent future, your primary device is your phone, not your laptop.
+
+Why? Because if agents are doing the computational work, you don't need a keyboard and screen anymore. You need:
+- A way to **delegate** tasks (voice, text, quick inputs)
+- A way to **check status** (notifications, dashboards)
+- A way to **approve decisions** (simple touch interfaces)
+- A way to **review work** (mobile-friendly outputs)
+
+**Pamir is the backend infrastructure that makes mobile-first agent delegation possible.**
+
+Your laptop is where you used to *do* work. Your phone is where you *manage* work. **Pamir is where work gets done.**
+
+---
+
+## The Experience
+
+**Morning:** "Hey, I need a report on Q4 performance by EOD."
+
+*Phone buzzes: "Task received. Starting analysis."*
+
+**Midday:** *Notification: "Found inconsistency in sales data. Should I use preliminary or revised figures?"*
+
+"Use revised." *"Got it. Continuing."*
+
+**Evening:** *"Q4 report complete. 24 pages, 8 charts. Ready to review."*
+
+### What Just Happened
+
+The agent worked for 6+ hours autonomously. Accessed multiple data sources. Made independent decisions. Only interrupted twice for genuine judgment calls.
+
+The human spent 10 minutes total. Never opened a laptop. Stayed in flow on other priorities. Maintained control without micromanagement.
+
+**This is the boss-employee model, applied to AI.**
+
+---
+
+## About This Documentation
+
+This documentation is for the Pamir/Distiller development team. It explains the **"why"** behind our architectural decisions and the **user experience philosophy** that drives the product.
+
+### What's Documented
+
+- **Onboarding** - Device setup flow designed for zero-friction agent activation
+- **WiFi** - Self-healing connectivity with BLE-based recovery
+- **Bluetooth** - Dual-mode architecture serving system recovery and peripherals
+- **Display** - E-ink settings optimized for agent status, not human interaction
+- **Audio** - Voice input/output for agent communication
+- **LED Indicators** - Ambient status communication when screens aren't watched
+- **System** - Device identity and health monitoring
+- **Security** - Trust boundaries for autonomous agent operations
+- **Notifications** - Intelligent interruption protocols for delegation, not babysitting
+
+These aren't just features. They're the primitives that make agent autonomy possible.
+
+---
+
+## The Vision
+
+**Pamir is the persistent, sovereign, always-on workspace where your AI agents live, work, and only interrupt you when they need something you haven't already told them how to handle.**
+
+Because the future of work isn't humans using computers.
+
+It's humans directing agents, and agents using computers.
+
+**Pamir is the computer agents use.**
