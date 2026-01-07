@@ -2,9 +2,12 @@
     "title": "Documentation",
     "pages": [
         "index",
+        "---Overview",
         "onboarding",
+        "---Connectivity",
         "wifi",
         "bluetooth",
+        "---Settings",
         "display",
         "audio",
         "led",
