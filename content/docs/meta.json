@@ -1,21 +1,6 @@
 {
     "title": "Documentation",
     "pages": [
-        "index",
-        "---Overview",
-        "onboarding",
-        "---Connectivity",
-        "wifi",
-        "bluetooth",
-        "---Settings",
-        "display",
-        "audio",
-        "led",
-        "system",
-        "storage",
-        "performance",
-        "updates",
-        "security",
-        "notifications"
+        "index"
     ]
 }
