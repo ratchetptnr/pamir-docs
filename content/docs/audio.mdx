@@ -1,0 +1,95 @@
+---
+title: Audio
+description: Audio Settings Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Hardware fades into the background." Audio should just work. We expose volume and mic gain because users have different environments—loud offices, quiet bedrooms, close-talk vs far-field recording. Everything else is automatic.
+</Callout>
+
+## The Audio Reality
+
+The Distiller device has a microphone and speaker. These serve two purposes:
+1. **Input**: Recording voice commands, ambient audio for AI agent context
+2. **Output**: Text-to-speech feedback, alerts, confirmations
+
+Unlike a studio recording setup, users don't think in terms of sample rates or buffer sizes. They think: *"Is it too loud?"* or *"Can it hear me?"*
+
+---
+
+## User-Controlled Settings
+
+### Speaker Volume
+
+**Why it matters**: User environments vary. A quiet home office vs a bustling coffee shop.
+
+**The control**: Slider (0-100%)
+
+**The philosophy**: Linear, obvious. No need for presets or curves. Users know what "louder" means.
+
+### Microphone Gain
+
+**Why it matters**: Distance from device, room acoustics, and voice volume vary wildly. Too much gain = background noise. Too little = missed words.
+
+**The control**: Slider (0-100%) with **magnetic snap at 50%**
+
+**The snap point**: We discovered through testing that 50% gain is the sweet spot for most users (arm's length, normal speaking voice). The slider "snaps" to 50% with haptic feedback when you get close—a subtle nudge toward the recommended default.
+
+**The philosophy**: Give control, but guide toward success.
+
+### Mute Microphone
+
+**Why it matters**: Privacy. When not using voice features, users want certainty that the mic is off.
+
+**The hierarchy**: Mute is the parent control. When muted, the gain slider is disabled and grayed out.
+
+**The philosophy**: Clear information architecture. You can't adjust gain when the mic is dead.
+
+---
+
+## What We Excluded (and Why)
+
+These settings exist in the audio stack but were deliberately hidden.
+
+| Setting | Why Excluded |
+| :--- | :--- |
+| **Sample Rate** | Too technical. 16kHz is optimal for voice. Users shouldn't need to think about this. |
+| **Channels** | Mono vs stereo should be automatic based on task. Voice commands? Mono. Music playback? Stereo. |
+| **Buffer Size** | Latency vs stability tradeoff. We choose smart defaults (4096 samples). Users would have no mental model for this. |
+| **Audio Device** | The device has one mic and one speaker. Auto-detection is sufficient. |
+| **Voice Activity Detection** | Should be on by default for voice commands. Not a user-facing toggle. |
+
+---
+
+## The Haptic Guide
+
+The mic gain slider has a unique interaction: when you drag it near 50%, it **snaps** to that value with a medium haptic pulse. If you cross the 50% threshold (moving up or down), you feel a lighter haptic tap.
+
+**Why?** 50% is the calibrated default. Most users should start there. The snap behavior:
+- **Guides** new users to the sweet spot
+- **Reassures** experienced users they're at a known-good value
+- **Feels intentional**, not arbitrary
+
+---
+
+## States of Mind
+
+How users approach audio based on their needs.
+
+| User Scenario | Settings Pattern |
+| :--- | :--- |
+| **"I'm using voice commands nearby"** | Volume: 70%, Mic Gain: 50%, Mute: Off |
+| **"The agent is too loud"** | Volume: 30%, Mic Gain: unchanged |
+| **"I'm in a noisy room"** | Mic Gain: 70-80% (closer to device) |
+| **"I need privacy"** | Mute: On (gain disabled) |
+
+---
+
+## Design Principles
+
+1. **Volume is obvious**: Everyone knows what a volume slider does. Don't overcomplicate it.
+2. **Gain needs guidance**: Unlike volume, gain is less intuitive. The snap point educates.
+3. **Mute means dead**: When muted, don't just visually disable the gain slider—make it immutable. The hierarchy must be crystal clear.
+4. **Hardware transparency**: Users shouldn't think about audio devices or sample rates. They should think about "Can it hear me?" and "Is it too loud?"

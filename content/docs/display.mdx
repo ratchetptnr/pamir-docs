@@ -1,0 +1,88 @@
+---
+title: Display
+description: E-ink Display Settings Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Show what matters, hide what doesn't." The E-ink display is the device's face to the world. We expose only the settings that meaningfully change the user's experience, not the underlying API knobs.
+</Callout>
+
+## The Display as Interface
+
+The E-ink screen is not just a component—it's the primary feedback mechanism when the device operates headless. Unlike traditional screens, E-ink has unique characteristics: high readability in sunlight, zero power consumption when static, but slow refresh rates.
+
+**Our approach**: Embrace these constraints. Expose settings that align with how users actually position and use the device.
+
+---
+
+## User-Controlled Settings
+
+These are the settings we chose to expose. Each represents a real user need.
+
+### Screen Orientation
+
+**Why it matters**: Users mount the device in different orientations—horizontal on a desk, vertical on a wall, rotated in a custom enclosure.
+
+**The options**: 0°, 90°, 180°, 270°
+
+**The philosophy**: Let the user match the physical world. The device doesn't know if it's upside down; the orientation setting is the user saying *"This is how I see you."*
+
+### Invert Colors
+
+**Why it matters**: Some users prefer white-on-black for aesthetic or readability reasons, especially in low-light environments.
+
+**The toggle**: Normal ↔ Inverted
+
+**The philosophy**: A simple preference toggle. No performance impact, pure aesthetics.
+
+### Screen Timeout
+
+**Why it matters**: E-ink doesn't need to "turn off" to save power (static images are free). But users might want the screen to sleep after inactivity for privacy or to reduce visual clutter.
+
+**The options**: 30 seconds, 1 minute, 5 minutes, 10 minutes, 30 minutes, Never
+
+**The philosophy**: Default to 5 minutes (unobtrusive). "Never" is available for users who want persistent dashboards.
+
+### Refresh Mode
+
+**Why it matters**: E-ink displays can refresh in different modes: full refresh (slower, perfect quality) or partial refresh (faster, may ghost).
+
+**The options**: Normal, Speed (partial), Quality (full)
+
+**The philosophy**: Most users want "Normal" (balanced). Power users can optimize for their use case—dashboards that update frequently might prioritize Speed; static displays prioritize Quality.
+
+---
+
+## What We Excluded (and Why)
+
+These settings exist in the underlying SDK but were deliberately hidden from users.
+
+| Setting | Why Excluded |
+| :--- | :--- |
+| **Firmware Type** | This is hardware detection, not a user setting. The device knows what display it has. |
+| **Scaling Method** | Technical implementation detail. The device should intelligently fit content to screen. |
+| **Dithering Quality** | Too technical. Users don't think in terms of dithering algorithms; they think in terms of "looks good" or "doesn't." We choose smart defaults. |
+| **Flip Horizontal/Vertical** | Edge case. Orientation handles 99% of use cases. Adding these clutters the UI for negligible benefit. |
+
+---
+
+## States of Mind
+
+How users perceive the display based on their settings choices.
+
+| User Goal | Settings Pattern |
+| :--- | :--- |
+| **"I want a persistent dashboard"** | Timeout: Never, Refresh: Normal |
+| **"I want privacy when idle"** | Timeout: 1 minute, Invert: Off |
+| **"I mounted it sideways"** | Orientation: 90°, Refresh: Normal |
+| **"I prefer dark mode"** | Invert: On, Timeout: 5 minutes |
+
+---
+
+## Design Principles
+
+1. **Physical trumps digital**: Orientation is about matching the real world, not rotating pixels for fun.
+2. **Defaults should disappear**: Most users never touch these settings. That's a success metric.
+3. **E-ink is patient**: Unlike LCD, there's no urgency to "turn off" the screen. Timeout is about user preference, not battery life.

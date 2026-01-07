@@ -1,0 +1,104 @@
+---
+title: System
+description: System Settings Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "The device should know itself." System settings are about identity and self-awareness—giving the device a name, monitoring its health, managing its resources. We nest complexity (Storage, Performance, Updates) to keep the top level clean.
+</Callout>
+
+## Identity First
+
+The most fundamental system setting is **Device Name**. This is how the device identifies itself on the network, in the app's device list, and in logs.
+
+**Default**: `distiller-b515` (model + serial)
+
+**Why it matters**: When you have multiple Distiller devices, "My Office Brain" is more meaningful than "distiller-b515."
+
+**The philosophy**: Make it personal. The device is a member of your digital ecosystem, not a serial number.
+
+---
+
+## The Nested Structure
+
+System settings follow a hierarchical architecture:
+
+```
+System
+├── Device Name (top level)
+└── System Management
+    ├── Storage
+    ├── Performance
+    └── Updates
+```
+
+**Why nest?** These are all "system" concerns, but they serve different user intents:
+- **Storage**: "How full is my device?"
+- **Performance**: "Is it running well?"
+- **Updates**: "Is it current?"
+
+Grouping them under "System Management" signals: *"These are about the device's health, not your project settings."*
+
+---
+
+## What's Automatic
+
+### Timezone
+
+**Why excluded**: The device infers timezone from Wi-Fi geolocation. When you connect to a network, the device knows where it is. No manual dropdowns of "America/Los_Angeles" or "Europe/Berlin."
+
+**The exception**: If the user wants to override (remote server in a different timezone), we can expose this later. For now, automatic is better.
+
+### Language
+
+**Why excluded**: The Distiller OS currently operates in English. When we support multi-language, it will be automatic based on the user's phone locale, not a per-device setting.
+
+**The philosophy**: Don't expose settings for features that don't exist yet. Wait until the need is real.
+
+---
+
+## Storage (Nested)
+
+See [Storage settings documentation](/docs/storage) for full details.
+
+**Summary**: Auto-cleanup logs, clear cache on boot, and a visual storage meter. Users want to know "Am I running out of space?" and "Can the device clean up after itself?"
+
+---
+
+## Performance (Nested)
+
+See [Performance settings documentation](/docs/performance) for full details.
+
+**Summary**: A monitoring dashboard (CPU, memory, temperature, uptime, load) with one control: Power Mode (Power Saving / Balanced / Performance). Users want transparency, not tinkering.
+
+---
+
+## Updates (Nested)
+
+See [Updates settings documentation](/docs/updates) for full details.
+
+**Summary**: Auto-check for updates, manual "Check Now" button, and version display. Users want to stay current without manual hunting.
+
+---
+
+## States of Mind
+
+How users interact with system settings based on their needs.
+
+| User Intent | Action Path |
+| :--- | :--- |
+| **"I want to name my device"** | System → Device Name |
+| **"How much storage is left?"** | System → Storage |
+| **"Is the device overheating?"** | System → Performance → Temperature |
+| **"Am I on the latest version?"** | System → Updates |
+
+---
+
+## Design Principles
+
+1. **Identity is top-level**: Device name is immediately visible. It's the most common system setting users change.
+2. **Nest complexity**: Storage, Performance, and Updates are important but not daily-use settings. Tucking them under "System Management" keeps the main settings list uncluttered.
+3. **Automatic over manual**: Timezone and language should be invisible. If the device can figure it out, don't ask the user.
+4. **Health, not configuration**: System settings are about monitoring and light maintenance, not deep OS tweaking. We're not exposing kernel parameters or boot flags.

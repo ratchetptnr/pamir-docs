@@ -1,0 +1,135 @@
+---
+title: Updates
+description: Software Update Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Stay current, stay safe." Software updates should be transparent and user-controlled. We check for updates automatically, but users approve installation. No surprise reboots, no forced updates.
+</Callout>
+
+## The Update Journey
+
+Updates serve two purposes:
+1. **Security**: Patch vulnerabilities, fix bugs
+2. **Features**: New capabilities, performance improvements
+
+**The user's concern**: *"Will this break my projects?"*
+
+**Our promise**: Updates are explicit. You'll know what's available, what it does, and when it installs.
+
+---
+
+## User-Controlled Settings
+
+### Auto-Check for Updates
+
+**What it does**: Periodically checks (every 24 hours) if a new version is available.
+
+**The toggle**: On/Off (default: On)
+
+**The philosophy**: Checking is harmless and low-bandwidth. Most users want to know when updates exist, even if they don't install immediately.
+
+**Why not auto-install?** Trust. The device is running user code. An update mid-project could cause issues. Users should control when the device reboots and re-provisions.
+
+### Current Version
+
+**What it shows**: Current software version (e.g., `1.0.2`)
+
+**Why it matters**: When reporting bugs or asking for help, "What version are you on?" is the first question. Making this visible saves time.
+
+### Last Checked
+
+**What it shows**: Timestamp of last update check (e.g., `Jan 6, 2026, 6:32 PM`)
+
+**Why it matters**: If auto-check is on, users want reassurance that it's actually working. If the timestamp is weeks old, something's wrong.
+
+### Check for Updates Now
+
+**What it does**: Immediately queries the update server for new versions.
+
+**The action**: Button with loading state (*"Checking for Updates..."*)
+
+**The philosophy**: Some users disable auto-check (bandwidth concerns, offline dev). They still need a manual way to pull updates when they're ready.
+
+---
+
+## The Update States
+
+The UI adapts based on update availability:
+
+### State 1: Up to Date
+
+**What you see**:
+- Green checkmark icon
+- Message: *"Your Distiller is up to date"*
+- "Check for Updates" button
+
+**User perception**: *"Nothing to do. I'm current."*
+
+### State 2: Checking
+
+**What you see**:
+- Spinner icon
+- Message: *"Checking for Updates..."*
+- Button is disabled
+
+**User perception**: *"The system is working. Wait a moment."*
+
+### State 3: Update Available
+
+**What you see**:
+- Blue download icon
+- Message: *"Update Available — Version 1.1.0 is ready to install"*
+- "Install Update" button (actionable)
+
+**User perception**: *"New version exists. I can install when ready."*
+
+---
+
+## What We Excluded (and Why)
+
+These settings exist in other update systems but were deliberately hidden.
+
+| Setting | Why Excluded |
+| :--- | :--- |
+| **Update Channel** (Stable/Beta) | Adds complexity. Most users should be on Stable. Beta testers are advanced enough to switch via command line or developer settings. |
+| **Auto-Install** | Dangerous. The device could reboot mid-task. Users must approve install timing. |
+| **Rollback** | Not exposed yet. Future feature. When we build this, it'll appear here. |
+
+---
+
+## States of Mind
+
+How users interact with updates based on their workflow.
+
+| User Scenario | Settings Pattern |
+| :--- | :--- |
+| **"I want to stay current automatically"** | Auto-Check: On, manually install when notified |
+| **"I'm offline for weeks at a time"** | Auto-Check: Off, use "Check Now" when online |
+| **"I'm actively developing code"** | Auto-Check: On, delay install until project is stable |
+| **"Update broke something"** | (Future: Rollback option will appear here) |
+
+---
+
+## The Install Flow (Future Detail)
+
+When the user taps "Install Update," the following happens:
+1. **Download**: Update package is fetched (progress bar shown)
+2. **Verification**: Checksum is validated (prevent corrupted installs)
+3. **Install**: Package is applied
+4. **Reboot**: Device restarts to complete installation
+5. **Verification**: New version is confirmed on next boot
+
+**User control**: They tap "Install Update" and see progress. The reboot is expected, not a surprise.
+
+---
+
+## Design Principles
+
+1. **Transparency**: Users always know what version they're on and when updates exist.
+2. **Control**: Checking is automatic. Installing is manual. Trust over convenience.
+3. **Safety**: No silent updates. No forced reboots. Users approve timing.
+4. **Simplicity**: One button: "Check for Updates." One action: "Install Update." No cryptic version numbers or release notes (unless users tap for details).
+5. **Offline-friendly**: Users can disable auto-check if they're bandwidth-constrained or working offline. Manual check is always available.

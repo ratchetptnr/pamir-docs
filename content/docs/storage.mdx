@@ -1,0 +1,111 @@
+---
+title: Storage
+description: Storage Settings Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Self-healing storage." The device should manage its own disk space. Users don't want to manually delete log files or hunt for cache bloat. Expose visibility and simple cleanup toggles, nothing more.
+</Callout>
+
+## The Storage Reality
+
+Raspberry Pi compute modules ship with 32GB eMMC storage. After the OS, SDK, and models, users have space for projects, data, and logs.
+
+**The user's question**: *"Am I running out of space?"*
+
+**The system's answer**: A visual bar showing used vs available, color-coded to indicate health.
+
+---
+
+## User-Controlled Settings
+
+### Storage Visualization
+
+**What it shows**: Used storage (GB) / Total storage (GB), with a progress bar.
+
+**Color logic**:
+- **Blue** (0-75%): Healthy
+- **Orange** (75-90%): Getting full
+- **Red** (90%+): Critical, needs attention
+
+**Why it matters**: Users need at-a-glance awareness. The color shift is progressive: blue = *"don't worry,"* orange = *"check soon,"* red = *"act now."*
+
+### Auto-Cleanup Logs
+
+**What it does**: Automatically deletes log files older than 30 days.
+
+**The toggle**: On/Off (default: On)
+
+**The philosophy**: Logs are diagnostic, not precious. If you're not actively debugging, they're just disk clutter. Auto-cleanup respects the user's time—they shouldn't have to remember to do this manually.
+
+### Clear Cache on Startup
+
+**What it does**: Deletes temporary files (`/tmp`, build artifacts, cached downloads) when the device boots.
+
+**The toggle**: On/Off (default: Off)
+
+**The philosophy**: For most users, cache persistence is helpful (faster subsequent runs). For power users who redeploy frequently, clearing cache on boot ensures a clean slate.
+
+**The tradeoff**: Slightly slower first run after boot, but guaranteed no stale artifacts.
+
+### Clear Cache Now
+
+**What it does**: Immediately clears temporary files and cache.
+
+**The action**: Button (blue, actionable)
+
+**The philosophy**: Sometimes you just need to free up space *now*. Don't make users reboot or dig through file explorers.
+
+---
+
+## What We Excluded (and Why)
+
+These settings exist in the underlying system but were deliberately hidden.
+
+| Setting | Why Excluded |
+| :--- | :--- |
+| **Log Retention Days** | Too granular. 30 days is a sensible default. If users want more control, they're advanced enough to SSH in and configure it manually. |
+| **Max Log Size** | Another technical knob. The auto-cleanup toggle handles the 90% use case. |
+| **Backup Location** | Backup/restore is a separate feature (future). Exposing a path field now would confuse users. |
+| **Storage Alert Threshold** | Hardcoded to 85%. Users shouldn't need to tweak this. If they're at 85%, they'll see the orange bar. |
+
+---
+
+## The Health Indicator
+
+Storage health is communicated through color:
+
+| Usage Level | Bar Color | User Perception |
+| :--- | :--- | :--- |
+| **0-75%** | Blue | *"I'm fine. Plenty of space."* |
+| **75-90%** | Orange | *"I should check what's taking up space."* |
+| **90%+** | Red | *"I need to free up space now."* |
+
+**Why these thresholds?**
+- **75%**: Most systems start to slow down or exhibit issues around this point. Orange is a heads-up, not a panic.
+- **90%**: Critical. The device may fail to save files or boot properly. Red demands action.
+
+---
+
+## States of Mind
+
+How users interact with storage settings based on their needs.
+
+| User Scenario | Settings Pattern |
+| :--- | :--- |
+| **"Just checking general health"** | View bar (blue = ignore, orange/red = investigate) |
+| **"I want automatic cleanup"** | Auto-cleanup: On, Clear Cache on Boot: Off |
+| **"I redeploy projects frequently"** | Auto-cleanup: On, Clear Cache on Boot: On |
+| **"I need space right now"** | Tap "Clear Cache Now" button |
+
+---
+
+## Design Principles
+
+1. **Visibility over control**: Show the storage bar prominently. Most users just need to see "Am I okay?"
+2. **Automatic is better**: Auto-cleanup should be on by default. Users shouldn't manage log files manually.
+3. **Color conveys urgency**: Blue, orange, red. Universal traffic light logic. No numbers needed—the color tells the story.
+4. **Emergency escape hatch**: "Clear Cache Now" is for when something breaks. It's a manual override, available but not encouraged for daily use.
+5. **Hide the complexity**: Users don't care about retention days or size limits. They care about "Is my device going to die because it's full?"

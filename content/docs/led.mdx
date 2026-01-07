@@ -1,0 +1,102 @@
+---
+title: LED Indicators
+description: LED Settings Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Speak without words." LEDs are ambient communication. They tell you the device's state at a glance—across the room, from your desk, without opening an app. We expose color meanings and brightness because context matters.
+</Callout>
+
+## The Seven Lights
+
+The Distiller device has **7 RGB LEDs** arranged in a ring. Unlike system status LEDs (power, activity), these are programmable indicators designed to communicate device state.
+
+**The challenge**: How do you give users control without overwhelming them with 21 color pickers (7 LEDs × 3 states)?
+
+**Our solution**: Abstract to *state colors*, not *LED IDs*.
+
+---
+
+## User-Controlled Settings
+
+### Master Toggle
+
+**Why it matters**: Some environments (bedrooms, offices with strict policies) can't have blinking lights.
+
+**The control**: LED Indicators On/Off
+
+**The cascade**: When off, all other controls are disabled and grayed out. The hierarchy is clear: master switch controls everything below.
+
+### Global Brightness
+
+**Why it matters**: A dim room vs bright office. What's "subtle" in one context is "invisible" in another.
+
+**The control**: Slider (0-100%)
+
+**The philosophy**: One brightness for all LEDs. Users don't think "LED 3 should be dimmer than LED 5." They think "The lights are too bright."
+
+### Status Colors
+
+We expose three key device states:
+
+| State | Default Color | Meaning |
+| :--- | :--- | :--- |
+| **Idle** | Blue | Device is on, waiting. Calm, neutral. |
+| **Recording** | Red | Microphone is active. Universal "recording" signal. |
+| **Error** | Orange | Something needs attention. Not catastrophic (that would be red), but actionable. |
+
+**Why these three?** They map to the user's mental model:
+- *"Is it working?"* → Idle (Blue)
+- *"Is it listening?"* → Recording (Red)
+- *"Do I need to check on it?"* → Error (Orange)
+
+**The color pickers**: We use iOS native color pickers. Users can customize to match their desk setup, accessibility needs, or personal preference.
+
+---
+
+## What We Excluded (and Why)
+
+The underlying SDK has extensive LED control. We deliberately hid most of it.
+
+| Setting | Why Excluded |
+| :--- | :--- |
+| **Active LEDs** (which of the 7 to use) | Too granular. Users don't care about "LED 0-6." They care about "the ring of lights." |
+| **Animation Modes** (blink, fade, rainbow, heartbeat) | Fun for demos, distracting for daily use. If the device is constantly pulsing, users tune it out. We prioritize static, meaningful states. |
+| **Animation Timing** | If we had animations, this would matter. Since we don't, it's irrelevant. |
+| **Per-LED Configuration** | Power user feature that adds massive UI complexity. 99% of users would never touch this. |
+
+---
+
+## The Information Hierarchy
+
+When LEDs are disabled, the entire settings page becomes "read-only":
+- Brightness slider is grayed out
+- Color pickers are disabled
+- Visual opacity drops to 50%
+
+**Why?** Users shouldn't be able to configure settings for a feature that's turned off. It creates confusion: *"I changed the color, but nothing happened!"*
+
+---
+
+## States of Mind
+
+How users approach LED settings based on their environment.
+
+| User Context | Settings Pattern |
+| :--- | :--- |
+| **"I want subtle indicators at night"** | Enabled, Brightness: 20%, Colors: Default |
+| **"I need high visibility across the room"** | Enabled, Brightness: 90%, Recording: Bright Red |
+| **"No lights allowed (bedroom/office)"** | Disabled (all controls grayed out) |
+| **"I want to match my desk theme"** | Enabled, Brightness: 60%, Idle: Purple (custom) |
+
+---
+
+## Design Principles
+
+1. **Ambient, not intrusive**: LEDs should inform, not demand attention. Static colors, not flashing animations.
+2. **State over decoration**: We don't expose rainbow modes or breathing effects. The LEDs serve a purpose: communicate device state.
+3. **One brightness to rule them all**: Users think holistically. They don't want to individually dim 7 LEDs.
+4. **Master switch matters**: Some users need zero light pollution. The toggle must be absolute—when off, truly off.
+5. **Familiar colors**: Default to universal conventions (red = recording, orange = warning). Allow customization, but start with what works.

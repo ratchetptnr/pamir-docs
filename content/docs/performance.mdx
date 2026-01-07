@@ -1,0 +1,125 @@
+---
+title: Performance
+description: Performance Monitoring Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Monitor, don't tinker." Performance settings are not about overclocking or tuning. They're about transparency—showing users what's happening inside the device. The only control is Power Mode, because users care about battery vs speed, not CPU governors.
+</Callout>
+
+## The Activity Monitor Approach
+
+Think macOS Activity Monitor, not BIOS settings. Users want to see:
+- *"Is my device struggling?"*
+- *"Why is it hot?"*
+- *"How long has it been running?"*
+
+They don't want to configure kernel parameters or manage swap files.
+
+---
+
+## The Monitoring Dashboard
+
+### CPU Usage
+
+**What it shows**: Real-time percentage (0-100%)
+
+**Visual**: Progress bar, color-coded
+- **Blue** (0-70%): Normal
+- **Orange** (70-90%): Heavy load
+- **Red** (90%+): Maxed out
+
+**Why it matters**: If the device feels slow, the CPU bar tells you why. If it's at 95%, you know it's working hard. If it's at 10%, the bottleneck is elsewhere.
+
+### Memory Usage
+
+**What it shows**: Used GB / Total GB (e.g., "2.1 GB of 8 GB")
+
+**Visual**: Progress bar, color-coded (same logic as storage)
+
+**Why it matters**: Running out of RAM causes swapping and sluggishness. The orange/red warning gives users a heads-up before the device crawls to a halt.
+
+### CPU Temperature
+
+**What it shows**: Temperature in °C
+
+**Visual**: Thermometer icon, color-coded
+- **Gray** (< 70°C): Normal
+- **Orange** (70-80°C): Warm
+- **Red** (> 80°C): Hot (throttling risk)
+
+**Why it matters**: Raspberry Pi compute modules throttle at high temps. If the device is in direct sunlight or a poorly ventilated enclosure, users need to know.
+
+**Warning indicator**: If temp > 70°C, we show an orange alert: *"Temperature is high"*
+
+### Uptime
+
+**What it shows**: Time since last reboot (formatted as `4d 12h 35m`)
+
+**Why it matters**: Long uptimes are a badge of honor (stability). But if the device has been running for months, users might want to reboot for a fresh start.
+
+### Load Average
+
+**What it shows**: 1-minute, 5-minute, and 15-minute load averages
+
+**Example**: `0.80 / 1.20 / 1.50`
+
+**Why it matters**: Load average is a Unix concept (number of processes waiting for CPU). Values < 1.0 are healthy. Values > 2.0 indicate the device is overloaded.
+
+**The philosophy**: Expose this for power users, but don't require understanding it. The CPU bar is more intuitive for most people.
+
+---
+
+## The One Control: Power Mode
+
+**Why it exists**: Users care about one tradeoff: battery/heat vs performance.
+
+**The options**:
+- **Power Saving**: CPU runs slower, lower heat, longer battery (relevant for future battery-powered versions)
+- **Balanced**: Adapts CPU speed based on demand (default)
+- **Performance**: CPU always at max speed, prioritizes responsiveness
+
+**Why we excluded everything else**:
+- **CPU Governor**: This *is* power mode, but framed as user intent, not kernel config.
+- **Max CPU Frequency**: Users don't think in MHz. They think "fast" or "slow."
+- **GPU Memory Split**: Relevant for hardware acceleration, but not user-facing. We set it optimally behind the scenes.
+- **Swap**: Always on, smart size. Users shouldn't manage this.
+
+---
+
+## What We Excluded (and Why)
+
+These settings exist in the underlying OS but were deliberately hidden.
+
+| Setting | Why Excluded |
+| :--- | :--- |
+| **CPU Governor** | Abstracted to "Power Mode." Same control, better language. |
+| **Max CPU Frequency** | Dangerous. Users could limit performance and not know why the device is slow. |
+| **GPU Memory Split** | Requires reboot, highly technical. We choose optimal defaults. |
+| **Swap Size** | Auto-configured based on RAM. Users don't manage virtual memory manually. |
+| **Process Monitor** | That's a separate tool (future diagnostics page). Settings are about configuration, not real-time process lists. |
+
+---
+
+## States of Mind
+
+How users interpret the performance dashboard.
+
+| User Observation | Likely Action |
+| :--- | :--- |
+| **"CPU at 90%, temp orange"** | *"I should stop some tasks or improve ventilation."* |
+| **"Memory bar is red"** | *"I need to restart or reduce resident processes."* |
+| **"Uptime is 45 days"** | *"Maybe time for a reboot (or proud of stability)."* |
+| **"Load average is 0.3"** | *"Device is idle. All is well."* |
+
+---
+
+## Design Principles
+
+1. **Transparency over control**: Show everything. Control almost nothing. Users should see what's happening inside the black box.
+2. **Color as language**: Blue, orange, red. Consistent across all metrics. No need to read numbers—the color tells the story.
+3. **One knob is enough**: Power Mode is the only user-facing control. Everything else is monitoring.
+4. **Familiar patterns**: Modeled after macOS Activity Monitor, htop, and other system monitors. Users who've looked at those tools will feel at home.
+5. **Warnings before failure**: Temperature and memory warnings appear *before* the device throttles or crashes. Give users time to act.
