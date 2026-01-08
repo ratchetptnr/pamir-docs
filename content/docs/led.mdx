@@ -11,7 +11,9 @@ import { Callout } from 'fumadocs-ui/components/callout'
 
 ## The Seven Lights
 
-The Distiller device has **7 RGB LEDs** arranged in a ring. Unlike system status LEDs (power, activity), these are programmable indicators designed to communicate device state.
+The Distiller device has **7 RGB LEDs** arranged in a horizontal strip above the E-ink display. Unlike system status LEDs (power, activity), these are programmable indicators designed to communicate device and agent state.
+
+This linear arrangement is visible at a glance from across the room—whether the device is on your desk, a shelf, or mounted on a wall. The strip provides clear ambient feedback without requiring you to open an app or approach the device.
 
 **The challenge**: How do you give users control without overwhelming them with 21 color pickers (7 LEDs × 3 states)?
 
@@ -39,18 +41,24 @@ The Distiller device has **7 RGB LEDs** arranged in a ring. Unlike system status
 
 ### Status Colors
 
-We expose three key device states:
+We expose key device and agent states:
 
 | State | Default Color | Meaning |
 | :--- | :--- | :--- |
-| **Idle** | Blue | Device is on, waiting. Calm, neutral. |
-| **Recording** | Red | Microphone is active. Universal "recording" signal. |
-| **Error** | Orange | Something needs attention. Not catastrophic (that would be red), but actionable. |
+| **Idle** | Blue | Agent is ready, waiting for tasks |
+| **Thinking** | Purple | Agent is processing, working autonomously |
+| **Needs Permission** | Yellow | Agent requires user approval to proceed |
+| **Recording** | Red | Microphone is active, listening |
+| **Playing** | Green | Audio playback, agent speaking |
+| **Error** | Orange | Something needs attention |
 
-**Why these three?** They map to the user's mental model:
-- *"Is it working?"* → Idle (Blue)
+**Why these states?** They map to the agent delegation model:
+- *"Is my agent ready?"* → Idle (Blue)
+- *"Is it working?"* → Thinking (Purple)
+- *"Does it need me?"* → Needs Permission (Yellow)
 - *"Is it listening?"* → Recording (Red)
-- *"Do I need to check on it?"* → Error (Orange)
+- *"Is it speaking?"* → Playing (Green)
+- *"Did something break?"* → Error (Orange)
 
 **The color pickers**: We use iOS native color pickers. Users can customize to match their desk setup, accessibility needs, or personal preference.
 
@@ -62,7 +70,7 @@ The underlying SDK has extensive LED control. We deliberately hid most of it.
 
 | Setting | Why Excluded |
 | :--- | :--- |
-| **Active LEDs** (which of the 7 to use) | Too granular. Users don't care about "LED 0-6." They care about "the ring of lights." |
+| **Active LEDs** (which of the 7 to use) | Too granular. Users don't care about "LED 0-6." They care about "the strip of lights." |
 | **Animation Modes** (blink, fade, rainbow, heartbeat) | Fun for demos, distracting for daily use. If the device is constantly pulsing, users tune it out. We prioritize static, meaningful states. |
 | **Animation Timing** | If we had animations, this would matter. Since we don't, it's irrelevant. |
 | **Per-LED Configuration** | Power user feature that adds massive UI complexity. 99% of users would never touch this. |
