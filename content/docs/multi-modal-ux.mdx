@@ -1,0 +1,163 @@
+---
+title: Multi-Modal UX Framework
+description: The decision-making framework for resolving conflicts between system feedback and user projects.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Framework, Not Decisions">
+  **This document provides the rules for decision-making.** It does not prescribe the modality for every single event.
+  
+  Actual decisions (e.g., "Is WiFi onboarding Critical?") are made case-by-case in the specific flow specification documents. This framework is the tool used to make those decisions.
+</Callout>
+
+## The Challenge
+
+Pamir has three output modalities that serve two different purposes:
+
+**Device Hardware:**
+- **Display**: Sharp LCD (400×240, monochrome)
+- **LED**: 7 RGB LEDs
+
+**Remote Interface:**
+- **Mobile App**: iOS companion
+
+These modalities serve **two different masters**:
+1. **System Operations** (setup, recovery, errors)
+2. **User Projects** (custom applications users build)
+
+**The Question:** When the system needs to communicate, should it interrupt the user's project?
+
+---
+
+## The Solution: Critical vs Non-Critical
+
+We categorize all system events into two groups based on a simple question: **Does the system absolutely need device hardware to function?**
+
+### 1. Critical Events
+**Allowed to use device modalities + mobile app**
+
+Events where device display or LED is the ONLY way to accomplish the task. No alternative exists.
+
+| What Makes It Critical | Generic Example |
+| :--- | :--- |
+| **Functional Requirement** | A visual code must be shown on the device itself |
+| **No Alternative Path** | Remote connection is impossible/broken |
+| **Blocking Nature** | User physically cannot proceed without device interaction |
+
+**User Impact:** User's project is briefly interrupted, state is saved, then seamlessly restored.
+
+### 2. Non-Critical Events
+**Mobile app only—never interrupts device**
+
+All other system events that can be effectively communicated via the mobile app.
+
+| What Makes It Non-Critical | Generic Example |
+| :--- | :--- |
+| **Mobile Can Handle** | Status updates, progress bars, notifications |
+| **Not Blocking** | System can self-recover in background |
+| **User Perception** | "I can handle this on my phone" |
+
+**User Impact:** User's project continues uninterrupted.
+
+---
+
+## Decision Framework
+
+When converting a system flow (like Onboarding or WiFi Recovery) into a specification, use this framework to categorize each event in that flow.
+
+### The 3-Question Test
+
+Apply this to every event in your flow:
+
+**Question 1: Can the mobile app communicate this effectively?**
+- **Yes** → Mark as **Non-Critical** (Mobile Only)
+- **No** → Continue to Q2
+
+**Question 2: Does it absolutely require device display or LED?**
+- **No** → Mark as **Non-Critical** (Mobile Only)
+- **Yes** → Continue to Q3
+
+**Question 3: Is there truly no alternative method?**
+- **No** → Mark as **Non-Critical** (Mobile Only)
+- **Yes** → Mark as **Critical** (Device + Mobile)
+
+**Guiding Principle:** Default to Non-Critical. Only classify as Critical when absolutely necessary.
+
+---
+
+## Illustrative Scenarios (Examples)
+
+*Note: These are scenarios to illustrate how the framework works. They are not final design decisions for these specific flows.*
+
+### Example A: A "Must-Have" Device Interaction
+*Hypothetical Scenario: First-Time Pairing*
+
+**The Situation:** User turns on a brand new device. The mobile app doesn't know this device exists yet.
+
+**Applying the Framework:**
+1. *Can mobile app handle this?* No, it's not connected yet.
+2. *Does it require device display?* Yes, to show a pairing code.
+3. *Is there an alternative?* No, without the code, pairing is impossible.
+
+**Framework Result:** **Critical Event**
+- System takes over display to show QR code.
+- User scans code.
+- System returns control to user.
+
+### Example B: A Transient Issue
+*Hypothetical Scenario: WiFi Drop*
+
+**The Situation:** The device temporarily loses internet connection.
+
+**Applying the Framework:**
+1. *Can mobile app handle this?* Yes, it can show "Device Reconnecting..." status.
+2. *Does it require device display?* No, the device is just waiting for a router.
+3. *Is there an alternative?* Yes, just wait.
+
+**Framework Result:** **Non-Critical Event**
+- User's project continues running on display.
+- Mobile app shows status notification.
+- User is not interrupted.
+
+---
+
+## State Preservation Promise
+
+If a specific flow determines an event is **Critical**, the system makes a promise to the user:
+
+**"We will capture your project's exact state, handle the emergency, and return you exactly where you left off."**
+
+| Phase | System Guarantee |
+| :--- | :--- |
+| **Before** | Full state capture (screenshot + memory) |
+| **During** | User processes the critical event |
+| **After** | Full state restoration |
+
+---
+
+## Notification Strategy (Mobile First)
+
+Since the framework pushes most events to **Non-Critical** (Mobile Only), the mobile app becomes the primary interface.
+
+*Design your flows to use these notification levels appropriately:*
+
+| Level | Intended Use |
+| :--- | :--- |
+| **Silent** | Logs, background info (user doesn't need to know immediately) |
+| **Standard** | Routine updates (e.g., "Update available") |
+| **Urgent** | Self-preservation or blocking issues (e.g., "Storage Full", "Overheating") |
+
+**Note on Self-Preservation:**
+Even "Critical" hardware issues (like Overheating) might be best handled as **Non-Critical (Mobile Only)** events if the goal is to *avoid* waking up the display and generating more heat.
+
+---
+
+## Summary for Flow Designers
+
+1.  **Don't assume modality.** Don't start by saying "The screen shows X."
+2.  **Start with the goal.** "The user needs to know X."
+3.  **Apply the questions.** Can the phone do it?
+4.  **Document the decision.** In your flow spec, write: *"Classified as Critical because [Reason]."* or *"Classified as Non-Critical because [Reason]."*
+
+This framework ensures consistency while respecting the user's ownership of the device.
