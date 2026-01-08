@@ -41,24 +41,22 @@ This linear arrangement is visible at a glance from across the room—whether th
 
 ### Status Colors
 
-We expose key device and agent states:
+The LED strip communicates **agent state only**. Everything else (recording, playback, volume) is shown on the E-ink display.
 
 | State | Default Color | Meaning |
 | :--- | :--- | :--- |
-| **Idle** | Blue | Agent is ready, waiting for tasks |
-| **Thinking** | Purple | Agent is processing, working autonomously |
-| **Needs Permission** | Yellow | Agent requires user approval to proceed |
-| **Recording** | Red | Microphone is active, listening |
-| **Playing** | Green | Audio playback, agent speaking |
-| **Error** | Orange | Something needs attention |
+| **Idle** | Off | Agent dormant, no active tasks (power saving) |
+| **Working** | Green | Agent is autonomously executing tasks |
+| **Needs You** | Blue | Agent blocked, requires user input or permission |
+| **Error** | Red | Agent encountered a problem, needs attention |
 
-**Why these states?** They map to the agent delegation model:
-- *"Is my agent ready?"* → Idle (Blue)
-- *"Is it working?"* → Thinking (Purple)
-- *"Does it need me?"* → Needs Permission (Yellow)
-- *"Is it listening?"* → Recording (Red)
-- *"Is it speaking?"* → Playing (Green)
-- *"Did something break?"* → Error (Orange)
+**Why these colors?**
+- **Off** = Power efficient. If nothing is happening, why waste energy?
+- **Green** = Universal "go" signal. Agent is working.
+- **Blue** = Calm notification. "Hey, I need you"—informative, not alarming.
+- **Red** = Universal "stop/danger" signal. Something broke.
+
+**The philosophy**: The LEDs answer one question: *"What is my agent doing right now?"* The E-ink display handles everything else.
 
 **The color pickers**: We use iOS native color pickers. Users can customize to match their desk setup, accessibility needs, or personal preference.
 
