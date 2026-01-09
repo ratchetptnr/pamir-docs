@@ -1,0 +1,33 @@
+---
+title: Performance
+description: Performance Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Monitor, don't tinker." The best performance setting is one you don't have to touch. The device manages its own resources.
+</Callout>
+
+## Why No Performance Settings?
+
+We deliberately excluded performance controls (overclocking, CPU governors, memory splits) from the user interface.
+
+**1. Reliability over Speed**
+The device is designed for stability. Letting users tweak voltages or clock speeds compromises that stability.
+
+**2. Automatic Management**
+The OS automatically scales CPU frequency based on load. It knows when to run fast and when to save power.
+
+**3. It's an Appliance**
+You don't tune the CPU on your refrigerator or smart speaker. You shouldn't have to tune it here either.
+
+---
+
+## What We Handle Automatically
+
+| Feature | How We Handle It |
+| :--- | :--- |
+| **CPU Speed** | Dynamic scaling (ondemand governor) |
+| **Throttling** | Automatic thermal protection |
+| **Memory** | Intelligent swap management |

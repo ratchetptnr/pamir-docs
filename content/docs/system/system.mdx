@@ -25,18 +25,15 @@ The most fundamental system setting is **Device Name**. This is how the device i
 
 System settings follow a hierarchical architecture:
 
-```
 System
 ├── Device Name (top level)
 └── System Management
     ├── Storage
-    ├── Performance
     └── Updates
 ```
 
 **Why nest?** These are all "system" concerns, but they serve different user intents:
 - **Storage**: "How full is my device?"
-- **Performance**: "Is it running well?"
 - **Updates**: "Is it current?"
 
 Grouping them under "System Management" signals: *"These are about the device's health, not your project settings."*

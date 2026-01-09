@@ -1,0 +1,27 @@
+---
+title: Notifications
+description: Notification Philosophy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  "Mobile First." Notifications belong to the app, not the device.
+</Callout>
+
+## Why No Notification Settings on Device?
+
+Notifications are handled entirely by the iOS/Android app, not the device's embedded OS.
+
+**1. The Phone is the Proxy**
+The device itself doesn't "notify" you (no speakers, no flashing lights). It sends a signal to the cloud, which pushes a notification to your phone.
+
+**2. App-Level Control**
+Since notifications appear on your phone, you manage them in your phone's system settings (Settings > Notifications > Distiller), not inside the device's specialized settings menu.
+
+**3. Critical Events Only**
+We only push notifications for:
+*   **Agent Requests**: "I need permission to proceed."
+*   **Critical Health**: "Device is overheating."
+
+These are non-negotiable for the device's operation, so there are no granular toggles to accidental disable them.

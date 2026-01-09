@@ -1,24 +1,10 @@
 {
     "title": "Documentation",
     "pages": [
-        "---Getting Started---",
-        "index",
-        "onboarding",
-        "---Connectivity---",
-        "wifi",
-        "bluetooth",
-        "---Hardware---",
-        "display",
-        "audio",
-        "led",
-        "---UX Framework---",
-        "multi-modal-ux",
-        "---System---",
-        "system",
-        "storage",
-        "performance",
-        "updates",
-        "security",
-        "notifications"
+        "getting-started",
+        "device-setup",
+        "connectivity",
+        "hardware",
+        "system"
     ]
 }

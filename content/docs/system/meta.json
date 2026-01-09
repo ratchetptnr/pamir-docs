@@ -1,0 +1,13 @@
+{
+    "title": "System",
+    "pages": [
+        "system",
+        "storage",
+        "updates",
+        "security",
+        "developer",
+        "---Deprecated---",
+        "performance",
+        "notifications"
+    ]
+}

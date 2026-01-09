@@ -23,42 +23,29 @@ This linear arrangement is visible at a glance from across the room—whether th
 
 ## User-Controlled Settings
 
-### Master Toggle
+### Stealth Mode
 
 **Why it matters**: Some environments (bedrooms, offices with strict policies) can't have blinking lights.
 
-**The control**: LED Indicators On/Off
+**The control**: Toggle (On/Off)
 
-**The cascade**: When off, all other controls are disabled and grayed out. The hierarchy is clear: master switch controls everything below.
+**The philosophy**: "I am sleeping. No lights." User preference trumps system feedback.
 
-### Global Brightness
+### Brightness
 
 **Why it matters**: A dim room vs bright office. What's "subtle" in one context is "invisible" in another.
 
 **The control**: Slider (0-100%)
 
-**The philosophy**: One brightness for all LEDs. Users don't think "LED 3 should be dimmer than LED 5." They think "The lights are too bright."
+**The philosophy**: One brightness for all LEDs.
 
-### Status Colors
+### Idle Color
 
-The LED strip communicates **agent state only**. Everything else (recording, playback, volume) is shown on the E-ink display.
+**Why it matters**: Personalization. What color is the device when it's "resting"?
 
-| State | Default Color | Meaning |
-| :--- | :--- | :--- |
-| **Idle** | Off | Agent dormant, no active tasks (power saving) |
-| **Working** | Green | Agent is autonomously executing tasks |
-| **Needs You** | Blue | Agent blocked, requires user input or permission |
-| **Error** | Red | Agent encountered a problem, needs attention |
+**The control**: Color Picker
 
-**Why these colors?**
-- **Off** = Power efficient. If nothing is happening, why waste energy?
-- **Green** = Universal "go" signal. Agent is working.
-- **Blue** = Calm notification. "Hey, I need you"—informative, not alarming.
-- **Red** = Universal "stop/danger" signal. Something broke.
-
-**The philosophy**: The LEDs answer one question: *"What is my agent doing right now?"* The E-ink display handles everything else.
-
-**The color pickers**: We use iOS native color pickers. Users can customize to match their desk setup, accessibility needs, or personal preference.
+**The philosophy**: "What color is 'resting'?" Customization for the device's default state.
 
 ---
 

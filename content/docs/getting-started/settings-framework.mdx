@@ -1,0 +1,98 @@
+---
+title: Settings Framework
+description: The philosophy for distinguishing User Preferences (Settings) from App Capabilities (SDK).
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  **"The User Owns the Default State."**
+  A generic toggle is not a setting. Only clear user preferences that define the "resting state" or "identity" of the device belong in Settings. Capability tuning belongs to the App/SDK logic that uses it.
+</Callout>
+
+## The Challenge
+
+As the OS capabilities grow, the list of potential knobs and dials explodes. Providing every possible hardware configuration option to the user creates a cluttered, confusing "Airplane Cockpit" interface.
+
+We need a razor to decide: **Does this belong in the System Settings app?**
+
+---
+
+## The Core Distinction
+
+We divide all configuration into two worlds:
+
+### 1. User Settings (System)
+*The Global Reference.*
+This is the user telling the device who they are and how they generally like things. These settings apply **globally** and persist across reboots as the "default state".
+
+*   **Identity**: "My name is Distiller-01."
+*   **Preference**: "I prefer Dark Mode."
+*   **Constraint**: "Never go louder than 80% volume." (Safety/Comfort)
+*   **Connectivity**: "Connect to Home Wi-Fi."
+
+### 2. SDK Capabilities (App/Agent)
+*The Momentary Tool.*
+This is an application or agent taking control to perform a specific task. These are **momentary** states determined by code, not user preference.
+
+*   **Task Requirement**: "Record at 16kHz for Whisper." (Not a user preference for 'Low Quality audio')
+*   **Context**: "Blink Red because *this specific error* happened."
+*   **Mode**: "Use high-contrast display for *this reading app*."
+
+---
+
+## The Filter Analysis
+
+We applied this filter to our hardware capabilities to decide what surfaces to the user.
+
+### Audio & Voice
+| Item | Decision | Reasoning |
+| :--- | :--- | :--- |
+| **Master Volume** | ✅ **Setting** | Global output limit/preference. |
+| **Sample Rate** | ❌ **SDK** | Users don't "prefer" 44.1kHz. Apps *require* it. |
+| **Microphone Gain** | ✅ **Setting** | Hardware calibration. "My room is quiet/loud". |
+
+### Display (E-ink)
+| Item | Decision | Reasoning |
+| :--- | :--- | :--- |
+| **Orientation** | ✅ **Setting** | Physical constraint. "I hold it upside down". |
+| **Refresh Mode** | ❌ **SDK** | Reading apps need "Quality"; Terminal apps need "Speed". App decides. |
+| **Dithering** | ❌ **SDK** | Technical rendering choice. |
+
+### Camera (Legacy)
+| Item | Decision | Reasoning |
+| :--- | :--- | :--- |
+| **Global Privacy** | ✅ **Setting** | "Block camera access physically/software-wise." |
+| **Brightness** | ❌ **SDK** | Auto-exposure should handle this. Manual override is for a "Camera App", not System Settings. |
+
+### LED Indicators
+| Item | Decision | Reasoning |
+| :--- | :--- | :--- |
+| **Stealth Mode** | ✅ **Setting** | "I am sleeping. No lights." (User preference trumps system feedback). |
+| **Idle Color** | ✅ **Setting** | "What color is 'resting'?" |
+| **Animations** | ❌ **SDK** | Apps trigger Specific animations (Rainbow, Blink) for signals. |
+
+---
+
+## The Resulting Surface
+
+By stripping away the SDK capabilities, we reveal a clean, focused Settings structure for the iOS App.
+
+### 🌐 Connectivity
+*   **Wi-Fi / Bluetooth**: The lifeline.
+*   **Updates**: Keeping the brain fresh.
+
+### ⚙️ General
+*   **Identity**: Device Name.
+*   **Storage**: Capacity and Cache clearing (Maintenance).
+*   **Language**: System-wide language preference.
+
+### 💡 Hardware Preference
+*   **Stealth Mode**: The "Do Not Disturb" for hardware LEDs.
+*   **Idle Color**: Personalization.
+*   **Camera Privacy**: The legacy kill-switch.
+*   **Orientation**: Physical setup.
+
+### 🔊 Senses
+*   **Volume & Gain**: Input/Output calibration.
+*   **System Voice**: Who speaks to me? (TTS Voice).
