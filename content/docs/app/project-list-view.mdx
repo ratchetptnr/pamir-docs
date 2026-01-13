@@ -48,7 +48,7 @@ Best for starting fresh. The app creates a managed directory on your device inst
 ### 2. Open Local Folder
 Allows you to bring existing code into the Pamir ecosystem.
 - **UX Flow:** Uses the native Folder Picker. Navigation is instantaneous once a folder is selected.
-- **Why are files disabled?** To maintain spatial awareness, we show the full file tree, but individual files are dimmed and non-selectable. This ensures the user focuses on selecting a valid project root directory while still being able to verify the contents of the folders they are browsing.
+- **Why are files disabled?** As an IDE-focused tool, Pamir requires a folder to establish a project root; selecting individual files is not supported. We show the files so the user can verify the contents of the directory they are adding, but we gray them out to prevent accidental selection and reinforce the "Folder as Project" requirement.
 
 <div className="flex justify-center my-8">
   <img 
