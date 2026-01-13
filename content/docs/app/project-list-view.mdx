@@ -130,17 +130,22 @@ Authentication is intentionally **not** displayed in the clone sheet when authen
 
 **Settings → Git**
 
-<div className="flex justify-center my-8">
+<div className="flex justify-center my-8 gap-4">
   <img 
     src="/docs/app/git-settings-view.png" 
+    alt="Git settings page showing unauthenticated state" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+  <img 
+    src="/docs/app/git-settings-authenticated.png" 
     alt="Git settings page showing authenticated account" 
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
 This settings page shows:
-- ✓ Signed in as @username
-- "Sign Out" button
+- Unauthenticated: Sign in prompt
+- Authenticated: ✓ Signed in as @username with "Sign Out" button
 - Future: Git configuration (user name, email, default branch)
 
 This matches how professional IDEs bury authentication settings—developers rarely need to see them after initial setup.
