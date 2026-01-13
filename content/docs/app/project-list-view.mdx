@@ -85,7 +85,7 @@ Each Distiller device maintains its own GitHub authentication token. This means:
 1. **Unauthenticated Device** (First Time):
    - The clone sheet displays a clean authentication prompt: "🔒 Private repos require authentication"
    - Tapping "Sign in to GitHub" opens a Safari-style OAuth modal
-   - After 2 seconds, the device is authenticated and the modal auto-dismisses
+   - After authentication, the device is authenticated and the modal auto-dismisses
    - The clone sheet returns to its clean state (no banner clutter)
 
 <div className="flex justify-center my-8">
@@ -96,54 +96,18 @@ Each Distiller device maintains its own GitHub authentication token. This means:
   />
 </div>
 
-<div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/git-oauth-modal.png" 
-    alt="Safari-style GitHub OAuth modal" 
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
-
 2. **Authenticated Device**:
    - No authentication banner is shown (keeps the UI clean)
-   - Repository autocomplete works silently when tapping the URL field
    - Private repositories can be cloned immediately
+   - The clone sheet follows standard native iOS patterns:
+     - **Repository URL**: Auto-detects GitHub, GitLab, and Bitbucket
+     - **Project Name**: Auto-extracted from the URL (e.g., `mycompany/ios-app` → `ios-app`)
+     - **Branch**: Defaults to `main` if left blank
 
 <div className="flex justify-center my-8">
   <img 
     src="/docs/app/git-clone-authenticated.png" 
-    alt="Git clone sheet on authenticated device (clean, no banner)" 
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
-
-#### Repository Autocomplete
-
-When authenticated, tapping the Repository URL field reveals your private repositories:
-
-<div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/git-clone-autocomplete.png" 
-    alt="Private repository autocomplete dropdown" 
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
-
-- Shows up to 4 recent private repos
-- Each repo is marked with a 🔒 icon
-- Tapping a suggestion auto-fills the URL and project name
-
-#### Clone Sheet UX
-
-The clone sheet follows native iOS patterns:
-- **Repository URL**: Auto-detects GitHub, GitLab, and Bitbucket
-- **Project Name**: Auto-extracted from the URL (e.g., `mycompany/ios-app` → `ios-app`)
-- **Branch**: Defaults to `main` if left blank
-
-<div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/git-clone-sheet.png" 
-    alt="Git Clone Sheet" 
+    alt="Git clone sheet on authenticated device" 
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
