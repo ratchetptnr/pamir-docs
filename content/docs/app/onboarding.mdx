@@ -10,9 +10,7 @@ import { Mermaid } from '@/components/mermaid'
   **Setup must be straightforward.** Users should connect their Distiller in under 2 minutes with clear guidance at every step. Every error state provides a clear path forward.
 </Callout>
 
-## Flow Overview
-
-The onboarding flow handles device discovery via Bluetooth, WiFi configuration, and security setup.
+The onboarding flow handles device discovery via Bluetooth, WiFi configuration, and security setup. It is designed to be a single, cohesive experience with no redundant steps.
 
 <Mermaid chart={`
 flowchart TD
@@ -168,7 +166,8 @@ This table shows what the user sees on both the mobile app and the device screen
 ## Design Principles
 
 1. **Clear Path Forward**: Every error has retry or alternative method
-2. **Show Complexity When Needed**: Manual entry appears only when automatic fails
-3. **Respect Time**: Auto-retry shows progress, not just waiting
-4. **Clear Status**: Processing states explain what's happening
-5. **Security Required**: PIN protects device; forgot PIN requires factory reset
+2. **Streamlined Setup**: No redundant naming steps. The device is named once during the security configuration.
+3. **Show Complexity When Needed**: Manual entry appears only when automatic fails
+4. **Respect Time**: Auto-retry shows progress, not just waiting
+5. **Clear Status**: Processing states explain what's happening
+6. **Security Required**: PIN protects device; forgot PIN requires factory reset

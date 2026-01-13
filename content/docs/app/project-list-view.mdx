@@ -1,0 +1,65 @@
+---
+title: Project List View
+description: Managing projects, switching devices, and accessing system settings.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The Project List View is the central hub for managing your development environments. It follows native iOS design patterns to provide a responsive and clear user experience.
+
+## Overview
+
+The Project List View displays all projects associated with your active device. It supports quick searching, project deletion via swipe actions, and various creation methods.
+
+![Project List View main interface](/docs/app/project-list-view-main.png)
+*Project List View main interface showing the search bar and project rows.*
+
+## Device Management
+
+Pamir allows you to manage multiple Distiller devices seamlessly from a single app instance.
+
+### Switching Devices
+You can switch between active devices using the device selector at the top of the project list. This instantly updates the list to show projects stored on the selected device.
+
+![Device switching menu](/docs/app/device-switcher.png)
+*Device switching menu showing multiple connected Distillers.*
+
+### Adding a New Device
+To add a new Distiller, tap the "Add Device" option in the device menu. This triggers the [Onboarding Flow](./onboarding) to securely pair and configure your new hardware.
+
+## Creating Projects
+
+Pamir supports three primary ways to create projects, each optimized for speed and clarity.
+
+### 1. Create Empty Project
+Best for starting fresh. The app creates a managed directory on your device instantly.
+- **UX Flow:** Instant feedback. The view navigates to the Project Overview immediately.
+
+### 2. Open Local Folder
+Allows you to bring existing code into the Pamir ecosystem.
+- **UX Flow:** Uses the native Folder Picker. Navigation is instantaneous once a folder is selected.
+
+### 3. Clone Git Repository
+For projects hosted on GitHub, GitLab, or bitbucket.
+- **UX Flow:** Unlike the other methods, this is an asynchronous operation.
+- **Native Loading:** Pamir uses a native inline loading pattern. The project appears in the list immediately with a progress indicator and "Cloning..." status, allowing you to continue using the app while the operation completes in the background.
+
+![Inline loading indicator](/docs/app/project-clone-loading.png)
+*Inline loading indicator showing a spinner and "Cloning..." text.*
+
+## System Settings
+
+The gear icon in the top right provides quick access to the system-wide settings for the active Distiller.
+
+- **Hardware:** Configure display brightness, LED patterns, and audio levels.
+- **Connectivity:** Manage Wi-Fi networks and Bluetooth peripheral pairing.
+- **Security:** Update device passwords and privacy permissions.
+
+![System settings menu](/docs/app/system-settings-menu.png)
+*Settings menu overlay showing hardware, connectivity, and security options.*
+
+## Key UX Decisions
+
+- **Instant Access:** We prioritize immediate navigation for synchronous operations (local folder/empty project) to make the app feel extremely fast.
+- **Non-blocking Operations:** Asynchronous operations like Git clones use inline progress instead of full-screen overlays, matching the behavior of the iOS App Store.
+- **Swipe Actions:** Standard iOS swipe-to-delete provides a familiar and efficient management interface.
