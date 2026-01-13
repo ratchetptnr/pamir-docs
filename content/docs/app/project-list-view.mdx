@@ -48,10 +48,29 @@ Best for starting fresh. The app creates a managed directory on your device inst
 ### 2. Open Local Folder
 Allows you to bring existing code into the Pamir ecosystem.
 - **UX Flow:** Uses the native Folder Picker. Navigation is instantaneous once a folder is selected.
+- **Why are files disabled?** To maintain spatial awareness, we show the full file tree, but individual files are dimmed and non-selectable. This ensures the user focuses on selecting a valid project root directory while still being able to verify the contents of the folders they are browsing.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/folder-picker-sheet.png" 
+    alt="Folder Picker Sheet" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
 
 ### 3. Clone Git Repository
 For projects hosted on GitHub, GitLab, or bitbucket.
 - **UX Flow:** Unlike the other methods, this is an asynchronous operation.
+- **Git Clone Sheet:** The user provides the repository URL and selects a branch.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/git-clone-sheet.png" 
+    alt="Git Clone Sheet" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
 - **Native Loading:** Pamir uses a native inline loading pattern. The project appears in the list immediately with a progress indicator and "Cloning..." status, allowing you to continue using the app while the operation completes in the background.
 
 <div className="flex justify-center my-8">
