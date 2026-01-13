@@ -68,10 +68,77 @@ Allows you to bring existing code into the Pamir ecosystem.
   />
 </div>
 
-### 3. Clone Git Repository (WIP)
-For projects hosted on GitHub, GitLab, or bitbucket.
-- **UX Flow:** Unlike the other methods, this is an asynchronous operation.
-- **Git Clone Sheet:** The user provides the repository URL and selects a branch.
+### 3. Clone Git Repository
+
+For projects hosted on GitHub, GitLab, or Bitbucket, Pamir provides a professional Git cloning experience with support for private repository authentication.
+
+#### Authentication Flow
+
+**Per-Device Authentication:**  
+Each Distiller device maintains its own GitHub authentication token. This means:
+- When you switch from Distiller A → Distiller B, you may need to authenticate again
+- Tokens are stored locally on each device and persist across app restarts
+- This mirrors how professional Git clients (VS Code, GitHub Desktop) handle credentials
+
+**Two States:**
+
+1. **Unauthenticated Device** (First Time):
+   - The clone sheet displays a clean authentication prompt: "🔒 Private repos require authentication"
+   - Tapping "Sign in to GitHub" opens a Safari-style OAuth modal
+   - After 2 seconds, the device is authenticated and the modal auto-dismisses
+   - The clone sheet returns to its clean state (no banner clutter)
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/git-clone-auth-prompt.png" 
+    alt="Git authentication prompt for unauthenticated device" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/git-oauth-modal.png" 
+    alt="Safari-style GitHub OAuth modal" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+2. **Authenticated Device**:
+   - No authentication banner is shown (keeps the UI clean)
+   - Repository autocomplete works silently when tapping the URL field
+   - Private repositories can be cloned immediately
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/git-clone-authenticated.png" 
+    alt="Git clone sheet on authenticated device (clean, no banner)" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+#### Repository Autocomplete
+
+When authenticated, tapping the Repository URL field reveals your private repositories:
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/git-clone-autocomplete.png" 
+    alt="Private repository autocomplete dropdown" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+- Shows up to 4 recent private repos
+- Each repo is marked with a 🔒 icon
+- Tapping a suggestion auto-fills the URL and project name
+
+#### Clone Sheet UX
+
+The clone sheet follows native iOS patterns:
+- **Repository URL**: Auto-detects GitHub, GitLab, and Bitbucket
+- **Project Name**: Auto-extracted from the URL (e.g., `mycompany/ios-app` → `ios-app`)
+- **Branch**: Defaults to `main` if left blank
 
 <div className="flex justify-center my-8">
   <img 
@@ -81,7 +148,9 @@ For projects hosted on GitHub, GitLab, or bitbucket.
   />
 </div>
 
-- **Native Loading:** Pamir uses a native inline loading pattern. The project appears in the list immediately with a progress indicator and "Cloning..." status, allowing you to continue using the app while the operation completes in the background.
+#### Native Loading
+
+Pamir uses a native inline loading pattern. The project appears in the list immediately with a progress indicator and "Cloning..." status, allowing you to continue using the app while the operation completes in the background.
 
 <div className="flex justify-center my-8">
   <img 
@@ -90,6 +159,27 @@ For projects hosted on GitHub, GitLab, or bitbucket.
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
+
+#### Managing Git Settings
+
+Authentication is intentionally **not** displayed in the clone sheet when authenticated (to avoid clutter). Instead, users manage their GitHub account through:
+
+**Settings → Git**
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/git-settings-view.png" 
+    alt="Git settings page showing authenticated account" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+This settings page shows:
+- ✓ Signed in as @username
+- "Sign Out" button
+- Future: Git configuration (user name, email, default branch)
+
+This matches how professional IDEs bury authentication settings—developers rarely need to see them after initial setup.
 
 ## System Settings
 
