@@ -103,18 +103,18 @@ flowchart TD
 
 This table shows what the user sees on both the mobile app and the device screen during a successful setup.
 
-| Step | User Action | 📱 Mobile App | 📟 Device (E-ink) |
+| Step | User Action | Mobile App State | Device Display State |
 | :--- | :--- | :--- | :--- |
-| **1. Power On** | Powers on device | (Not open yet) | **QR Code**<br/>"Scan to Setup"<br/>ID: A4F2 |
-| **2. Permission** | Grants Camera access | **Camera Permission**<br/>"Allow Camera Access" | Unchanged (QR) |
-| **3. Scan** | Scans QR code | **QR Scanner**<br/>Camera Viewfinder | Unchanged (QR) |
-| **4. Discovery** | Waits (Auto) | **Searching...**<br/>"Looking for Distiller..." | Unchanged (QR) |
-| **5. Connected** | Taps Continue | **Device Found**<br/>"Found Distiller-A4F2" | **Connected**<br/>"App Connected"<br/>Waiting for WiFi... |
-| **6. Network** | Selects WiFi & enters password | **Select WiFi**<br/>List of networks | Unchanged (Connected) |
-| **7. Provisioning** | Waits (Auto) | **Connecting...**<br/>"Connecting Distiller to WiFi..." | **Connecting**<br/>"Connecting to [SSID]..." |
-| **8. Success** | Taps Continue | **WiFi Connected!**<br/>Success animation | **Online**<br/>Connected to [SSID]<br/>192.168.1.45 |
-| **9. Security** | Sets Name & Password | **Secure Device**<br/>"Name your Distiller" | Unchanged (Online) |
-| **10. Complete** | Taps Go to App | **All Set!**<br/>Desktop Link shown | **Ready**<br/>distiller-a4f2.devices...<br/>(QR updates to access link) |
+| **1. Permissions** | Taps "Connect" | **Camera Permission** | **Status Hub**<br/>(QR code visible) |
+| **2. Scanning** | Scans QR Code | **QR Scanner Active** | Unchanged |
+| **3. Finding** | Waits for BLE | **BLE Search**<br/>Searching for [ID]... | **Provisioning**<br/>"Establishing Link..." |
+| **4. Found** | Taps "Continue" | **Device Found**<br/>Connection established | **Provisioning**<br/>"Link Established" |
+| **5. WiFi List** | Selects Network | **WiFi Selection**<br/>Scanned networks shown | **Provisioning**<br/>"Scanning WiFi..." |
+| **6. Password** | Enters Password | **WiFi Password** | Unchanged |
+| **7. Connecting** | Waits for Join | **Connecting**<br/>Sending credentials... | **Provisioning**<br/>"Joining [SSID]..." |
+| **8. Success** | Taps "Continue" | **WiFi Connected!**<br/>Success animation | **Online**<br/>Connected to [SSID] |
+| **9. Security** | Sets Name/Pass | **Secure Device**<br/>"Name your Distiller" | Unchanged (Online) |
+| **10. Complete** | Taps "Go to App" | **All Set!** | **Ready**<br/>[Name].devices... |
 
 ---
 
