@@ -1,0 +1,97 @@
+---
+title: Workspace
+description: Managing open tabs and navigating between Chat, Terminal, and Editor views.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The Workspace is your primary work environment within a project. It displays all open tabs and provides quick access to Intelligence briefings.
+
+## Overview
+
+The Workspace follows a clean, native iOS list design that shows all active tabs for the current project. Each tab represents a Chat, Terminal, or Editor instance with its own persistent state.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/workspace-main.png" 
+    alt="Workspace main view with open tabs" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="info">
+Each project maintains its own set of tabs, so switching projects will show that project's workspace.
+</Callout>
+
+## Tab Types
+
+The Workspace supports three types of tabs, each with a distinct icon and color:
+
+- **Chat** (Blue) - Conversational AI interface for natural language interaction
+- **Terminal** (Black) - Command-line interface for direct system access
+- **Editor** (Purple) - Code editor for viewing and editing project files
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/workspace-tab-types.png" 
+    alt="Different tab types in the workspace" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Creating Tabs
+
+Tap the **+** button in the top-right corner to create a new tab. You can choose which type of tab to create:
+
+1. Tap the **+** button
+2. Select **Chat**, **Terminal**, or **Editor** from the menu
+3. The new tab appears in the list and becomes active
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/workspace-new-tab.png" 
+    alt="Creating a new tab" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Managing Tabs
+
+### Opening a Tab
+Tap any tab in the list to open it. The view transitions to show the tab's content.
+
+### Closing Tabs
+Swipe left on any tab to reveal the **Close** action. This removes the tab and its state from the workspace.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/workspace-swipe-delete.png" 
+    alt="Swipe to close a tab" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="warn">
+Closing a Chat tab will permanently remove its message history from your device.
+</Callout>
+
+## Intelligence Access
+
+The **newspaper icon** in the top-right toolbar provides quick access to the Intelligence page, where you can view:
+
+- **Timeline**: Chronological history of completed work
+- **Briefings**: AI-generated insights and suggestions
+
+See [Intelligence Page](./intelligence) for more details.
+
+## Empty State
+
+When a project has no open tabs, the Workspace displays a helpful empty state prompting you to create your first tab.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/workspace-empty.png" 
+    alt="Workspace empty state" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
