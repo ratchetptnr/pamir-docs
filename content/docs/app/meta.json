@@ -2,6 +2,10 @@
     "title": "App",
     "pages": [
         "onboarding",
-        "project-list-view"
+        "project-list-view",
+        "workspace",
+        "intelligence",
+        "chat",
+        "desk"
     ]
 }

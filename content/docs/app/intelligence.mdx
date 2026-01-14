@@ -1,0 +1,127 @@
+---
+title: Intelligence Page
+description: Timeline of completed work and AI-generated briefings for your project.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The Intelligence Page is your AI-powered project briefing room. It aggregates completed work into a timeline and surfaces proactive insights in the Briefings tab.
+
+## Overview
+
+The Intelligence Page consists of two main sections accessed via tabs:
+
+- **Timeline**: A chronological feed of recent work, sorted newest to oldest
+- **Briefings**: AI-generated opportunities and suggestions for improvements
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/intelligence-timeline.png" 
+    alt="Intelligence Timeline view" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="info">
+The Shadow Agent continuously monitors your work and updates these feeds in real-time.
+</Callout>
+
+## Timeline Tab
+
+The Timeline shows a reverse-chronological list of completed activities. Each item displays:
+
+- **Primary text**: What was completed (e.g., "Fixed Navigation Bug")
+- **Timestamp**: When the work was completed (e.g., "2 mins ago")
+- **Icon**: Visual indicator of the activity type
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/intelligence-timeline-items.png" 
+    alt="Timeline items with timestamps" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Timeline Item Details
+
+Tapping any timeline item opens a detail sheet showing:
+
+- Full description of the completed work
+- Context (which chat or investigation it came from)
+- Action buttons to continue the conversation
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/intelligence-timeline-detail.png" 
+    alt="Timeline item detail sheet" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Briefings Tab
+
+The Briefings tab surfaces AI-generated insights, such as:
+
+- Code quality opportunities
+- Potential bugs or edge cases
+- Architecture suggestions
+- Performance optimizations
+
+Unlike Timeline items, Briefings do not show timestamps—they represent ongoing opportunities rather than historical events.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/intelligence-briefings.png" 
+    alt="Briefings tab view" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Briefing Detail Sheet
+
+Tapping a briefing opens a detail sheet with:
+
+- Full explanation of the suggested improvement
+- Context about why this matters
+- Action options to address the suggestion
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/intelligence-briefing-detail.png" 
+    alt="Briefing detail sheet" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Taking Action
+
+Both Timeline and Briefing detail sheets offer two primary actions:
+
+### Open in Chat
+Creates a new Chat tab pre-populated with the context from the selected item. This allows you to:
+
+- Ask follow-up questions
+- Request modifications
+- Explore related code
+
+### Start Investigation
+Triggers the AI agent to perform a deeper analysis of the item. This opens [The Desk](./desk) where you can monitor the investigation in real-time.
+
+<Callout type="tip">
+Use "Open in Chat" for conversational exploration. Use "Start Investigation" when you want the agent to autonomously analyze and report findings.
+</Callout>
+
+## Empty States
+
+When there's no data to display, the Intelligence Page shows helpful empty states:
+
+- **Timeline**: "No activity yet. Open a tab to get started."
+- **Briefings**: "All clear. Shadow Agent will notify you of opportunities."
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/intelligence-empty.png" 
+    alt="Intelligence empty state" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>

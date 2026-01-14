@@ -1,0 +1,125 @@
+---
+title: The Desk
+description: Monitor the AI agent's live work and review completed tasks.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The Desk provides visibility into the AI agent's internal processes. It shows what the agent is currently working on and maintains a history of completed tasks.
+
+## Overview
+
+The Desk uses a native iOS grouped list design with two sections:
+
+- **Current Action**: The agent's active task
+- **Previous Activities**: Completed tasks from this session
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/desk-main.png" 
+    alt="The Desk main view" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="info">
+Think of The Desk as a "task monitor" that shows you what the agent is doing behind the scenes.
+</Callout>
+
+## Current Action
+
+The Current Action section shows a prominent card with:
+
+- **Task title**: High-level description (e.g., "Refining Chat Input Layout")
+- **Live status**: A pulsing blue indicator showing active processing
+- **Latest activity**: The most recent agent action (e.g., "THINK: Proposed fix...")
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/desk-active-task.png" 
+    alt="Active task card" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+Tapping the active task opens a detail sheet showing all agent activities for this task.
+
+## Previous Activities
+
+This section lists all completed tasks from the current session. Each item shows:
+
+- **Task title**: What was completed
+- **Timestamp**: When it finished
+- **Status badge**: Completed, Failed, or other states
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/desk-history.png" 
+    alt="Previous activities list" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+Tapping any history item opens its detail sheet.
+
+## Task Detail Sheets
+
+Both active and completed tasks can be tapped to view detailed activity logs in a modal sheet.
+
+The detail sheet displays the task in a terminal-like format, showing all agent activities chronologically:
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/desk-detail-sheet.png" 
+    alt="Task detail sheet" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Activity Types
+
+Each activity is tagged with a type label:
+
+- **GREP**: File search operations
+- **READ**: Reading file contents
+- **TEST**: Running tests or validation
+- **DIFF**: Analyzing code changes
+- **THINK**: Agent reasoning and planning
+- **INFO**: General informational messages
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/desk-activity-types.png" 
+    alt="Different activity types" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Activity Details
+
+Some activities include additional detail text, such as:
+
+- File paths and line numbers for READ operations
+- Search patterns for GREP operations
+- Test results and pass/fail counts
+
+<Callout type="tip">
+The detail view helps you understand exactly what the agent did during a task, which is useful for debugging or learning from the agent's approach.
+</Callout>
+
+## Navigation
+
+Access The Desk from any Chat tab by tapping the **clipboard icon** in the top-right toolbar.
+
+## Use Cases
+
+The Desk is valuable when you want to:
+
+- **Monitor progress**: See what the agent is doing right now
+- **Review work**: Understand how the agent solved a problem
+- **Debug issues**: Trace through the agent's actions if something went wrong
+- **Learn patterns**: Observe the agent's problem-solving approach
+
+<Callout type="info">
+The Desk is a transparency feature—it shows you the agent's "thought process" rather than hiding it in a black box.
+</Callout>

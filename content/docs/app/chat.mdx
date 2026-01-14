@@ -1,0 +1,147 @@
+---
+title: Chat
+description: Conversing with the AI agent using natural language with persistent message history.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The Chat interface provides a natural language conversation experience with the AI agent. It supports rich markdown formatting, code syntax highlighting, and persistent message history.
+
+## Overview
+
+Chat tabs are the primary way to interact with the Shadow Agent. Each chat maintains its own conversation history, which persists across app restarts.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-main.png" 
+    alt="Chat interface with conversation" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="info">
+Each Chat tab has a unique persistent history. Opening the same tab later will restore all previous messages.
+</Callout>
+
+## Message Interface
+
+### User Messages
+Your messages appear in blue bubbles aligned to the right, following the familiar iMessage design pattern.
+
+### AI Responses
+The agent's responses appear as left-aligned text with full markdown rendering, including:
+
+- **Headings** for structure
+- **Bold** and *italic* text
+- `Inline code` snippets
+- Code blocks with syntax highlighting
+- Lists (ordered and unordered)
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-markdown.png" 
+    alt="Markdown rendering in chat" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Input Interface
+
+The chat input uses a native iOS "pill" design that grows vertically as you type (up to 6 lines).
+
+### Composing Messages
+
+1. Tap the input field at the bottom
+2. Type your message (the field expands as needed)
+3. Tap the blue **arrow button** to send
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-input.png" 
+    alt="Chat input field design" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Attachment Menu
+
+The **+** button to the left of the input field opens a menu with two options:
+
+- **Attach File**: Add files or documents to your message
+- **Terminal**: Include terminal output or commands
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-attachment-menu.png" 
+    alt="Attachment menu options" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="info">
+Attachment functionality is designed for future enhancements to support file sharing and terminal integration.
+</Callout>
+
+## Code Blocks
+
+When the AI responds with code, it renders in horizontally scrollable blocks with:
+
+- Syntax highlighting for the specified language
+- Monospaced font for readability
+- Light gray background for visual separation
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-code-block.png" 
+    alt="Code block rendering" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Streaming Responses
+
+The AI agent streams its responses in real-time, displaying a "Thinking..." indicator when generating a reply. Text appears character-by-character as it's generated.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-streaming.png" 
+    alt="Streaming response in progress" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Accessing The Desk
+
+The **clipboard icon** in the top-right toolbar navigates to [The Desk](./desk), where you can monitor the agent's active work and review completed tasks.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-desk-button.png" 
+    alt="Desk navigation button" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Empty State
+
+When a chat has no messages, it displays a centered prompt encouraging you to start a conversation:
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-empty.png" 
+    alt="Empty chat state" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Message Persistence
+
+Chat history is automatically saved to disk on a per-tab basis. This means:
+
+- Closing the app preserves your conversations
+- Each Chat tab maintains its own independent history
+- Deleting a tab removes its message history
+
+<Callout type="warn">
+Message history is stored locally on your device and syncs with the paired Distiller hardware.
+</Callout>
