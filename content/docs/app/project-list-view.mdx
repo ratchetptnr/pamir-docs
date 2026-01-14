@@ -47,6 +47,26 @@ To add a new Distiller, tap the "Add Device" option in the device menu. This tri
 
 For more details on the setup process, see [Onboarding Flow](./onboarding).
 
+## Empty State
+
+When no projects exist on the active device, Pamir displays a clean, native iOS empty state rather than a blank screen.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/project-list-empty-state.png" 
+    alt="Empty state when no projects exist" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+**Design Rationale:**
+- **Visual Consistency**: Uses the same `folder.badge.plus` icon as the toolbar button, creating a clear visual connection between the empty state and the creation action.
+- **Clear Guidance**: Explicitly instructs users to tap the icon to get started, reducing friction for first-time users.
+- **Native Pattern**: Follows iOS's `ContentUnavailableView` standard, matching the look and feel of apps like Files, Photos, and Notes.
+
+**Search Results:**
+When a search returns no matches, the view displays iOS's standard "No Results" empty state instead.
+
 ## Creating Projects
 
 Pamir supports three primary ways to create projects, each optimized for speed and clarity.
