@@ -5,14 +5,14 @@ description: Monitor the AI agent's live work and review completed tasks.
 
 import { Callout } from 'fumadocs-ui/components/callout'
 
-The Desk provides visibility into the AI agent's internal processes. It shows what the agent is currently working on and maintains a history of completed tasks.
+The Desk provides visibility into the AI agent's internal processes for a specific Chat tab. Each Chat has its own Desk that shows what the agent is currently working on and maintains a history of completed tasks for that conversation.
 
 ## Overview
 
 The Desk uses a native iOS grouped list design with two sections:
 
-- **Current Action**: The agent's active task
-- **Previous Activities**: Completed tasks from this session
+- **Current Action**: The agent's active task in this chat
+- **Previous Activities**: Completed tasks from this chat's history
 
 <div className="flex justify-center my-8">
   <img 
@@ -38,7 +38,7 @@ Tapping the active task opens a detail sheet showing all agent activities for th
 
 ## Previous Activities
 
-This section lists all completed tasks from the current session. Each item shows:
+This section lists all completed tasks from this specific Chat tab. Each item shows:
 
 - **Task title**: What was completed
 - **Timestamp**: When it finished
@@ -93,7 +93,7 @@ The detail view helps you understand exactly what the agent did during a task, w
 
 ## Navigation
 
-Access The Desk from any Chat tab by tapping the **clipboard icon** in the top-right toolbar.
+Access The Desk from any Chat tab by tapping the **clipboard icon** in the top-right toolbar. Each Chat tab has its own dedicated Desk showing only the agent activities related to that conversation.
 
 ## Use Cases
 
