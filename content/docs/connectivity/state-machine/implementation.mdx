@@ -1,0 +1,527 @@
+---
+title: Implementation
+description: Code structure, API reference, and technical implementation details
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+This page covers the technical implementation of the state machine.
+
+<Callout title="For Developers">
+The state machine is already implemented in the onboarding flow as the "BLE Monitor". It doesn't disappear after onboarding - it runs forever, managing connectivity.
+</Callout>
+
+---
+
+## BLE Monitor = State Machine
+
+The "BLE Monitor" from the onboarding flow **IS** the state machine implementation.
+
+### What It Does
+
+The BLE Monitor:
+- Tracks current state (ONLINE, RECOVERING, CONNECTING)
+- Watches WiFi status continuously
+- Watches BLE health continuously
+- Triggers state transitions based on events
+- Coordinates the 4 subsystems
+- Persists state across crashes/reboots
+
+### Status Mapping
+
+```
+BLE Monitor watches WiFi status:
+- WiFi OK → State = ONLINE → Monitor status = Green
+- WiFi lost → State = RECOVERING → Monitor status = Amber
+- WiFi connecting → State = CONNECTING → Monitor status = Amber
+
+BLE Monitor also watches BLE health:
+- BLE lost → Monitor status = Red → Fatal error (restart onboarding)
+```
+
+### Why It's Called "BLE Monitor"
+
+Historical naming. It started as a monitor for BLE health during onboarding. But it evolved into the state machine that manages all connectivity (WiFi + BLE).
+
+**Consider renaming to:** `ConnectivityStateMachine` or `ConnectivityMonitor` for clarity.
+
+---
+
+## Core State Machine Structure
+
+```python
+class ConnectivityStateMachine:
+    """
+    The persistent connectivity state machine.
+    Runs forever (not just during onboarding).
+    """
+    state: Literal["ONLINE", "RECOVERING", "CONNECTING"]
+
+    def __init__(self):
+        self.state = self.load_persisted_state() or "RECOVERING"
+        self.self_healing = SelfHealingProcess()
+        self.recovery_flow = RecoveryFlow()
+        self.intelligence = IntelligenceLayer()
+
+    # ===== State Transitions =====
+
+    def transition_to(self, new_state):
+        """
+        Central state transition handler.
+        All state changes go through this method.
+        """
+        old_state = self.state
+        self.state = new_state
+        self.persist_state(new_state)
+        self.on_state_changed(old_state, new_state)
+
+    # ===== Event Handlers =====
+
+    def on_wifi_lost(self):
+        """
+        WiFi connection dropped.
+        Triggered by: OS WiFi event, heartbeat timeout, etc.
+        """
+        self.transition_to("RECOVERING")
+        self.enable_ble_pairing()           # Turn on BLE radio
+        self.display_qr_code()              # Show QR on display
+        self.self_healing.start()           # Start background retry
+
+    def on_cached_network_found(self, network):
+        """
+        Self-healing found a cached network.
+        Triggered by: Self-healing process
+        """
+        self.transition_to("CONNECTING")
+        self.attempt_connection(network.ssid, network.password, network.bssid)
+
+    def on_user_provisions_wifi(self, ssid, password):
+        """
+        User provided new WiFi credentials via BLE.
+        Triggered by: Recovery flow
+        """
+        self.transition_to("CONNECTING")
+        self.attempt_connection(ssid, password, bssid=None)
+
+    def on_wifi_connected(self):
+        """
+        WiFi connection succeeded (associated with AP, got IP).
+        Now verify internet before declaring ONLINE.
+        """
+        if self.intelligence.verify_internet():
+            # Internet verified - truly online
+            self.transition_to("ONLINE")
+            self.disable_ble_pairing()      # Turn off BLE radio
+            self.hide_qr_code()             # Return to dashboard
+        else:
+            # Connected but no internet - stay in recovery
+            self.transition_to("RECOVERING")
+            self.display_error("WiFi Connected, No Internet")
+            # BLE stays on, user can try different network
+
+    def on_connection_failed(self, reason):
+        """
+        WiFi connection attempt failed.
+        Triggered by: Connection timeout, auth failure, etc.
+        """
+        self.transition_to("RECOVERING")
+        self.display_error(f"Connection failed: {reason}")
+        # Self-healing continues, user can try again via BLE
+
+    # ===== Helper Methods =====
+
+    def attempt_connection(self, ssid, password, bssid=None):
+        """
+        Attempt WiFi connection with smart retry logic.
+        """
+        if bssid:
+            # Cached network - connect to specific AP
+            self.wifi.connect(ssid=ssid, password=password, bssid=bssid)
+        else:
+            # User-provisioned - connect to any AP with this SSID
+            self.wifi.connect(ssid=ssid, password=password)
+
+        # CONNECTING state handles retry logic with exponential backoff
+
+    def persist_state(self, state):
+        """
+        Save current state to persistent storage.
+        Survives reboots and crashes.
+        """
+        storage.write("connectivity_state", state)
+
+    def load_persisted_state(self):
+        """
+        Load state from persistent storage on boot.
+        """
+        return storage.read("connectivity_state")
+```
+
+---
+
+## Subsystem Integration
+
+### 1. Self-Healing Process
+
+```python
+class SelfHealingProcess:
+    """
+    Background process that tries cached networks.
+    Runs only in RECOVERING state.
+    """
+
+    def start(self):
+        """Start self-healing when entering RECOVERING state."""
+        self.running = True
+        self.backoff_seconds = 0  # Immediate first try
+        asyncio.create_task(self.run())
+
+    def stop(self):
+        """Stop self-healing when exiting RECOVERING state."""
+        self.running = False
+
+    async def run(self):
+        """Main self-healing loop."""
+        while self.running:
+            # Get cached networks in smart order
+            networks = self.get_cached_networks_ordered()
+
+            for network in networks:
+                if not self.running:
+                    break
+
+                # Check if network is visible
+                if self.is_network_visible(network.bssid, network.ssid):
+                    # Signal state machine: cached network found
+                    state_machine.on_cached_network_found(network)
+                    return  # Exit self-healing, now in CONNECTING state
+
+            # No networks found - wait and try again
+            await asyncio.sleep(self.backoff_seconds)
+            self.backoff_seconds = min(self.backoff_seconds * 2 or 5, 300)
+
+    def get_cached_networks_ordered(self):
+        """
+        Return cached networks in priority order:
+        Tier 1: Last 7 days (by recency)
+        Tier 2: 8-30 days (by recency)
+        Tier 3: 30+ days (deprioritized)
+        Within each tier: Sort by signal strength
+        """
+        networks = storage.read_all("wifi_credentials")
+
+        now = datetime.now()
+        tier1 = [n for n in networks if (now - n.last_connected).days <= 7]
+        tier2 = [n for n in networks if 7 < (now - n.last_connected).days <= 30]
+        tier3 = [n for n in networks if (now - n.last_connected).days > 30]
+
+        # Sort each tier by recency, then signal
+        tier1.sort(key=lambda n: (-n.last_connected.timestamp(), -n.last_rssi))
+        tier2.sort(key=lambda n: (-n.last_connected.timestamp(), -n.last_rssi))
+        tier3.sort(key=lambda n: (-n.last_connected.timestamp(), -n.last_rssi))
+
+        return tier1 + tier2 + tier3
+```
+
+### 2. Intelligence Layer
+
+```python
+class IntelligenceLayer:
+    """
+    Smart decision-making for connectivity.
+    """
+
+    def verify_internet(self, timeout=10):
+        """
+        Verify internet connectivity after WiFi connects.
+        Returns: True if internet available, False otherwise
+        """
+        try:
+            response = requests.get(
+                "https://api.pamir.cloud/health",
+                timeout=timeout
+            )
+            return response.status_code == 200
+        except (requests.Timeout, requests.ConnectionError):
+            return False
+
+    def get_signal_strength_category(self, rssi):
+        """
+        Categorize signal strength for retry logic.
+        Returns: "strong", "weak", or "very_weak"
+        """
+        if rssi >= -70:
+            return "strong"
+        elif rssi >= -80:
+            return "weak"
+        else:
+            return "very_weak"
+
+    def calculate_backoff(self, attempt, signal_category):
+        """
+        Calculate exponential backoff based on signal strength.
+        """
+        if signal_category == "strong":
+            # Gentle backoff for strong signal
+            return min(2 ** attempt, 16)  # 1s, 2s, 4s, 8s, 16s
+        elif signal_category == "weak":
+            # Aggressive backoff for weak signal
+            return min(4 * (2 ** attempt), 64)  # 4s, 8s, 16s, 32s, 64s
+        else:
+            # Very weak - give up after 3 tries
+            if attempt >= 3:
+                raise GiveUpException("Signal too weak")
+            return 4 * (2 ** attempt)
+```
+
+### 3. BLE Management
+
+```python
+def enable_ble_pairing(self):
+    """
+    Enable BLE pairing mode (RECOVERING state).
+    Device becomes discoverable for recovery.
+    """
+    ble.set_discoverable(True)
+    ble.start_advertising(device_name=f"Distiller-{device_id}")
+
+    # No timeout - BLE stays on until ONLINE reached
+
+def disable_ble_pairing(self):
+    """
+    Disable BLE pairing mode (ONLINE state).
+    Turn off BLE radio to save power.
+    """
+    ble.stop_advertising()
+    ble.set_discoverable(False)
+    # BLE radio can be turned off or put in low-power mode
+```
+
+---
+
+## Network Caching
+
+```python
+class NetworkCache:
+    """
+    Manages cached WiFi credentials with BSSID+SSID tracking.
+    """
+
+    def cache_network(self, ssid, password, bssid):
+        """
+        Cache network credentials.
+        Key: (ssid, bssid) tuple (not just ssid!)
+        """
+        entry = {
+            "ssid": ssid,
+            "bssid": bssid,
+            "password": encrypt(password),
+            "last_connected": datetime.now(),
+            "last_rssi": self.get_current_rssi()
+        }
+
+        storage.write(f"wifi_{ssid}_{bssid}", entry)
+
+    def find_cached_network(self, ssid, bssid):
+        """
+        Find cached credentials for specific BSSID+SSID.
+        Prevents confusion between same-named networks.
+        """
+        key = f"wifi_{ssid}_{bssid}"
+        entry = storage.read(key)
+
+        if entry:
+            entry["password"] = decrypt(entry["password"])
+            return entry
+        return None
+
+    def update_last_connected(self, ssid, bssid):
+        """
+        Update recency timestamp after successful connection.
+        Helps prioritize frequently-used networks.
+        """
+        key = f"wifi_{ssid}_{bssid}"
+        entry = storage.read(key)
+        if entry:
+            entry["last_connected"] = datetime.now()
+            storage.write(key, entry)
+```
+
+---
+
+## Event-Driven Architecture
+
+The state machine responds to events from the OS and subsystems:
+
+```python
+# WiFi Events (from OS)
+on_wifi_connected()        # WiFi associated with AP, got IP
+on_wifi_disconnected()     # WiFi connection lost
+on_wifi_auth_failed()      # Wrong password
+
+# Self-Healing Events
+on_cached_network_found()  # Self-healing found a network
+
+# Recovery Flow Events
+on_user_provisions_wifi()  # User sent credentials via BLE
+
+# Internet Verification Events
+on_verification_success()  # HTTP GET returned 200
+on_verification_failed()   # HTTP GET timeout/error
+
+# BLE Events
+on_ble_connected()         # App connected via BLE
+on_ble_disconnected()      # BLE connection dropped
+```
+
+**Important:** The state machine is event-driven, not poll-based. WiFi events trigger state transitions automatically.
+
+---
+
+## State Persistence
+
+```python
+def persist_state(self, state):
+    """
+    Save state to non-volatile storage.
+    Survives device reboots and app crashes.
+    """
+    storage.write("connectivity_state", {
+        "state": state,
+        "timestamp": datetime.now(),
+        "last_ssid": self.current_ssid,
+        "last_bssid": self.current_bssid
+    })
+
+def load_persisted_state(self):
+    """
+    Restore state on boot.
+    If device was ONLINE before reboot, start in RECOVERING
+    (assume WiFi was lost during reboot).
+    """
+    saved = storage.read("connectivity_state")
+    if not saved:
+        return "RECOVERING"  # First boot
+
+    # If was ONLINE, assume connectivity lost (conservative)
+    if saved["state"] == "ONLINE":
+        return "RECOVERING"
+
+    # If was RECOVERING or CONNECTING, resume same state
+    return saved["state"]
+```
+
+---
+
+## Testing
+
+### Unit Tests
+
+```python
+def test_wifi_lost_triggers_recovery():
+    sm = ConnectivityStateMachine()
+    sm.state = "ONLINE"
+
+    sm.on_wifi_lost()
+
+    assert sm.state == "RECOVERING"
+    assert ble.is_discoverable() == True
+    assert self_healing.is_running() == True
+
+def test_connectivity_verification_prevents_false_online():
+    sm = ConnectivityStateMachine()
+    sm.state = "CONNECTING"
+
+    # Mock: WiFi connects but internet verification fails
+    with patch('intelligence.verify_internet', return_value=False):
+        sm.on_wifi_connected()
+
+    assert sm.state == "RECOVERING"  # Should NOT go to ONLINE
+    assert ble.is_discoverable() == True  # BLE stays on
+```
+
+### Integration Tests
+
+```python
+def test_end_to_end_recovery():
+    """
+    Simulate: Device loses WiFi, user recovers via BLE.
+    """
+    sm = ConnectivityStateMachine()
+    sm.state = "ONLINE"
+
+    # 1. WiFi lost
+    sm.on_wifi_lost()
+    assert sm.state == "RECOVERING"
+
+    # 2. User scans QR, connects via BLE, provisions WiFi
+    sm.on_user_provisions_wifi("NewNetwork", "password123")
+    assert sm.state == "CONNECTING"
+
+    # 3. WiFi connects successfully
+    with patch('intelligence.verify_internet', return_value=True):
+        sm.on_wifi_connected()
+
+    assert sm.state == "ONLINE"
+    assert ble.is_discoverable() == False  # BLE turned off
+```
+
+---
+
+## Performance Considerations
+
+### Battery Impact
+
+**BLE Radio:**
+- ON in RECOVERING/CONNECTING: ~10-20mA continuous
+- OFF in ONLINE: 0mA
+- Trade-off: Always-available recovery vs battery life
+- **Acceptable** because device is usually ONLINE (BLE off)
+
+**Self-Healing Scan:**
+- WiFi scan: ~50-100mA for 1-2 seconds
+- Exponential backoff prevents excessive scanning
+- Max frequency: Once every 5 minutes when in RECOVERING
+
+### Network Load
+
+**Connectivity Verification:**
+- Single HTTP GET every time WiFi connects
+- Minimal payload (~100 bytes)
+- Prevents false "online" state
+- Worth the extra request
+
+---
+
+## Connection to Onboarding
+
+The onboarding flow IS the implementation of the RECOVERING → CONNECTING → ONLINE transitions:
+
+**Onboarding Chunk 1-2:** Device boots → RECOVERING state (BLE on, QR visible)
+**Onboarding Chunk 3:** User provisions WiFi → CONNECTING state
+**Onboarding Chunk 4:** WiFi verified → ONLINE state (BLE off)
+
+**After onboarding:** State machine keeps running. If WiFi lost, device re-enters RECOVERING and the same flow works.
+
+---
+
+## Summary
+
+**Key Implementation Points:**
+
+1. **BLE Monitor is the state machine** - Already implemented in onboarding
+2. **Event-driven architecture** - WiFi events trigger state transitions
+3. **State persisted** - Survives crashes and reboots
+4. **BSSID+SSID tracking** - Prevents network confusion
+5. **Connectivity verification** - HTTP GET before declaring ONLINE
+6. **Exponential backoff** - Battery-efficient retry logic
+7. **No special cases** - One code path handles onboarding and recovery
+
+---
+
+## Next Steps
+
+- **[Overview](/docs/connectivity/state-machine)** - Understand the big picture
+- **[States](/docs/connectivity/state-machine/states)** - Deep dive into the 3 states
+- **[How It Works](/docs/connectivity/state-machine/how-it-works)** - Learn about the 4 subsystems
+- **[Scenarios](/docs/connectivity/state-machine/scenarios)** - See it in action with real examples

@@ -1,0 +1,784 @@
+---
+title: State Machine
+description: The Persistent Connectivity State Machine - A unified system for WiFi and BLE recovery
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion'
+
+<Callout title="Core Principle">
+  "The device is always reachable." Either via internet (ONLINE) or BLE (RECOVERING). Never truly lost. This isn't onboarding AND recovery - it's ONE system that handles both.
+</Callout>
+
+## The State Machine
+
+The Persistent Connectivity System is built on a simple 3-state machine:
+
+<Mermaid chart={`
+stateDiagram-v2
+    [*] --> RECOVERING: First boot
+    RECOVERING --> CONNECTING: User provisions WiFi<br/>OR cached network found
+    CONNECTING --> ONLINE: WiFi success +<br/>Internet verified
+    ONLINE --> RECOVERING: WiFi lost OR<br/>Verification fails
+    CONNECTING --> RECOVERING: Connection fails<br/>OR timeout
+    RECOVERING --> RECOVERING: Self-healing retries<br/>(background)
+
+    note right of ONLINE
+        ✅ WiFi connected
+        ✅ Internet verified
+        🔴 BLE radio OFF
+    end note
+
+    note right of RECOVERING
+        ❌ WiFi lost/failed
+        🟢 BLE radio ON
+        📱 QR code visible
+        🔄 Self-healing active
+    end note
+
+    note right of CONNECTING
+        ⏳ Attempting WiFi
+        🟢 BLE still ON
+        📊 Monitoring signal
+        ⏱️ Exponential backoff
+    end note
+`} />
+
+---
+
+## State Definitions
+
+### ONLINE State
+
+**Meaning:** Device is fully operational with internet access.
+
+**Behaviors:**
+- WiFi connected AND internet verification passed (HTTP GET to health endpoint)
+- BLE radio is OFF (hidden mode - saves power)
+- Device working normally, app shows green status
+- Background monitoring continues (watching for failures)
+
+**Exit Conditions:**
+- WiFi signal drops → RECOVERING
+- Connectivity verification fails (no internet) → RECOVERING
+- WiFi auth fails (password changed) → RECOVERING
+- Any connectivity failure → RECOVERING
+
+---
+
+### RECOVERING State
+
+**Meaning:** Device lost internet. Self-healing and user recovery both active.
+
+**Behaviors:**
+- **BLE radio ON** - Pairing mode active, broadcasting device name
+- **Display shows:** "No Internet - Scan QR to reconnect"
+- **Self-healing running** - Background retries of cached networks
+- **User can intervene** - Scan QR → BLE connection → WiFi provisioning
+
+**This is identical to onboarding!** The recovery flow reuses the onboarding BLE + WiFi provisioning system.
+
+**Self-Healing Process (Background):**
+1. Scan for all cached networks
+2. Try networks in smart order (recency + signal strength)
+3. Exponential backoff to prevent battery drain
+4. If found and connected → silently transition to CONNECTING
+5. If all fail → stay in RECOVERING, wait for user
+
+**User Recovery Process:**
+1. User scans QR code → App opens
+2. App searches for BLE device
+3. User enters device password (security gate)
+4. App shows WiFi networks
+5. User selects network → App sends credentials via BLE
+6. Transition to CONNECTING
+
+**Exit Conditions:**
+- Self-healing finds cached network → CONNECTING
+- User provisions new WiFi → CONNECTING
+- Never exits until WiFi is attempted
+
+---
+
+### CONNECTING State
+
+**Meaning:** Device is attempting WiFi connection (user-initiated or cached network).
+
+**Behaviors:**
+- **WiFi connection in progress** - Device trying to join network
+- **BLE still ON** - Safety net remains active during attempt
+- **Exponential backoff** - Prevents hammering the network
+- **Signal strength monitoring** - RSSI-based retry strategy
+- **Timeout detection** - Gives up after reasonable time
+
+**Smart Retry Strategy:**
+- Strong signal (-50 to -70 dBm): Gentle backoff (1s, 2s, 4s, 8s...)
+- Weak signal (-70 to -80 dBm): Aggressive backoff (4s, 8s, 16s, 32s...)
+- Very weak (< -80 dBm): Give up after N retries → RECOVERING
+
+**Exit Conditions:**
+- WiFi connects AND verification passes → ONLINE (BLE turns OFF)
+- Connection fails OR timeout → RECOVERING
+- Wrong password → RECOVERING
+- No internet after connection → RECOVERING
+
+---
+
+## The Four Subsystems
+
+The state machine is implemented by four integrated subsystems:
+
+### 1. State Machine (The Core)
+
+**Purpose:** Track device connectivity state and orchestrate transitions.
+
+**Implementation:** The BLE Monitor from onboarding flow IS this state machine.
+- Green status = ONLINE
+- Amber status = RECOVERING or CONNECTING
+- Red status = BLE lost (fatal - restart onboarding)
+
+**State Persistence:**
+- Device always knows current state
+- App can query state via BLE (if connected) or heartbeat (if online)
+- State survives app crashes (device is source of truth)
+
+---
+
+### 2. Self-Healing (Background Process)
+
+**Purpose:** Silent auto-recovery without user intervention.
+
+**Runs in:** RECOVERING state (background, parallel to user recovery option).
+
+**Smart Retry Ordering:**
+```
+Priority Tiers:
+1. Tier 1: Networks connected in last 7 days (ordered by recency)
+2. Tier 2: Networks connected in last 30 days
+3. Tier 3: Networks connected ever (deprioritized)
+
+Within each tier: Sort by signal strength (stronger first)
+```
+
+**Behaviors:**
+- Scans for all cached networks continuously
+- Tries networks with exponential backoff (prevents battery drain)
+- Monitors RSSI (signal strength) to adjust retry intensity
+- Runs for 15-30 minutes before giving up
+- **If succeeds:** Silent transition to ONLINE (user sees nothing!)
+- **If fails:** Device stays in RECOVERING, BLE visible for user
+
+**Network Caching Intelligence:**
+- Cache by BSSID + SSID (not just SSID name)
+- Prevents connecting to wrong "HomeNetwork" at different location
+- Credentials age over time (> 90 days = deprioritized)
+- Successful connection updates recency timestamp
+
+---
+
+### 3. Recovery Flow (User Intervention)
+
+**Purpose:** User-driven recovery when self-healing fails or user wants to change networks.
+
+**Critical Realization:** This IS the onboarding flow! Recovery reuses the exact same BLE + WiFi provisioning system.
+
+**Flow Steps:**
+1. **QR Code Display** - Device shows QR + "No Internet"
+2. **BLE Pairing** - User scans → App discovers device → BLE connection
+3. **Authentication** - App requests device password (security gate)
+4. **WiFi Selection** - App shows available networks
+5. **Credential Provisioning** - User selects network → App sends via BLE
+6. **Connection Attempt** - Device transitions to CONNECTING
+
+**Prerequisites-Based Resumption (Stateless):**
+- If app crashes mid-recovery, on relaunch:
+  - Check: Is BLE connected?
+  - If NO: Start from QR scan
+  - If YES: Check auth status
+    - If authenticated: Jump to WiFi selection
+    - If not: Jump to password entry
+- Device doesn't track "recovery sessions" - only current state matters
+- BLE connection itself is the source of truth
+
+**BLE Never Hides (Until Internet):**
+- BLE pairing mode stays ON indefinitely (no 60s timeout)
+- Only turns OFF when WiFi reconnects AND verification passes
+- BLE is the safety net - never remove it until device is truly online
+
+---
+
+### 4. Intelligence Layer (Cross-Cutting)
+
+**Purpose:** Smart decision-making that improves all subsystems.
+
+**Connectivity Verification:**
+```
+After WiFi Connection:
+1. Make HTTP GET request to known endpoint (e.g., api.pamir.cloud/health)
+2. Expect: 200 OK = internet available
+3. Timeout/error = no internet
+
+If No Internet:
+- Don't transition to ONLINE
+- Stay in CONNECTING → Fall back to RECOVERING
+- Show specific error: "WiFi Connected, No Internet"
+```
+
+**BSSID + SSID Tracking:**
+- Cache networks by unique BSSID (AP MAC address) + SSID pair
+- Prevents confusion between networks with same name
+- Example: "HomeNetwork" at home vs office are different BSSIDs
+- Device won't accidentally connect to wrong one
+
+**Signal Strength Monitoring (RSSI):**
+- Strong: -50 to -70 dBm (retry normally)
+- Weak: -70 to -80 dBm (backoff more aggressively)
+- Very Weak: < -80 dBm (give up, enter RECOVERING)
+- Prevents "flapping" (rapid connect/disconnect cycles)
+
+**Credential Aging:**
+- Networks last connected > 90 days are deprioritized
+- Prevents hammering dead networks
+- User can still manually select old network via recovery flow
+
+---
+
+## Connection to Onboarding
+
+**The Critical Insight:** Onboarding flow already implements this state machine!
+
+### Onboarding is RECOVERING State
+
+**Chunk 1 (App Discovery):**
+- Device displays QR code ← RECOVERING state display
+- User scans → App opens ← Recovery initiation
+
+**Chunk 2 (BLE Setup):**
+- BLE pairing mode ← RECOVERING state behavior
+- Security authentication ← Recovery security gate
+- BLE Monitor spawned ← State machine implementation
+
+**Chunk 3 (WiFi Provisioning):**
+- WiFi network list ← Recovery WiFi selection
+- Credential transmission ← Recovery provisioning
+- Connection attempt ← Transition to CONNECTING
+- Success → ONLINE (BLE turns off)
+
+### After Onboarding
+
+**Normal Operation:**
+- Device enters ONLINE state (BLE off, WiFi working)
+- BLE Monitor (state machine) keeps watching
+- If WiFi breaks → device re-enters RECOVERING state
+- **Recovery uses the exact same BLE + WiFi provisioning flow!**
+
+**We didn't design onboarding AND recovery separately. We designed ONE SYSTEM that handles both.**
+
+---
+
+## How It Solves Real-World Scenarios
+
+The state machine naturally handles connectivity problems without special-case code. Here are common scenarios:
+
+<Accordions>
+
+<Accordion title="WiFi Password Changed">
+
+**Scenario:** User changes router password. Device is still connected but suddenly gets kicked off.
+
+**What Happens:**
+```
+Initial State: ONLINE
+↓
+Router rejects device (auth failure)
+↓
+Device detects: WiFi connection lost
+↓
+Transition: ONLINE → RECOVERING
+↓
+Self-healing: Tries cached credentials (fails - wrong password)
+↓
+Display shows: "No Internet - Scan QR"
+BLE turns ON
+↓
+User scans QR → BLE connects → Enters device password
+↓
+App shows WiFi networks → User selects network → Enters NEW password
+↓
+Transition: RECOVERING → CONNECTING
+↓
+WiFi succeeds + verification passes
+↓
+Transition: CONNECTING → ONLINE (BLE turns off)
+```
+
+**Result:** Device recovers. New password cached for future.
+
+</Accordion>
+
+<Accordion title="Device Moves Between Locations (Home → Office)">
+
+**Scenario:** User unplugs device at home, carries it to office.
+
+**What Happens:**
+```
+Initial State: ONLINE (connected to HomeNetwork)
+↓
+User unplugs device, carries to office
+↓
+Device detects: WiFi signal lost
+↓
+Transition: ONLINE → RECOVERING
+↓
+Self-healing: Scans for cached networks
+↓
+Finds: OfficeNetwork (cached from previous visit)
+↓
+Silently tries: OfficeNetwork with cached credentials
+↓
+Transition: RECOVERING → CONNECTING
+↓
+WiFi succeeds + verification passes
+↓
+Transition: CONNECTING → ONLINE
+```
+
+**Result:** User sees NOTHING (silent recovery!). Device just works at new location.
+
+</Accordion>
+
+<Accordion title="WiFi Connected but No Internet">
+
+**Scenario:** Router is up, WiFi connects, but ISP is down. Or captive portal requires login.
+
+**What Happens:**
+```
+Initial State: RECOVERING
+↓
+User provisions WiFi via BLE
+↓
+Transition: RECOVERING → CONNECTING
+↓
+WiFi connection succeeds
+↓
+Connectivity verification: HTTP GET to health endpoint
+↓
+Result: Timeout (no internet detected)
+↓
+Intelligence Layer catches: Connected but no internet
+↓
+Transition: CONNECTING → RECOVERING (don't go to ONLINE!)
+↓
+Display shows: "WiFi Connected, No Internet"
+↓
+App shows: "Try a different network or check your router"
+↓
+User provisions different network OR waits for ISP
+↓
+Repeat until verification passes → ONLINE
+```
+
+**Result:** Device never falsely reports "online" when internet is broken.
+
+</Accordion>
+
+<Accordion title="Weak Signal / WiFi Flapping">
+
+**Scenario:** Device is at edge of WiFi range. Signal keeps dropping and reconnecting.
+
+**What Happens:**
+```
+Device monitors RSSI (signal strength)
+↓
+Detects: Signal is very weak (< -80 dBm)
+↓
+Connection drops
+↓
+Transition: ONLINE → RECOVERING → CONNECTING
+↓
+CONNECTING state applies: Exponential backoff based on signal strength
+↓
+Weak signal detected → Aggressive backoff (4s, 8s, 16s, 32s...)
+↓
+Prevents: Rapid reconnect attempts (battery drain, network spam)
+↓
+After N failed attempts with weak signal:
+↓
+Give up → Transition: CONNECTING → RECOVERING
+↓
+Display shows: "No Internet - Scan QR"
+↓
+User moves device closer OR connects via BLE to provision stronger network
+```
+
+**Result:** Device doesn't hammer the network. Saves battery. Clear user path.
+
+</Accordion>
+
+<Accordion title="App Crashes Mid-Recovery">
+
+**Scenario:** User is recovering device via BLE. App crashes (force quit, iOS killed it).
+
+**What Happens:**
+```
+Initial State: RECOVERING
+↓
+User scans QR → BLE connects → Enters device password
+↓
+App showing WiFi list
+↓
+App crashes (user force-quits)
+↓
+Device stays in: RECOVERING (BLE still on, state persisted)
+↓
+User relaunches app
+↓
+App checks: Is BLE connected? YES
+App checks: Is device authenticated? YES
+↓
+App auto-advances to: WiFi selection screen
+↓
+User continues from where they left off
+↓
+No restart needed! (stateless resumption based on prerequisites)
+```
+
+**Result:** Recovery survives app crashes. User never has to start over.
+
+</Accordion>
+
+<Accordion title="Multiple Devices Nearby (Discovery Confusion)">
+
+**Scenario:** User has 3 Distillers (home, office, friend's house). All are in pairing mode. App finds all 3.
+
+**What Happens:**
+```
+All devices in RECOVERING state
+↓
+All broadcasting BLE: "Distiller-A4F2", "Distiller-B8C9", "Distiller-D2E5"
+↓
+User scans QR code on their device (e.g., Distiller-A4F2)
+↓
+QR encodes: device ID + MAC address + device name
+↓
+App knows: "I'm looking for Distiller-A4F2"
+↓
+App scans BLE, finds multiple devices
+↓
+App shows list with:
+- Device names (from BLE advertisement)
+- Signal strength (RSSI - strongest = closest)
+↓
+App auto-selects: Distiller-A4F2 (from QR code)
+↓
+User confirms: "Yes, that's my device" (optional visual confirmation)
+↓
+BLE connects to correct device
+↓
+Recovery proceeds normally
+```
+
+**Result:** User never connects to wrong device. QR code + RSSI + visual confirmation = 3 layers of safety.
+
+</Accordion>
+
+<Accordion title="Wrong Device Password During Recovery">
+
+**Scenario:** User connects via BLE but enters wrong device password.
+
+**What Happens:**
+```
+User scans QR → BLE connects
+↓
+App requests: Device password
+↓
+User enters: Wrong password
+↓
+Device validates: WRONG
+↓
+Device sends: "Invalid Password" (explicit error)
+↓
+BLE connection stays OPEN (does NOT disconnect)
+↓
+App shows: "Incorrect device password. Try again."
+↓
+User can immediately re-enter password (no rescan needed)
+↓
+User retries (up to 5 attempts before disconnect for DoS protection)
+↓
+Correct password → Recovery proceeds
+```
+
+**Result:** User doesn't have to restart entire flow on typo. Respects user recovery attempts.
+
+</Accordion>
+
+<Accordion title="Similar Network Names (HomeNetwork at Home vs Office)">
+
+**Scenario:** Home has "HomeNetwork" (router 1). Office has "HomeNetwork" (router 2). Device shouldn't confuse them.
+
+**What Happens:**
+```
+During onboarding at home:
+↓
+User selects "HomeNetwork"
+↓
+Device caches: SSID="HomeNetwork" + BSSID="AA:BB:CC:DD:EE:FF"
+↓
+Later, at office:
+↓
+User provisions "HomeNetwork" (different router)
+↓
+Device caches: SSID="HomeNetwork" + BSSID="11:22:33:44:55:66"
+↓
+Device now knows: TWO distinct networks with same name
+↓
+When device scans for cached networks:
+↓
+Matches on BSSID first (most specific)
+↓
+At home: Connects to BSSID AA:BB:CC (home router)
+At office: Connects to BSSID 11:22:33 (office router)
+↓
+Never accidentally connects to wrong network
+```
+
+**Result:** BSSID tracking prevents network confusion. Each router is unique.
+
+</Accordion>
+
+<Accordion title="All Cached Networks Are Stale/Gone">
+
+**Scenario:** Device has 5 cached networks. WiFi infrastructure changed - all 5 are gone or have new passwords.
+
+**What Happens:**
+```
+Device in RECOVERING state
+↓
+Self-healing: Tries cached networks in order (10s timeout per network)
+↓
+Network 1: Not found (timeout)
+Network 2: Wrong password (auth failure)
+Network 3: Not found (timeout)
+Network 4: Not found (timeout)
+Network 5: Wrong password (auth failure)
+↓
+After 3 consecutive failures: Device marks credentials as "stale"
+↓
+Device shows: "Known networks not available"
+↓
+BLE pairing mode stays ON
+↓
+Display shows: "No Internet - Scan QR to set up new network"
+↓
+User scans → BLE recovery → Provisions new network
+↓
+Device connects with new credential
+↓
+Old stale credentials still cached but deprioritized
+```
+
+**Result:** Device doesn't waste battery on dead networks. Clear user recovery path.
+
+</Accordion>
+
+<Accordion title="Too Many Cached Networks (Which One to Try First?)">
+
+**Scenario:** Device has cached 10 networks (home, office, coffee shops, airports...). All 10 are potentially reachable. Which to try first?
+
+**What Happens:**
+```
+Device in RECOVERING state
+↓
+Self-healing uses smart retry ordering:
+↓
+Tier 1: Networks connected in last 7 days
+  - OfficeNetwork (connected 2 days ago) - signal: -60 dBm
+  - HomeNetwork (connected 1 day ago) - signal: -65 dBm
+  → Try: HomeNetwork first (most recent), then OfficeNetwork
+
+Tier 2: Networks connected in last 30 days
+  - CoffeeShop (connected 10 days ago) - signal: -55 dBm
+  → Try if Tier 1 fails
+
+Tier 3: Networks connected ever (> 30 days ago)
+  - AirportWiFi (connected 90 days ago)
+  → Deprioritized, only try if nothing else works
+↓
+Device tries Tier 1 networks first (2 second timeout each)
+↓
+HomeNetwork found → Connects silently
+↓
+Transition: RECOVERING → CONNECTING → ONLINE
+```
+
+**Result:** Device connects to most likely network first. Faster recovery. Doesn't waste time on old airports.
+
+</Accordion>
+
+<Accordion title="BLE Drops During Provisioning">
+
+**Scenario:** User is sending WiFi credentials via BLE. BLE connection drops (out of range, interference).
+
+**What Happens:**
+```
+User sending credentials via BLE
+↓
+BLE connection drops mid-transfer
+↓
+Device behavior:
+- Credentials NOT written to storage (BLE write ACK never received)
+- Device remains in RECOVERING state (pairing mode stays ON)
+- Device waits for app to reconnect
+↓
+App behavior:
+- Detects: Write failure (no ACK within 30s timeout)
+- App knows: Credentials were NOT received by device
+- App shows: "Connection lost. Scan QR to try again."
+↓
+User scans QR again → BLE re-establishes
+↓
+Device still in same state (no corruption)
+↓
+User re-sends credentials → Transition to CONNECTING
+```
+
+**Result:** BLE drops don't corrupt state. Built-in GATT write ACK protocol ensures safety. User can retry.
+
+</Accordion>
+
+<Accordion title="User Phone BLE is Disabled">
+
+**Scenario:** Device is set up and working. Later, user disables Bluetooth on phone. Device goes offline. Now user can't recover via BLE.
+
+**What Happens:**
+```
+Device in ONLINE state
+↓
+WiFi fails → Transition to RECOVERING
+↓
+Display shows: "No Internet - Scan QR"
+BLE turns ON
+↓
+User scans QR → App opens
+↓
+App tries to search for BLE device
+↓
+Detects: Phone Bluetooth is OFF
+↓
+App shows: "Bluetooth is required for recovery. Enable Bluetooth?"
+↓
+Provides: Direct link to iOS Bluetooth settings
+↓
+User enables Bluetooth → BLE scan succeeds
+↓
+Recovery proceeds normally
+↓
+(Future enhancement: If BLE truly unavailable for 2+ hours,
+ device creates WiFi hotspot as fallback)
+```
+
+**Result:** App makes it obvious what to do. Future: Hotspot fallback for extreme cases.
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## Design Principles
+
+### 1. Never Silent Failures
+Every failure is detected immediately and triggers appropriate state transition. No ambiguous "it's working but not really" states.
+
+### 2. User Always Has Control
+- In ONLINE: User can manually trigger recovery (tap "Change WiFi" in app)
+- In RECOVERING: User can provision new network OR wait for self-healing
+- In CONNECTING: User can cancel and try different network
+
+### 3. Graceful Degradation
+- Layer 1: Silent self-healing (user sees nothing)
+- Layer 2: BLE recovery (if nearby with phone)
+- Layer 3: Hotspot fallback (future - if BLE disabled)
+- Each layer prevents previous layer failure
+
+### 4. State Persistence
+- Device always knows what state it's in
+- App can resume if it crashes (prerequisites-based)
+- User never feels "stuck" with no path forward
+
+### 5. One System, Not Band-Aids
+All scenarios are handled by the same state machine. No special-case code for each situation.
+
+---
+
+## Implementation Notes
+
+### BLE Monitor = State Machine
+
+The BLE Monitor from onboarding flow is the implementation of this state machine:
+
+```
+BLE Monitor watches WiFi status:
+- WiFi OK → State = ONLINE → Monitor status = Green
+- WiFi lost → State = RECOVERING → Monitor status = Amber
+- WiFi connecting → State = CONNECTING → Monitor status = Amber
+
+BLE Monitor also watches BLE health:
+- BLE lost → Monitor status = Red → Fatal error (restart onboarding)
+```
+
+### State Machine Code Structure
+
+```python
+class ConnectivityStateMachine:
+    state: Literal["ONLINE", "RECOVERING", "CONNECTING"]
+
+    def on_wifi_lost(self):
+        """WiFi dropped - enter recovery"""
+        self.transition_to(RECOVERING)
+        self.start_self_healing()  # Background process
+        self.enable_ble_pairing()   # User recovery option
+        self.display_qr_code()      # Visual feedback
+
+    def on_cached_network_found(self, network):
+        """Self-healing found a network"""
+        self.transition_to(CONNECTING)
+        self.attempt_connection(network)
+
+    def on_user_provisions_wifi(self, ssid, password):
+        """User provided new credentials"""
+        self.transition_to(CONNECTING)
+        self.attempt_connection(ssid, password)
+
+    def on_wifi_connected(self):
+        """WiFi connected - verify internet"""
+        if self.verify_internet():
+            self.transition_to(ONLINE)
+            self.disable_ble_pairing()  # Safety net no longer needed
+        else:
+            # Connected but no internet - stay in recovery
+            self.transition_to(RECOVERING)
+            self.display_error("WiFi Connected, No Internet")
+
+    def on_connection_failed(self):
+        """Connection attempt failed"""
+        self.transition_to(RECOVERING)
+        # Self-healing continues, user can try again
+```
+
+---
+
+## Summary
+
+**The Persistent Connectivity State Machine is the foundational system that:**
+
+1. **Unifies onboarding and recovery** - Same flow, same code, same UX
+2. **Provides layered recovery** - Self-healing → BLE → Hotspot (future)
+3. **Keeps device reachable** - Always either online (internet) or accessible (BLE)
+4. **Respects user control** - User initiates recovery, user ends recovery
+5. **Never fails silently** - Every error detected and handled explicitly
+6. **Handles all scenarios** - No special-case code, just state transitions
+
+**The state machine is already implemented in the onboarding flow. Recovery just reuses it.**

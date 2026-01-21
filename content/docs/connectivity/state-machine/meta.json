@@ -1,0 +1,10 @@
+{
+    "title": "State Machine",
+    "pages": [
+        "index",
+        "states",
+        "how-it-works",
+        "scenarios",
+        "implementation"
+    ]
+}

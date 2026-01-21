@@ -1,0 +1,139 @@
+---
+title: Overview
+description: A unified system for WiFi and BLE connectivity that solves 28+ edge cases with one architecture
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+import { Card, Cards } from 'fumadocs-ui/components/card'
+
+<Callout title="Core Principle">
+  "The device is always reachable." Either via internet (ONLINE) or BLE (RECOVERING). Never truly lost. This isn't onboarding AND recovery - it's ONE system that handles both.
+</Callout>
+
+## The Problem
+
+WiFi-connected devices face a fundamental challenge: **connectivity is fragile**.
+
+When a device loses internet, the traditional approach creates 28+ edge cases:
+- WiFi password changed
+- Router restarted
+- Device moved to new location
+- ISP outage (WiFi works, but no internet)
+- Captive portal (hotel/airport WiFi)
+- Weak signal causes flapping
+- Multiple networks with same name
+- App crashes during recovery
+- ... and 20 more scenarios
+
+**The old way:** Treat each as a special case. Write custom code for each. Result: Complexity explosion, hard-to-maintain band-aids.
+
+**The problem with band-aids:** Every new edge case requires new code. Testing becomes impossible. Users encounter scenarios you never coded for.
+
+---
+
+## The Solution: One System, Not Band-Aids
+
+Instead of solving 28 edge cases individually, we built **one state machine** that handles all of them naturally.
+
+<Mermaid chart={`
+stateDiagram-v2
+    [*] --> RECOVERING: First boot
+    RECOVERING --> CONNECTING: WiFi provisioned
+    CONNECTING --> ONLINE: Internet verified
+    ONLINE --> RECOVERING: Connection lost
+    CONNECTING --> RECOVERING: Connection failed
+
+    note right of ONLINE
+        ✅ WiFi connected
+        ✅ Internet verified
+        🔴 BLE radio OFF
+    end note
+
+    note right of RECOVERING
+        ❌ No internet
+        🟢 BLE radio ON
+        📱 QR code visible
+        🔄 Self-healing active
+    end note
+
+    note right of CONNECTING
+        ⏳ Attempting WiFi
+        🟢 BLE still ON (safety net)
+        📊 Smart retry logic
+    end note
+`} />
+
+### The Key Insight
+
+**Onboarding IS the RECOVERING state.**
+
+When you first set up the device, it's in RECOVERING (no WiFi, BLE on, showing QR code). When it loses WiFi later, it re-enters RECOVERING using the *exact same code path*.
+
+- One system handles both onboarding and recovery
+- One QR code mechanism
+- One BLE provisioning flow
+- One set of states
+
+This architectural decision eliminates an entire category of bugs and duplicate code.
+
+---
+
+## How It Works (Quick Version)
+
+The system has **3 states** and **4 subsystems**:
+
+### The 3 States
+1. **ONLINE** - WiFi connected, internet verified, BLE off
+2. **RECOVERING** - No internet, BLE on, self-healing + user recovery available
+3. **CONNECTING** - Attempting WiFi with smart retry logic, BLE on as safety net
+
+### The 4 Subsystems
+1. **State Machine** - Orchestrates transitions between states
+2. **Self-Healing** - Background process trying cached networks automatically
+3. **Recovery Flow** - User-driven recovery via QR + BLE (reuses onboarding)
+4. **Intelligence Layer** - Connectivity verification, BSSID tracking, signal monitoring
+
+---
+
+## Why This Solves Everything
+
+Each "edge case" is just a **state transition**:
+
+- **WiFi password changed?** → State transition: ONLINE → RECOVERING → (user provisions new password) → CONNECTING → ONLINE
+- **Device moved locations?** → State transition: ONLINE → RECOVERING → (self-healing finds cached office network) → CONNECTING → ONLINE
+- **WiFi works but no internet?** → Intelligence layer detects it during CONNECTING → stays in RECOVERING instead of falsely going ONLINE
+- **App crashes during recovery?** → Device stays in RECOVERING (state persisted), user relaunches app and continues
+
+**No special case code needed.** The state machine handles everything.
+
+---
+
+## What's Next?
+
+<Cards>
+  <Card title="Understanding States" href="/docs/connectivity/state-machine/states">
+    Deep dive into the 3 states: what they mean, behaviors, and transitions
+  </Card>
+  <Card title="How It Works" href="/docs/connectivity/state-machine/how-it-works">
+    The 4 subsystems and how they work together
+  </Card>
+  <Card title="Real-World Scenarios" href="/docs/connectivity/state-machine/scenarios">
+    See how the state machine handles 12 common connectivity problems
+  </Card>
+  <Card title="Implementation" href="/docs/connectivity/state-machine/implementation">
+    Code structure, API reference, and technical details
+  </Card>
+</Cards>
+
+---
+
+## Design Principles
+
+Five principles guide this architecture:
+
+1. **Never Silent Failures** - Every failure detected immediately, triggers appropriate state transition
+2. **User Always Has Control** - Can manually intervene at any state
+3. **Graceful Degradation** - Self-healing → BLE recovery → (future: hotspot fallback)
+4. **State Persistence** - Device always knows its state, survives crashes
+5. **One System, Not Band-Aids** - All scenarios handled by same state machine, no special cases

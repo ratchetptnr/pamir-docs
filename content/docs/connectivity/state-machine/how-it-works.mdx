@@ -1,0 +1,345 @@
+---
+title: How It Works
+description: The 4 subsystems that implement the state machine
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The state machine is implemented by four integrated subsystems. Each has a specific role, and they work together seamlessly.
+
+---
+
+## 1. State Machine Monitor (The Core)
+
+**Purpose:** Track device connectivity state and orchestrate transitions.
+
+### What It Does
+
+The State Machine Monitor is the "brain" that:
+- Tracks which state the device is currently in (ONLINE, RECOVERING, CONNECTING)
+- Watches WiFi and BLE health continuously
+- Triggers state transitions based on events
+- Persists state across crashes/reboots
+- Coordinates the other 3 subsystems
+
+### Implementation
+
+**This is the "BLE Monitor" from the onboarding flow!** It didn't disappear after onboarding - it keeps running forever.
+
+- When WiFi is OK → State = ONLINE → Monitor status = Green
+- When WiFi is lost → State = RECOVERING → Monitor status = Amber
+- When WiFi is connecting → State = CONNECTING → Monitor status = Amber
+- When BLE is lost (fatal) → Monitor status = Red → Restart required
+
+### State Persistence
+
+The device always knows its current state:
+- State survives app crashes (device is source of truth, not app)
+- State survives device reboots (persisted to storage)
+- App can query current state via BLE (if RECOVERING/CONNECTING) or HTTP (if ONLINE)
+
+**Why this matters:** If app crashes during recovery, user can relaunch and continue. Device remembers where it was.
+
+---
+
+## 2. Self-Healing Process (Background Recovery)
+
+**Purpose:** Silent auto-recovery without user intervention.
+
+### When It Runs
+
+Only in **RECOVERING** state. Runs in background parallel to BLE user recovery option.
+
+### How It Works
+
+When device enters RECOVERING, self-healing activates:
+
+**Step 1: Network Discovery**
+- Scan for all cached networks (networks device has connected to before)
+- Match by BSSID (unique access point) + SSID (network name)
+- Build candidate list
+
+**Step 2: Smart Priority Ordering**
+```
+Tier 1: Networks connected in last 7 days
+  - Sort by recency (most recent first)
+  - Within recency: sort by signal strength (stronger first)
+
+Tier 2: Networks connected in last 30 days
+  - Sort by recency
+  - Within recency: sort by signal strength
+
+Tier 3: Networks connected > 30 days ago
+  - Deprioritized (might be stale)
+  - Only tried if Tier 1 and 2 fail
+```
+
+**Step 3: Connection Attempts**
+- Try Tier 1 networks first (2-second timeout per network)
+- If found and signal is strong → Attempt connection → Transition to CONNECTING
+- If all Tier 1 fail → Try Tier 2
+- If all Tier 2 fail → Try Tier 3
+- If all fail → Stay in RECOVERING, BLE visible for user
+
+**Step 4: Exponential Backoff**
+- First scan: Immediate
+- Second scan: 5 seconds later
+- Third scan: 10 seconds later
+- Fourth scan: 20 seconds later
+- Continue doubling up to max 5 minutes between scans
+- **Why?** Prevents battery drain from constant scanning
+
+**Step 5: Smart Timeouts**
+- Continue self-healing for 15-30 minutes
+- After 30 minutes with no success → Reduce scan frequency to save battery
+- Self-healing never fully stops (keeps trying at low frequency)
+
+### Network Caching Intelligence
+
+**BSSID + SSID Tracking:**
+- Each network is cached by **BSSID** (unique AP MAC address) + **SSID** (network name)
+- **Why?** Prevents connecting to wrong network with same name
+- Example: "HomeNetwork" at actual home vs "HomeNetwork" at office are different BSSIDs
+- Device won't accidentally try office credentials at home
+
+**Credential Aging:**
+- Networks last connected > 90 days are deprioritized (Tier 3)
+- Prevents hammering dead/changed networks
+- User can still manually select old network via recovery flow
+
+**Recency Tracking:**
+- Each successful connection updates "last connected" timestamp
+- Helps prioritize networks device uses most often
+
+### Success Outcome
+
+**Silent recovery!** If self-healing succeeds:
+- Device transitions: RECOVERING → CONNECTING → ONLINE
+- User sees nothing (app just shows green status again)
+- No QR scan needed, no manual intervention
+- Display automatically returns to dashboard
+
+**This is the ideal outcome** - connectivity restored invisibly.
+
+---
+
+## 3. Recovery Flow (User Intervention)
+
+**Purpose:** User-driven recovery when self-healing fails or user wants to change networks.
+
+<Callout>
+**Critical Realization:** This IS the onboarding flow! Recovery reuses the exact same BLE + WiFi provisioning system.
+</Callout>
+
+### When It's Available
+
+Always available in **RECOVERING** state. Runs in parallel with self-healing.
+
+User can trigger it at any time by scanning QR code (even if self-healing is running).
+
+### Flow Steps
+
+**1. QR Code Display**
+- Device displays QR code on screen
+- Message: "No Internet - Scan QR to reconnect"
+- QR encodes: Device ID + MAC address + Device name
+
+**2. App Discovery**
+- User scans QR → App opens
+- App extracts device info from QR code
+- App knows which device to look for
+
+**3. BLE Pairing**
+- App searches for BLE device by name
+- App connects to device via BLE (no OS pairing dialog needed)
+- If multiple devices nearby → App shows list with RSSI (signal strength) to help user pick closest
+
+**4. Authentication**
+- App requests device password (security gate)
+- User enters password set during onboarding
+- Device validates password
+- If wrong → Show error, allow retry (up to 5 attempts)
+- If correct → Unlock BLE commands
+
+**5. WiFi Selection**
+- App sends BLE command: "Scan for networks"
+- Device scans and returns list of available WiFi networks
+- App shows list to user with signal strength indicators
+- User selects network
+
+**6. Credential Provisioning**
+- User enters WiFi password (or uses cached if reconnecting)
+- App sends credentials to device via BLE (encrypted)
+- Device receives credentials → Caches them
+
+**7. Connection Attempt**
+- Device transitions to CONNECTING state
+- Attempts WiFi connection with new credentials
+- App stays connected via BLE to monitor progress
+- Success → Device goes ONLINE, BLE disconnects
+- Failure → Device returns to RECOVERING, BLE stays connected, user can retry
+
+### Prerequisites-Based Resumption
+
+**Stateless recovery:** If app crashes mid-recovery, on relaunch:
+
+```
+Check: Is BLE connected?
+├─ NO → Start from QR scan
+└─ YES → Check: Is device authenticated?
+    ├─ NO → Jump to password entry
+    └─ YES → Jump to WiFi selection
+```
+
+Device doesn't track "recovery sessions" - only current state matters. BLE connection itself is the source of truth.
+
+### BLE Persistence
+
+**Key principle:** BLE stays ON until device reaches ONLINE state.
+
+- BLE never times out (no 60-second pairing window)
+- BLE never hides until internet is verified
+- **Why?** BLE is the safety net. Never remove it until device is truly online.
+
+---
+
+## 4. Intelligence Layer (Cross-Cutting)
+
+**Purpose:** Smart decision-making that improves all subsystems.
+
+### Connectivity Verification
+
+**Problem:** WiFi connection doesn't guarantee internet access.
+
+**Examples of WiFi-without-internet:**
+- Captive portals (hotel/airport WiFi requiring login)
+- ISP outage (router works, internet doesn't)
+- Firewall blocking traffic
+- Router isolated from WAN
+
+**Solution:** After WiFi connection succeeds, verify internet before going ONLINE.
+
+**Implementation:**
+```
+After WiFi Connection:
+1. Make HTTP GET request to known endpoint
+   - Example: api.pamir.cloud/health
+   - Expect: 200 OK
+
+2. Check response
+   - If 200 OK → Internet verified → Transition to ONLINE
+   - If timeout → No internet → Stay in CONNECTING → Fallback to RECOVERING
+   - If 3xx/4xx/5xx → Depends on error (captive portal returns 302/303)
+
+3. Show appropriate message
+   - If no internet: "WiFi Connected, No Internet"
+   - If captive portal: "Network requires login" (future enhancement)
+```
+
+**Why this is critical:** Prevents device from claiming "online" when it can't actually reach cloud services.
+
+---
+
+### BSSID + SSID Tracking
+
+**Problem:** Multiple networks can have the same name (SSID).
+
+**Example:**
+- Home network: SSID="HomeNetwork", BSSID=AA:BB:CC:DD:EE:FF
+- Office network: SSID="HomeNetwork", BSSID=11:22:33:44:55:66
+- Coffee shop: SSID="HomeNetwork", BSSID=99:88:77:66:55:44
+
+**Without BSSID tracking:** Device tries home credentials at office → Auth failure → User confused.
+
+**With BSSID tracking:** Each network is unique by BSSID + SSID pair.
+- At home: Device tries BSSID AA:BB:CC (home router) only
+- At office: Device tries BSSID 11:22:33 (office router) only
+- Never confuses them
+
+**Cache structure:**
+```
+{
+  "ssid": "HomeNetwork",
+  "bssid": "AA:BB:CC:DD:EE:FF",
+  "password": "encrypted_credentials",
+  "last_connected": "2026-01-20T10:30:00Z"
+}
+```
+
+---
+
+### Signal Strength Monitoring (RSSI)
+
+**Purpose:** Adapt retry behavior to signal strength.
+
+**RSSI scale:**
+- **-30 to -50 dBm:** Excellent signal
+- **-50 to -70 dBm:** Good signal (normal operation)
+- **-70 to -80 dBm:** Weak signal (edge of range)
+- **-80+ dBm:** Very weak/unusable
+
+**Retry strategy adaptation:**
+
+| Signal Strength | Connection Behavior | Backoff Pattern |
+|----------------|---------------------|----------------|
+| Strong (-50 to -70) | Normal retry | 1s, 2s, 4s, 8s, 16s |
+| Weak (-70 to -80) | Aggressive backoff | 4s, 8s, 16s, 32s |
+| Very weak (< -80) | Give up after 3 tries | → RECOVERING |
+
+**Why?**
+- Weak signals → Connection unlikely to succeed
+- Hammering weak AP → Battery drain + network spam
+- Better to give up → Let user know → User moves device or switches networks
+
+**Prevents "flapping":** Rapid connect/disconnect cycles when signal is marginal.
+
+---
+
+### Credential Aging
+
+**Purpose:** Deprioritize stale networks to prevent wasted connection attempts.
+
+**Aging tiers:**
+- **Last 7 days:** Fresh, high priority (Tier 1)
+- **8-30 days:** Recent, medium priority (Tier 2)
+- **30-90 days:** Old, low priority (Tier 3)
+- **90+ days:** Very old, deprioritized heavily
+
+**Why?**
+- Old credentials might have changed
+- Old locations might not be visited anymore
+- Prevents device from wasting battery trying dead networks
+
+**User override:** Via recovery flow, user can still manually select any cached network (even 90+ days old).
+
+---
+
+## How Subsystems Work Together
+
+**Example: Device loses WiFi at home**
+
+1. **State Machine Monitor** detects WiFi lost → Transitions device to RECOVERING
+2. **Self-Healing** activates:
+   - Scans for cached networks
+   - Finds "HomeNetwork" (last connected 1 day ago, strong signal)
+   - **Intelligence Layer** confirms BSSID matches home router
+   - Attempts connection
+3. **Connectivity Verification** runs after connection:
+   - Makes HTTP GET to health endpoint
+   - **Intelligence Layer** detects timeout (ISP is down!)
+   - Reports: WiFi connected but no internet
+4. **State Machine Monitor** keeps device in RECOVERING (doesn't go ONLINE)
+5. **Recovery Flow** remains available:
+   - Device shows QR code
+   - User can scan → Provision different network (phone hotspot?)
+   - Or wait for ISP to come back (self-healing keeps trying)
+
+**Result:** All 4 subsystems working together to handle a complex scenario (WiFi works but ISP down).
+
+---
+
+## Next Steps
+
+- **[States](/docs/connectivity/state-machine/states)** - Deep dive into what each state means
+- **[Scenarios](/docs/connectivity/state-machine/scenarios)** - See subsystems in action with real examples
+- **[Implementation](/docs/connectivity/state-machine/implementation)** - Code structure and technical details

@@ -1,6 +1,7 @@
 {
     "title": "Connectivity",
     "pages": [
+        "state-machine",
         "wifi",
         "bluetooth"
     ]

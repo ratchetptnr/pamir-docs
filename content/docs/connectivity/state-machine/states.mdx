@@ -1,0 +1,238 @@
+---
+title: Understanding States
+description: Deep dive into the 3 states - ONLINE, RECOVERING, and CONNECTING
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+
+The state machine has exactly **three states**. Every connectivity behavior is defined by which state the device is in.
+
+<Mermaid chart={`
+stateDiagram-v2
+    [*] --> RECOVERING: First boot
+    RECOVERING --> CONNECTING: User provisions WiFi<br/>OR cached network found
+    CONNECTING --> ONLINE: WiFi success +<br/>Internet verified
+    ONLINE --> RECOVERING: WiFi lost OR<br/>Verification fails
+    CONNECTING --> RECOVERING: Connection fails<br/>OR timeout
+    RECOVERING --> RECOVERING: Self-healing retries<br/>(background)
+
+    note right of ONLINE
+        ✅ WiFi connected
+        ✅ Internet verified
+        🔴 BLE radio OFF
+    end note
+
+    note right of RECOVERING
+        ❌ WiFi lost/failed
+        🟢 BLE radio ON
+        📱 QR code visible
+        🔄 Self-healing active
+    end note
+
+    note right of CONNECTING
+        ⏳ Attempting WiFi
+        🟢 BLE still ON
+        📊 Monitoring signal
+        ⏱️ Exponential backoff
+    end note
+`} />
+
+---
+
+## ONLINE State
+
+**Meaning:** Device is fully operational with internet access.
+
+### What It Means
+The device has successfully connected to WiFi **and** verified that internet is actually available. This is the only state where the device is truly "online" and can communicate with cloud services.
+
+### Active Behaviors
+- WiFi connected to access point
+- Internet verification passed (HTTP GET to health endpoint returned 200 OK)
+- BLE radio is **OFF** (hidden mode to save power)
+- Device displays normal dashboard/status
+- App shows green "Online" indicator
+- Background monitoring continues (watching for failures)
+
+### What Triggers Entry
+Entering ONLINE requires **both conditions**:
+1. WiFi connection successful (associated with access point, obtained IP)
+2. Connectivity verification successful (HTTP GET to known endpoint succeeded)
+
+If WiFi connects but verification fails (captive portal, ISP down, firewall), device does **not** enter ONLINE.
+
+### Exit Conditions
+Any connectivity failure triggers exit to RECOVERING:
+- WiFi signal drops (disconnected from AP)
+- Connectivity verification fails (periodic check detects no internet)
+- WiFi auth fails (password changed remotely)
+- Any network error that breaks internet access
+
+**Critical:** Device never stays in ONLINE with broken internet. Continuous monitoring ensures real connectivity.
+
+---
+
+## RECOVERING State
+
+**Meaning:** Device lost internet. Self-healing and user recovery both active.
+
+<Callout>
+This is the SAME state as onboarding. When device first boots, it's in RECOVERING. When it loses WiFi later, it re-enters RECOVERING.
+</Callout>
+
+### What It Means
+The device has no internet access and is actively trying to recover connectivity. Two parallel recovery paths run simultaneously:
+1. **Self-healing** (automatic, background)
+2. **User recovery** (manual, via BLE)
+
+### Active Behaviors
+- **BLE radio ON** - Broadcasting device name, pairing mode active
+- **Display shows:** "No Internet - Scan QR to reconnect"
+- **Self-healing running** - Background scanning and retry of cached networks
+- **User can intervene** - Scan QR → BLE connection → WiFi provisioning at any time
+
+### Self-Healing Process (Background)
+
+Runs continuously in the background without user intervention:
+
+1. Scan for all cached networks (networks device has connected to before)
+2. Try networks in smart order:
+   - **Tier 1:** Networks connected in last 7 days (by recency)
+   - **Tier 2:** Networks connected in last 30 days
+   - **Tier 3:** Networks connected ever (deprioritized)
+   - Within each tier: Sort by signal strength (stronger first)
+3. Use exponential backoff to prevent battery drain
+4. Monitor RSSI (signal strength) to adjust retry intensity
+5. If found and connected → silently transition to CONNECTING
+6. If all fail → stay in RECOVERING, BLE visible for user
+
+**Result:** Many connectivity losses are automatically recovered without user knowing anything happened.
+
+### User Recovery Process
+
+Available at any time, triggered when user scans QR code:
+
+1. User scans QR code → App opens
+2. App searches for BLE device (finds it because BLE is ON)
+3. User enters device password (security gate)
+4. App shows available WiFi networks
+5. User selects network → App sends credentials via BLE
+6. Device receives credentials → Transition to CONNECTING
+
+**This IS the onboarding flow!** Recovery reuses the exact same code path.
+
+### Entry Conditions
+Device enters RECOVERING when:
+- First boot (never been online before)
+- WiFi connection lost while in ONLINE
+- Connection attempt failed in CONNECTING state
+- Connectivity verification failed (no internet detected)
+
+### Exit Conditions
+Device exits RECOVERING when WiFi credentials are available (either path):
+- Self-healing found a cached network → CONNECTING
+- User provisioned new WiFi via BLE → CONNECTING
+
+**Important:** Device stays in RECOVERING until it has credentials to attempt. BLE never turns off until device reaches ONLINE.
+
+---
+
+## CONNECTING State
+
+**Meaning:** Device is attempting WiFi connection with provided credentials.
+
+### What It Means
+The device is actively trying to join a WiFi network (either from self-healing or user provisioning). This is a **transient state** - device doesn't stay here long.
+
+### Active Behaviors
+- **WiFi connection in progress** - Device associating with access point, obtaining IP
+- **BLE still ON** - Safety net remains active during attempt (in case connection fails)
+- **Exponential backoff** - Prevents hammering the network if retries needed
+- **Signal strength monitoring** - RSSI-based retry strategy
+- **Timeout detection** - Gives up after reasonable time if connection impossible
+
+### Smart Retry Strategy
+
+Retry behavior adapts to signal strength (RSSI):
+
+| Signal Strength | Behavior | Backoff Pattern |
+|----------------|----------|----------------|
+| **Strong** (-50 to -70 dBm) | Gentle backoff | 1s, 2s, 4s, 8s, 16s... |
+| **Weak** (-70 to -80 dBm) | Aggressive backoff | 4s, 8s, 16s, 32s, 64s... |
+| **Very Weak** (< -80 dBm) | Give up after N retries | → RECOVERING |
+
+**Why?** Weak signals often mean device is out of range. Hammering a weak AP drains battery and spams network. Better to give up and let user intervene.
+
+### Connectivity Verification
+
+**Critical step:** After WiFi connects successfully, device makes HTTP GET request to known health endpoint (e.g., `api.pamir.cloud/health`).
+
+- **If 200 OK:** Internet verified → Transition to ONLINE
+- **If timeout/error:** WiFi works but no internet → Transition back to RECOVERING
+
+**This prevents false "online"** when:
+- Captive portal requires login (hotel/airport WiFi)
+- ISP is down (router works, but no internet)
+- Firewall blocking traffic
+
+### Entry Conditions
+- Self-healing found cached network in RECOVERING
+- User provisioned WiFi credentials via BLE in RECOVERING
+
+### Exit Conditions
+
+**Success path:**
+- WiFi connects AND verification passes → ONLINE (BLE turns OFF)
+
+**Failure paths:**
+- Connection fails (wrong password, AP unreachable) → RECOVERING
+- Connection timeout (taking too long) → RECOVERING
+- WiFi connected but verification fails (no internet) → RECOVERING
+- Signal too weak after N retries → RECOVERING
+
+---
+
+## State Transitions Summary
+
+| From State | To State | Trigger | BLE State Change |
+|-----------|----------|---------|------------------|
+| [First Boot] | RECOVERING | Device starts | BLE turns ON |
+| RECOVERING | CONNECTING | WiFi credentials available | BLE stays ON |
+| CONNECTING | ONLINE | WiFi success + internet verified | **BLE turns OFF** |
+| CONNECTING | RECOVERING | Connection failed | BLE stays ON |
+| ONLINE | RECOVERING | Connectivity lost | **BLE turns ON** |
+
+**Key Insight:** BLE acts as a safety net. It stays ON until device is truly ONLINE (internet verified). Only then does BLE turn off.
+
+---
+
+## What State Am I In? (Quick Reference)
+
+**Indicators by perspective:**
+
+### Device Display
+- **"Dashboard showing IP address"** → ONLINE
+- **"No Internet - Scan QR"** → RECOVERING
+- **"Connecting to [Network]..."** → CONNECTING
+
+### Mobile App
+- **Green status, heartbeat working** → ONLINE
+- **Red status, "Action Required"** → RECOVERING
+- **Yellow status, "Connecting..."** → CONNECTING
+
+### BLE Radio
+- **Not discoverable/connectable** → ONLINE
+- **Discoverable, broadcasting** → RECOVERING or CONNECTING
+
+### What's Running
+- **Only WiFi monitoring** → ONLINE
+- **Self-healing + BLE provisioning** → RECOVERING
+- **WiFi connection attempt + BLE safety net** → CONNECTING
+
+---
+
+## Next Steps
+
+- **[How It Works](/docs/connectivity/state-machine/how-it-works)** - Understand the 4 subsystems that implement these states
+- **[Scenarios](/docs/connectivity/state-machine/scenarios)** - See state transitions in real-world examples
