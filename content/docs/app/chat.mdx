@@ -37,6 +37,47 @@ The agent's responses appear as left-aligned text with full markdown rendering, 
 - Code blocks with syntax highlighting
 - Lists (ordered and unordered)
 
+## Quick Actions
+
+The **+** icon next to the message input unlocks powerful shortcuts for inspecting your environment and preparing context.
+
+### 1. Unified Quick Menu
+Tap the **+** button to reveal the Quick Actions menu. This central hub allows you to quickly pivot between different diagnostic and context-building tools without leaving the chat.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-quick-actions-menu.png" 
+    alt="Quick Actions menu showing Terminal and Attach File options" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### 2. Integrated Terminal
+Access a full-featured terminal directly from the chat. This is ideal for quickly running commands, checking system status, or listing directories while maintaining your conversation context.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-terminal-view.png" 
+    alt="Terminal sheet presented over the chat interface" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### 3. File Attachments
+Need to discuss specific code? Tap **Attach File** to browse your project structure and link relevant files to the chat. The AI agent will use the content of these files to provide more precise and contextual assistance.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/chat-file-picker.png" 
+    alt="File picker interface for selecting project documents" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="tip">
+When you attach a file, a visual tag `[Attached: filename]` is added to your input as confirmation.
+</Callout>
+
 ## Empty State
 
 When a chat has no messages, it displays a centered prompt encouraging you to start a conversation:
@@ -64,7 +105,7 @@ Message history is stored locally on your device and syncs with the paired Disti
 
 ## Notes Integration
 
-While chatting with the Shadow Agent, you can access your project's notes directly from the toolbar. This allows you to:
+While chatting with the Shadow Agent, you can access your project's notes directly from the **top-right toolbar**. This allows you to:
 
 - **Reference Insights**: Look up previous decisions or code snippets without leaving the chat.
 - **Capture Ideas**: Quickly jot down a new note based on the agent's response.

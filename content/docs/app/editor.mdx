@@ -1,0 +1,65 @@
+---
+title: Editor
+description: A lightweight code viewing and editing environment.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The Editor tab is your window into the project's codebase. It allows you to navigate the file structure, view code with syntax highlighting, and make edits to project files.
+
+## Overview
+
+The Editor is designed to be a clean, read-focused environment that steps out of your way. It provides a familiar, **IDE-like experience** complete with line numbers, monospaced fonts, and rich syntax highlighting, ensuring you can review code comfortably just as you would on a desktop.
+
+## Opening a File
+
+Navigating your project structure is simple. Follow these steps to locate and open any file in your repository.
+
+### 1. View the Empty State
+When you first open a new Editor tab, you are greeted with a clean empty state. Tap the **Folder Icon** in the top-right toolbar (or the "Open Project" button) to get started.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/editor-empty.png" 
+    alt="Editor empty state prompting to open a file" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### 2. Browse the File Tree
+The **Project Explorer** sheet appears, displaying your project's complete file hierarchy. You can expand folders and scroll through the list to find the file you need.
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/editor-finder-tree.png" 
+    alt="Project explorer showing the file tree" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### 3. View Code
+Tapping a file instantly opens it in the main editor view. The interface adapts to provide an IDE-quality reading experience specific to the file usage.
+
+<Callout title="Note" type="info">
+  The image below is just a demo. Ideally, the editor functionality will be close to that seen in [Runestone](https://github.com/simonbs/Runestone).
+</Callout>
+
+<div className="flex justify-center my-8">
+  <img 
+    src="/docs/app/editor-code-view.png" 
+    alt="Editor displaying code with IDE-like syntax highlighting" 
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Features
+
+### Syntax Highlighting
+The editor automatically detects the file type based on its extension and applies appropriate syntax highlighting, just like a standard IDE. Whether you're working with Swift, Python, Markdown, or JSON, the interface provides the visual context you expect from a professional development environment.
+
+### Notes Integration
+The **Notes** icon is always available in the **top-right toolbar**. This split-context view allows you to:
+- Read code while taking documentation notes
+- Reference architectural plans while reviewing implementation
+- Copy code snippets directly into your notes for safekeeping
+- Access the project's full shared context

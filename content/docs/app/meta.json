@@ -4,8 +4,9 @@
         "onboarding",
         "project-list-view",
         "workspace",
-        "notes",
         "chat",
-        "desk"
+        "terminal",
+        "editor",
+        "shadow-agent"
     ]
 }
