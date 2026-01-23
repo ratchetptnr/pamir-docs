@@ -1,0 +1,522 @@
+---
+title: Troubleshooting
+description: Solutions to common setup problems
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion'
+
+Having trouble setting up your Distiller? Find your issue below and follow the solution.
+
+---
+
+## QR Code Issues
+
+<Accordions>
+
+<Accordion title="QR code won't scan">
+
+**On Device:** QR code is displayed
+**On Phone:** Camera doesn't detect it or nothing happens when pointing at it
+
+**Solutions:**
+
+1. **Check camera focus**
+   - Make sure camera is focused on the QR code
+   - Hold phone steady for 2-3 seconds
+   - Try moving phone closer or farther away (6-12 inches is ideal)
+
+2. **Improve lighting**
+   - QR codes need good lighting to scan
+   - Avoid glare on the device screen
+   - Try scanning in a brighter location
+
+3. **Clean the device screen**
+   - Wipe screen with soft cloth
+   - Remove any protective film that might be on screen
+
+4. **Try a different camera app**
+   - Some phones have issues with built-in camera
+   - Download a QR scanner app from app store
+   - Use the QR scanner app instead
+
+5. **Manual workaround**
+   - Download the Distiller app directly from app store
+   - Open the app
+   - Tap "Set up new device"
+   - App will search for your Distiller automatically
+
+</Accordion>
+
+<Accordion title="QR code opens wrong link or app">
+
+**What's happening:** The QR code should open the Distiller app, but something else opens instead.
+
+**Solutions:**
+
+1. **Clear the QR detection**
+   - Point camera away from QR code
+   - Close the notification that appeared
+   - Try scanning again
+
+2. **Download app manually**
+   - Search for "Distiller by Pamir" in your app store
+   - Download and install
+   - Open the app manually
+   - Tap "Set up new device"
+
+</Accordion>
+
+<Accordion title="Device screen is black (no QR code)">
+
+**On Device:** Screen is completely black or blank
+
+**Solutions:**
+
+1. **Check power**
+   - Is the device plugged in?
+   - Is the power outlet working? (test with another device)
+   - Try a different power cable if available
+
+2. **Wait for boot**
+   - Device takes 10-15 seconds to boot after power on
+   - Screen will show "Starting..." then the QR code
+   - Be patient
+
+3. **Restart the device**
+   - Unplug the device
+   - Wait 10 seconds
+   - Plug it back in
+   - Wait for QR code to appear
+
+4. **Factory reset (last resort)**
+   - Unplug the device for 10 seconds
+   - Plug it back in
+   - Device will boot into factory reset mode
+   - Follow on-screen instructions
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## Bluetooth Issues
+
+<Accordions>
+
+<Accordion title="Device not found in Bluetooth list">
+
+**On Phone:** App shows "Searching for devices..." but never finds your Distiller
+
+**Solutions:**
+
+1. **Check distance**
+   - Move phone within 3 feet (1 meter) of device
+   - Bluetooth has limited range
+
+2. **Enable Bluetooth on phone**
+   - Go to phone Settings → Bluetooth
+   - Make sure Bluetooth is ON
+   - Return to Distiller app
+
+3. **Check device is in pairing mode**
+   - Device screen should show "No Internet - Scan QR"
+   - If it shows something else, restart the device
+
+4. **Restart Bluetooth on phone**
+   - Turn Bluetooth OFF
+   - Wait 5 seconds
+   - Turn Bluetooth ON
+   - Tap "Scan Again" in app
+
+5. **Restart both devices**
+   - Close the app completely
+   - Restart your phone
+   - Restart the Distiller (unplug and plug back in)
+   - Try setup again
+
+6. **Check for interference**
+   - Move away from:
+     - Other Bluetooth devices
+     - Microwave ovens
+     - WiFi routers (temporarily)
+   - These can interfere with Bluetooth signal
+
+</Accordion>
+
+<Accordion title="Wrong PIN error">
+
+**On Phone:** "Incorrect PIN" message after entering the PIN
+
+**On Device:** Shows a PIN (e.g., "PIN: 1234")
+
+**Solutions:**
+
+1. **Check the PIN again**
+   - Look carefully at device screen
+   - Make sure you're reading it correctly
+   - Easy to confuse: 0 and O, 1 and I, 5 and S
+
+2. **Wait and try again**
+   - Device may generate a new PIN after failed attempts
+   - Check device screen for updated PIN
+   - Enter the NEW PIN shown
+
+3. **Restart pairing**
+   - Tap "Cancel" in app
+   - Tap your device again in the list
+   - Device will show a new PIN
+   - Enter the new PIN
+
+</Accordion>
+
+<Accordion title="Multiple devices showing up - which is mine?">
+
+**On Phone:** App shows several Distillers (e.g., "Distiller-A4F2", "Distiller-B8C9")
+
+**Solutions:**
+
+1. **Check signal strength**
+   - The device with the MOST bars is usually yours
+   - It's the closest one
+
+2. **Check serial number**
+   - Look on the back/bottom of your device
+   - Find the serial number (e.g., "A4F2")
+   - Match it to the device name in the list
+
+3. **Move away from other devices**
+   - If you're in an office/lab with multiple Distillers
+   - Move to a different room temporarily
+   - Only your device should appear
+
+4. **Try connecting anyway**
+   - If you connect to the wrong device:
+     - You won't know the PIN
+     - Or the owner will have set a password
+   - Just cancel and try a different device
+
+</Accordion>
+
+<Accordion title="Bluetooth pairing keeps failing">
+
+**On Phone:** Connection fails repeatedly, even with correct PIN
+
+**Solutions:**
+
+1. **Forget previous pairings**
+   - Go to phone Settings → Bluetooth
+   - Look for your Distiller in "My Devices"
+   - Tap (i) icon next to it
+   - Tap "Forget This Device"
+   - Go back to app and try again
+
+2. **Restart both devices**
+   - Close the app
+   - Turn Bluetooth OFF on phone
+   - Restart the Distiller (unplug and plug back in)
+   - Turn Bluetooth back ON
+   - Open app and try again
+
+3. **Check phone OS version**
+   - Make sure your phone OS is up to date
+   - iOS: Settings → General → Software Update
+   - Android: Settings → System → System Update
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## Password and Security Issues
+
+<Accordions>
+
+<Accordion title="Password requirements not clear">
+
+**On Phone:** Can't proceed because password doesn't meet requirements
+
+**Requirements:**
+- Minimum 6 characters
+- Can include letters, numbers, and symbols
+- No maximum length
+
+**Tips:**
+- Use something memorable but secure
+- Write it down temporarily (you'll need it later)
+- Don't use "123456" or "password"
+
+</Accordion>
+
+<Accordion title="Passwords don't match">
+
+**On Phone:** "Passwords don't match" error
+
+**Solution:**
+- Re-enter both fields carefully
+- Use "Show password" checkbox to verify
+- Make sure no extra spaces
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## WiFi Connection Issues
+
+<Accordions>
+
+<Accordion title="My WiFi network isn't listed">
+
+**On Phone:** Your network doesn't appear in the WiFi list
+
+**Solutions:**
+
+1. **Check WiFi frequency**
+   - **Distiller supports both 2.4GHz and 5GHz WiFi**
+   - Make sure your network is broadcasting (SSID visible)
+   - Check your router settings to confirm WiFi is enabled
+
+2. **Check router settings**
+   - Is WiFi enabled on your router?
+   - Is SSID broadcast enabled? (network should be visible)
+   - Router must broadcast the network name
+
+3. **Move closer to router**
+   - Weak signal might not be detected
+   - Move device within 15 feet of router
+   - Tap "Scan Again" in app
+
+4. **Enter network manually**
+   - Tap "Network not listed?" in app
+   - Enter your network name (SSID) exactly
+   - Make sure it's spelled correctly (case-sensitive)
+   - Enter password
+   - Tap Connect
+
+5. **Restart router**
+   - Unplug router
+   - Wait 30 seconds
+   - Plug back in
+   - Wait 2 minutes for full boot
+   - Tap "Scan Again" in app
+
+</Accordion>
+
+<Accordion title="WiFi password incorrect">
+
+**On Device:** Shows "Connecting..." then goes back to "No Internet"
+**On Phone:** "Password incorrect" or "Authentication failed"
+
+**Solutions:**
+
+1. **Double-check password**
+   - WiFi passwords are case-sensitive
+   - Check for typos
+   - Use "Show password" to verify
+
+2. **Common password mistakes**
+   - Confusing: 0 (zero) and O (letter)
+   - Confusing: 1 (one) and l (lowercase L)
+   - Extra space at beginning or end
+   - Using old password (did you recently change it?)
+
+3. **Copy password from router settings**
+   - Log into your router admin page
+   - Find WiFi password
+   - Copy it exactly
+   - Paste into app
+
+4. **Try a different device first**
+   - Try connecting your phone to the same WiFi
+   - If phone can't connect, the password is wrong
+   - If phone connects, check for typos when entering in app
+
+</Accordion>
+
+<Accordion title="WiFi connected but no internet">
+
+**On Device:** Shows "WiFi Connected, No Internet"
+**On Phone:** Shows "Connected to WiFi but can't reach internet"
+
+**What this means:** Device joined the WiFi network successfully, but there's no internet connection.
+
+**Solutions:**
+
+1. **Check your internet connection**
+   - Can other devices access internet?
+   - Try browsing a website on your phone (using WiFi, not cellular)
+   - If nothing works, your internet is down
+
+2. **Router or ISP issue**
+   - Restart your router:
+     - Unplug it
+     - Wait 30 seconds
+     - Plug back in
+     - Wait 2 minutes
+   - Check with ISP if internet is down in your area
+
+3. **Captive portal (hotels, airports, cafes)**
+   - Some networks require login via web browser
+   - Distiller can't handle captive portals yet
+   - Try a different network or set up a hotspot from your phone
+
+4. **Firewall blocking device**
+   - Corporate or school networks may block IoT devices
+   - Contact network administrator
+   - Or use a different network (home network, mobile hotspot)
+
+5. **Wait and retry**
+   - Sometimes internet takes a few minutes to come back
+   - Tap "Try Again" after a minute
+   - Or connect to a different network
+
+</Accordion>
+
+<Accordion title="Connection times out">
+
+**On Device:** Shows "Connecting..." for a long time (over 1 minute), then fails
+
+**Solutions:**
+
+1. **Check WiFi signal strength**
+   - In the network list, check the bars next to your network
+   - If weak (1-2 bars), move device closer to router
+   - Try to get at least 3 bars
+
+2. **Router is overloaded**
+   - Too many devices connected
+   - Restart router
+   - Disconnect some devices temporarily
+
+3. **Network congestion**
+   - Try setup at a different time (less congestion)
+   - Or use a different network
+
+4. **Change WiFi channel**
+   - Log into router settings
+   - Change WiFi channel (try 1, 6, or 11 for 2.4GHz)
+   - Reduces interference from neighbors' WiFi
+
+</Accordion>
+
+<Accordion title="Connection works but then fails after a few seconds">
+
+**On Device:** Shows "Connected" briefly, then goes back to "No Internet"
+
+**Solutions:**
+
+1. **Router DHCP issues**
+   - Router may be out of IP addresses
+   - Restart router
+   - Or manually assign IP address in router settings
+
+2. **MAC address filtering**
+   - Some routers only allow known devices
+   - Check router settings
+   - Add Distiller's MAC address to allowed list
+   - (MAC address is shown on device back/bottom)
+
+3. **Network security settings**
+   - Some enterprise/school networks block new devices
+   - Contact network administrator
+   - Or use a home network
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## App Issues
+
+<Accordions>
+
+<Accordion title="App crashes during setup">
+
+**What happens:** App closes unexpectedly during setup
+
+**Good news:** You can continue where you left off!
+
+**Solutions:**
+
+1. **Before you set device password:**
+   - Reopen app
+   - Start setup from beginning
+   - Device will show QR code again
+
+2. **After you set device password:**
+   - Reopen app
+   - App will search for your device
+   - Tap your device
+   - Enter device password
+   - Continue from WiFi setup
+
+3. **If crashes persist:**
+   - Update app to latest version
+   - Restart your phone
+   - Try again
+
+</Accordion>
+
+<Accordion title="App stuck on 'Searching for devices'">
+
+**On Phone:** App shows "Searching..." forever, doesn't find device
+
+**See:** [Device not found in Bluetooth list](#device-not-found-in-bluetooth-list) above
+
+</Accordion>
+
+<Accordion title="App won't install from App Store">
+
+**On Phone:** Can't download or install the app
+
+**Solutions:**
+
+1. **Check phone storage**
+   - Go to Settings → Storage
+   - Make sure you have at least 100MB free
+
+2. **Check internet connection**
+   - Make sure phone has internet (WiFi or cellular)
+   - Try downloading a different app to test
+
+3. **Restart phone**
+   - Turn phone off
+   - Turn back on
+   - Try downloading again
+
+4. **Update phone OS**
+   - App may require newer OS version
+   - Update to latest version
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## Still Stuck?
+
+If none of these solutions work:
+
+1. **Factory reset and try again**
+   - Unplug the device for 10 seconds
+   - Plug it back in to boot into factory reset
+   - Confirm factory reset on device screen
+   - Start setup from beginning
+
+2. **Contact support**
+   - Email: support@pamir.cloud
+   - Include:
+     - Device serial number
+     - What step you're stuck on
+     - What error messages you see
+     - Photos of device screen and app screen (if possible)
+
+3. **Check for updates**
+   - Make sure you have the latest app version
+   - Check for device firmware updates (Settings in app)

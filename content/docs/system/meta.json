@@ -2,6 +2,8 @@
     "title": "System",
     "pages": [
         "system",
+        "multi-modal-ux",
+        "settings-framework",
         "storage",
         "updates",
         "security",

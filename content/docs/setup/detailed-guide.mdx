@@ -1,0 +1,555 @@
+---
+title: Detailed Setup Guide
+description: Step-by-step walkthrough with detailed explanations
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion'
+
+This guide walks you through every step of setting up your Distiller, with detailed explanations of what's happening at each stage.
+
+---
+
+## Before You Start
+
+**What You Need:**
+- Your Distiller (unboxed and plugged in)
+- Your smartphone (iOS or Android)
+- WiFi network name and password
+- 5 minutes of time
+
+**Important Notes:**
+- Your Distiller supports **2.4GHz and 5GHz WiFi**
+- Keep your phone near the device during setup
+- Bluetooth must be enabled on your phone
+
+---
+
+## Step 1: Power On the Device
+
+**What to do:**
+1. Plug in your Distiller to power
+2. Wait 10-15 seconds for the device to boot
+
+**On Device Display:**
+
+```
+First, you'll see:
+┌─────────────────────┐
+│                     │
+│   Pamir Distiller   │
+│                     │
+│   Starting...       │
+│                     │
+└─────────────────────┘
+```
+
+```
+Then, after 10 seconds:
+┌─────────────────────┐
+│                     │
+│   No Internet       │
+│                     │
+│   [QR CODE]         │
+│                     │
+│   Scan to connect   │
+│                     │
+└─────────────────────┘
+```
+
+<Callout>
+**What's happening:** The device is in "recovery mode" - it's looking for WiFi but doesn't have credentials yet. The QR code is how you'll tell it which network to use.
+</Callout>
+
+**The QR code will stay on screen until you complete setup.** No timeout - take your time.
+
+---
+
+## Step 2: Download and Open the App
+
+**What to do:**
+1. Open your phone's camera app
+2. Point it at the QR code
+3. Wait for the notification
+4. Tap the notification
+
+**On Your Phone:**
+
+```
+Camera detects QR:
+┌────────────────────────┐
+│ 📷                     │
+│                        │
+│  [Viewing QR Code]     │
+│                        │
+│  Open "Distiller App"  │ ← Tap this
+│                        │
+└────────────────────────┘
+```
+
+**What happens next depends on whether you have the app:**
+
+**If App Already Installed:**
+- App opens immediately
+- Shows "Searching for devices..." screen
+
+**If App NOT Installed:**
+```
+┌────────────────────────┐
+│ App Store              │
+│                        │
+│ Distiller              │
+│ by Pamir               │
+│                        │
+│    [GET]               │ ← Tap to download
+└────────────────────────┘
+```
+- Download the app (takes ~30 seconds)
+- App opens automatically after install
+
+<Callout type="info">
+**Note:** The QR code only opens the app - it doesn't connect to your device. The connection happens in the next step.
+</Callout>
+
+---
+
+## Step 3: Find Your Device via Bluetooth
+
+**On Your Phone:**
+
+First, the app checks if Bluetooth is enabled:
+
+```
+If Bluetooth is OFF:
+┌──────────────────────────┐
+│ ⚠️ Bluetooth Required    │
+│                          │
+│ Bluetooth must be on to  │
+│ connect to your device.  │
+│                          │
+│ [Open Settings]          │
+└──────────────────────────┘
+```
+
+If you see this, tap "Open Settings" and enable Bluetooth, then return to the app.
+
+**If Bluetooth is ON, app searches automatically:**
+
+```
+┌──────────────────────────┐
+│ Searching for devices... │
+│                          │
+│        ○ ○ ○             │ ← Animated
+│                          │
+│ Make sure your Distiller │
+│ is powered on and nearby │
+└──────────────────────────┘
+```
+
+**Within 5-15 seconds, your device appears:**
+
+```
+┌──────────────────────────┐
+│ Found Distillers         │
+│                          │
+│ ○ Distiller-A4F2  ━━━━━ │ ← Strong signal
+│   Serial: A4F2           │
+│   Distance: Very close   │
+│                          │
+│ ○ Distiller-B8C9  ━━    │ ← Weak signal
+│   Serial: B8C9           │
+│   Distance: Far          │
+│                          │
+│ [Scan Again]             │
+└──────────────────────────┘
+```
+
+**What to do:**
+- Look for the device with the **strongest signal** (most bars)
+- Check the serial number matches your device (if visible on device)
+- Tap the device to connect
+
+<Callout>
+**Multiple devices?** If you see several Distillers, the one with the strongest signal is usually yours. You can also check the serial number on the back of your device.
+</Callout>
+
+---
+
+## Step 4: Pair via Bluetooth
+
+**On Device Display:**
+
+When you tap to connect, device shows:
+
+```
+┌─────────────────────┐
+│                     │
+│   Bluetooth         │
+│   Pairing           │
+│                     │
+│   PIN: 1234         │
+│                     │
+│   Enter on phone    │
+│                     │
+└─────────────────────┘
+```
+
+**On Your Phone:**
+
+```
+┌──────────────────────────┐
+│ Pairing with Distiller   │
+│                          │
+│ Enter the PIN shown on   │
+│ your device's screen:    │
+│                          │
+│ PIN: [____]              │
+│                          │
+│      [Connect]           │
+└──────────────────────────┘
+```
+
+**What to do:**
+1. Look at your device's screen - note the PIN (e.g., "1234")
+2. Enter that PIN in the app
+3. Tap "Connect"
+
+**On Your Phone (after entering correct PIN):**
+
+```
+┌──────────────────────────┐
+│ ✓ Connected              │
+│                          │
+│ Bluetooth link           │
+│ established              │
+│                          │
+└──────────────────────────┘
+```
+
+**On Device Display:**
+
+```
+┌─────────────────────┐
+│                     │
+│   Bluetooth         │
+│   Connected ✓       │
+│                     │
+└─────────────────────┘
+```
+
+<Callout type="warn">
+**Wrong PIN?** If you enter the wrong PIN, you'll see an error. Just check the device screen again and re-enter the correct PIN. You have 5 attempts.
+</Callout>
+
+---
+
+## Step 5: Name Your Device
+
+**On Your Phone:**
+
+```
+┌──────────────────────────┐
+│ Name your Distiller      │
+│                          │
+│ Give it a name you'll    │
+│ recognize:               │
+│                          │
+│ [My Distiller        ]   │
+│                          │
+│ Examples:                │
+│ • Kitchen Distiller      │
+│ • Lab Device 1           │
+│ • Office Pamir           │
+│                          │
+│      [Next]              │
+└──────────────────────────┘
+```
+
+**On Device Display:**
+
+```
+┌─────────────────────┐
+│                     │
+│   Setting up...     │
+│                     │
+│   Step 1 of 2       │
+│                     │
+└─────────────────────┘
+```
+
+**What to do:**
+- Enter a name you'll remember
+- This is how the device will appear in the app
+- You can change it later in settings
+
+**Tips:**
+- Use a descriptive name if you have multiple devices
+- Keep it short (fits better on small screens)
+- Avoid special characters
+
+---
+
+## Step 6: Set Device Password
+
+**On Your Phone:**
+
+```
+┌──────────────────────────┐
+│ Protect your device      │
+│                          │
+│ Create a password to     │
+│ prevent unauthorized     │
+│ access:                  │
+│                          │
+│ Password: [••••••••]     │
+│ Confirm:  [••••••••]     │
+│                          │
+│ Requirements:            │
+│ • At least 6 characters  │
+│                          │
+│      [Next]              │
+└──────────────────────────┘
+```
+
+**On Device Display:**
+
+```
+┌─────────────────────┐
+│                     │
+│   Setting up...     │
+│                     │
+│   Step 2 of 2       │
+│                     │
+└─────────────────────┘
+```
+
+**What to do:**
+1. Enter a secure password (at least 6 characters)
+2. Confirm by entering it again
+3. Tap "Next"
+
+<Callout type="warn">
+**Important:** Remember this password! You'll need it if you ever need to reconnect the device to WiFi or change settings.
+</Callout>
+
+**Why is this needed?**
+- Anyone with Bluetooth can discover your device
+- The password prevents strangers from accessing it
+- It's like the lock screen on your phone
+
+---
+
+## Step 7: Connect to WiFi
+
+**On Your Phone:**
+
+App automatically scans for WiFi networks:
+
+```
+┌──────────────────────────┐
+│ Scanning for networks... │
+│                          │
+│        ○ ○ ○             │
+└──────────────────────────┘
+```
+
+Then shows available networks:
+
+```
+┌──────────────────────────┐
+│ Available Networks       │
+│                          │
+│ ○ HomeNetwork     ━━━━━ │ ← Strong
+│   2.4GHz                 │
+│                          │
+│ ○ OfficeWiFi      ━━━   │ ← Medium
+│   2.4GHz                 │
+│                          │
+│ ○ Guest           ━     │ ← Weak
+│   2.4GHz                 │
+│                          │
+│ [Network not listed?]    │
+└──────────────────────────┘
+```
+
+**What to do:**
+1. Find your WiFi network in the list
+2. Tap on it
+3. Enter your WiFi password
+
+```
+After tapping network:
+┌──────────────────────────┐
+│ Connect to HomeNetwork   │
+│                          │
+│ Password:                │
+│ [****************]       │
+│                          │
+│ ☑ Show password          │
+│                          │
+│      [Connect]           │
+└──────────────────────────┘
+```
+
+<Callout type="info">
+**Network not listed?** Tap "Network not listed?" to enter the network name (SSID) manually. Your Distiller supports both 2.4GHz and 5GHz networks.
+</Callout>
+
+**On Device Display (while connecting):**
+
+```
+┌─────────────────────┐
+│                     │
+│   Connecting to     │
+│   HomeNetwork...    │
+│                     │
+│   ●●●○○○           │
+│                     │
+└─────────────────────┘
+```
+
+This takes 10-30 seconds depending on your network.
+
+---
+
+## Step 8: Verify Connection
+
+**What happens behind the scenes:**
+
+The device does TWO checks before declaring success:
+
+1. **WiFi Connection:** Can it join the network?
+2. **Internet Verification:** Can it reach the internet?
+
+This is important because WiFi can work while internet is down.
+
+**On Device Display (checking internet):**
+
+```
+┌─────────────────────┐
+│                     │
+│   WiFi Connected    │
+│                     │
+│   Checking          │
+│   internet...       │
+│                     │
+└─────────────────────┘
+```
+
+**If everything succeeds:**
+
+**On Device Display:**
+
+```
+┌─────────────────────┐
+│                     │
+│   Connected ✓       │
+│                     │
+│   IP: 192.168.1.42  │
+│                     │
+└─────────────────────┘
+```
+
+**On Your Phone:**
+
+```
+┌──────────────────────────┐
+│ ✓ Setup Complete!        │
+│                          │
+│ Your Distiller is online │
+│ and ready to use.        │
+│                          │
+│ Status: Connected        │
+│ WiFi: HomeNetwork        │
+│ Signal: Strong           │
+│                          │
+│      [Get Started]       │
+└──────────────────────────┘
+```
+
+<Callout type="success">
+**Success!** Your Distiller is now connected to WiFi and can access the internet. The Bluetooth connection will automatically close.
+</Callout>
+
+---
+
+## What Happens After Setup?
+
+**Device Display:**
+- Shows dashboard with system status
+- Displays IP address
+- No longer shows QR code
+
+**App:**
+- Shows your device as "Online"
+- Green status indicator
+- You can now access all features
+
+**Bluetooth:**
+- Automatically disconnects (no longer needed)
+- Turns OFF to save battery
+- Will turn back ON if WiFi is lost
+
+---
+
+## Common Questions
+
+<Accordions>
+
+<Accordion title="Can I change the device name later?">
+
+Yes! Go to Settings in the app → Device Info → Edit Name
+
+</Accordion>
+
+<Accordion title="What if I forget the device password?">
+
+You'll need to factory reset the device. This will erase all settings and you'll need to set it up again from scratch.
+
+To factory reset:
+1. Hold the power button for 10 seconds
+2. Device will show "Factory Reset?"
+3. Confirm by pressing the button again
+
+</Accordion>
+
+<Accordion title="Can I connect to a different WiFi network later?">
+
+Yes! Open the app → Settings → Change WiFi Network
+
+You'll need to enter your device password to authorize the change.
+
+</Accordion>
+
+<Accordion title="Why does it take so long to connect to WiFi?">
+
+The device is doing several things:
+1. Joining the WiFi network (5-10 seconds)
+2. Getting an IP address from your router (5 seconds)
+3. Verifying internet connectivity (5 seconds)
+4. Establishing secure connection to Pamir servers (5-10 seconds)
+
+Total: 20-30 seconds is normal.
+
+</Accordion>
+
+<Accordion title="What happens if I quit the app during setup?">
+
+**Good news:** You can continue where you left off!
+
+- If you quit before setting the password: Start from the beginning
+- If you quit after setting the password:
+  1. Reopen the app
+  2. App will find your device via Bluetooth
+  3. Enter your device password
+  4. Continue from WiFi setup
+
+</Accordion>
+
+</Accordions>
+
+---
+
+## Need Help?
+
+If something isn't working as described, see the [Troubleshooting Guide](/docs/setup/troubleshooting) for solutions to common problems.
