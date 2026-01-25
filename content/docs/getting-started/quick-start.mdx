@@ -7,7 +7,7 @@ import { Callout } from 'fumadocs-ui/components/callout'
 
 <Callout>
   **Time to complete:** 3-5 minutes
-  **What you need:** Your phone, WiFi password
+  **What you need:** Your phone, WiFi password, Google/Apple account
 </Callout>
 
 ---
@@ -38,40 +38,30 @@ The device is ready for setup. It's showing a QR code that links to the Distille
 
 ---
 
-## Connect Your Phone
+## Connect Your Phone & Sign In
 
-### Step 1: Scan QR Code
+### Step 1: Scan QR Code & Sign In
 
 **What to do on your phone:**
 1. Open the Camera app
 2. Point at the QR code on your Distiller's screen
 3. Tap the notification to open the Distiller app
-
-**Device Display:**
-```
-┌──────────────────────────┐
-│                          │
-│   [QR CODE]              │
-│                          │
-│   Connecting to phone... │
-│                          │
-└──────────────────────────┘
-```
+4. On the Welcome screen, tap **Continue with Apple** or **Continue with Google**
 
 **App Display:**
 
 <div className="flex justify-center my-8">
   <img
     src="/docs/app/01-welcome.png"
-    alt="App welcome screen - ready to discover device"
+    alt="App welcome screen with Sign-In options"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
-### Step 2: App Finds Your Device
+### Step 2: Search for Devices
 
 **What happens automatically:**
-- App opens and searches for your Distiller via Bluetooth
+- Once signed in, the app searches for your Distiller via Bluetooth
 - Finds your device and shows it in the list of nearby devices
 
 **App Display:**
@@ -88,77 +78,16 @@ The device is ready for setup. It's showing a QR code that links to the Distille
 
 ---
 
-## Secure Your Device
-
-Your device is now connected to the app via Bluetooth. Now you'll set it up.
-
-### Step 3: Name Your Device
-
-Give your Distiller a memorable name so you can identify it later.
-
-**Device Display:**
-```
-┌──────────────────────────┐
-│                          │
-│   [QR CODE]              │
-│                          │
-│   Setting up...          │
-│                          │
-└──────────────────────────┘
-```
-
-**App Display:**
-
-<div className="flex justify-center my-8">
-  <img
-    src="/docs/app/03-secure-device.png"
-    alt="App screen - set device name and password"
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
-
-**What to do:**
-1. Enter a name (e.g., "My Distiller" or "Studio Bot")
-2. Tap Next
-
-### Step 4: Set Device Password
-
-Create a password to protect your device. You'll need this password if you ever need to recover or change settings.
-
-**What to do:**
-1. Create a strong password (minimum 6 characters, but 8+ recommended)
-2. Confirm the password
-3. Tap Save
-
-**Why both name and password?**
-- **Name** = Device identification (which physical device is this?)
-- **Password** = Device authorization (who can change settings?)
-
-This is like naming and locking your iPhone.
-
----
-
 ## Connect to WiFi
 
-Now that your device is named and secured, it's ready to attempt WiFi connection.
+Your device is now linked to your account. Now it's time to get it online.
 
-### Step 5: Select WiFi Network
+### Step 3: Select WiFi Network
 
 **What happens:**
 1. App requests WiFi network list from device via BLE
 2. Device scans nearby networks and sends list back to app
 3. App displays available networks
-
-**Device Display:**
-```
-┌──────────────────────────┐
-│                          │
-│   [QR CODE]              │
-│                          │
-│   Connecting to WiFi...  │
-│                          │
-└──────────────────────────┘
-```
 
 **App Display:**
 
@@ -174,24 +103,13 @@ Now that your device is named and secured, it's ready to attempt WiFi connection
 1. Find your WiFi network in the list
 2. Tap to select it
 
-### Step 6: Enter WiFi Password & Connect
+### Step 4: Enter WiFi Password & Connect
 
 **What happens:**
 1. App displays password entry screen
 2. You enter your WiFi password
 3. App sends credentials to device via Bluetooth
 4. Device attempts to connect to WiFi
-
-**Device Display:**
-```
-┌──────────────────────────┐
-│                          │
-│   [QR CODE]              │
-│                          │
-│   ⟳ Connecting...        │
-│                          │
-└──────────────────────────┘
-```
 
 **App Display:**
 
@@ -210,7 +128,7 @@ Now that your device is named and secured, it's ready to attempt WiFi connection
 
 ---
 
-## Setup Complete! You're Online
+## Step 5: Setup Complete! You're Online
 
 Your device successfully connected to WiFi and is now online.
 
@@ -220,14 +138,10 @@ Your device successfully connected to WiFi and is now online.
 │                          │
 │   Distiller Online       │
 │                          │
-│   [QR CODE]              │
-│                          │
-│   distiller.local:5000   │
+│   distiller.local        │
 │                          │
 └──────────────────────────┘
 ```
-
-The device now shows a QR code that links to its web interface, plus a direct link you can use from your phone or computer.
 
 **App Display:**
 
@@ -245,24 +159,9 @@ The device now shows a QR code that links to its web interface, plus a direct li
 
 Your Distiller is now **fully online** and ready to work:
 
+- ✅ **Account Linked** - Only you can control your device
 - ✅ **Connected to WiFi** - Internet access established
-- ✅ **Named & Secured** - Device identity and password set
-- ✅ **Bluetooth available** - Can reconnect anytime if WiFi is lost (recovery mode)
 - ✅ **Ready for projects** - You can start using the app
-
-### What Happens Next
-
-You can now:
-- Access your Distiller through the web interface by scanning the QR code on the device or visiting `distiller.local:5000`
-- Use the mobile app to control your Distiller
-- Start creating projects and agents
-
-### If WiFi Is Lost Later
-
-If your Distiller loses internet connection:
-1. The device will show the same setup screen with a QR code
-2. Scan the QR code and repeat the WiFi setup process
-3. It's the same simple process as the initial setup
 
 ---
 

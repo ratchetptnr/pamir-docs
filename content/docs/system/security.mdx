@@ -3,7 +3,6 @@ title: Security
 description: Security Settings Philosophy
 ---
 
-
 import { Callout } from 'fumadocs-ui/components/callout'
 
 <Callout type="warn" title="Under Consideration">
@@ -11,24 +10,23 @@ import { Callout } from 'fumadocs-ui/components/callout'
 </Callout>
 
 <Callout title="Product Philosophy">
-  "Trust through verification." Security settings are dangerous. Enabling SSH or changing firewall rules can expose the device to attacks. We require authentication before users can even view these settings.
+  "Trust through verification." Security settings are dangerous. Enabling SSH or changing firewall rules can expose the device to attacks. We require account-based authentication before users can even view these settings.
 </Callout>
 
 ## The Authentication Gate
 
 Before the security settings page loads, users must authenticate via:
-- **Face ID** (iOS devices with Face ID)
-- **Touch ID** (iOS devices with Touch ID)
-- **Device Passcode** (fallback)
+- **Registered Account Ownership** (Google or Apple)
+- **Face ID / Touch ID** (On your smartphone via the app)
 
 **Why?** These settings can compromise device security. Even *viewing* the current SSH port or firewall status could help an attacker. We treat this page like a bank app: authentication required.
 
 **The flow**:
 1. User taps "Security" in settings
-2. iOS prompts: *"Authenticate to access security settings"*
-3. User scans face/fingerprint or enters passcode
+2. App verifies the registered account token
+3. iOS prompts for biometric auth (*Face ID/Touch ID*)
 4. On success: Settings load
-5. On failure: User can retry or cancel (returns to main settings)
+5. On failure: User is denied access
 
 ---
 
@@ -44,12 +42,8 @@ Before the security settings page loads, users must authenticate via:
 
 **The port**: Hardcoded to **22** (standard SSH port). We show this read-only so users know where to connect.
 
-**Why we don't allow port changes**: Changing SSH ports is a "security through obscurity" tactic. It doesn't meaningfully improve security (attackers scan all ports). It *does* make it harder for users to remember how to connect. We prioritize usability.
-
 **The warning**: We show a security notice:
-> *"Only enable SSH if you need remote access. Make sure you're using a strong password and trusted network."*
-
-**Why?** SSH is powerful. If someone gains access, they control the device. Users should understand the risk.
+> *"Only enable SSH if you need remote access. Secure your connection by using your registered account credentials."*
 
 ---
 
@@ -69,13 +63,11 @@ Before the security settings page loads, users must authenticate via:
 
 ## What We Excluded (and Why)
 
-These settings exist in the underlying OS but were deliberately hidden.
-
 | Setting | Why Excluded |
 | :--- | :--- |
-| **SSH Port** | Standard is 22. Changing it adds complexity without real security benefit. Advanced users can edit `/etc/ssh/sshd_config` manually. |
-| **Firewall Rules** | Too technical. Users would need to understand ports, protocols, and IP ranges. We configure sane defaults (allow SSH, HTTP/HTTPS, block everything else). |
-| **Password Management** | Device password is set during onboarding. Changing it is a separate flow (future feature). |
+| **SSH Port** | Standard is 22. Changing it adds complexity without real security benefit. |
+| **Firewall Rules** | Too technical. We configure sane defaults (allow SSH, HTTP/HTTPS, block everything else). |
+| **Password Management** | Device passwords are eliminated in favor of account-based ownership. Only the registered account owner can manage the device. |
 | **Session Timeout** | Only relevant for web dashboards. The iOS app uses persistent tokens. No need to expose this. |
 
 ---
@@ -87,31 +79,16 @@ These settings exist in the underlying OS but were deliberately hidden.
 We employ multiple layers:
 
 1. **Firewall** (always on): Blocks unauthorized inbound connections
-2. **SSH Password**: Even if firewall allows SSH, users need the device password
-3. **Authentication for Settings**: Can't even *view* security settings without Face ID/passcode
+2. **Account Ownership**: Device only accepts commands from the app which has the registered account
+3. **Authentication for Settings**: Can't even *view* security settings without biometrics
 4. **BLE Security**: Covered in [Bluetooth documentation](/docs/bluetooth)
-
-**Why multiple layers?** No single layer is perfect. Firewall could be bypassed via a compromised local network. SSH password could be brute-forced (though we rate-limit attempts). Authentication for settings prevents shoulder-surfing or unauthorized access to the phone itself.
-
----
-
-## States of Mind
-
-How users interact with security settings based on their needs.
-
-| User Scenario | Settings Pattern |
-| :--- | :--- |
-| **"I need to SSH into the device"** | SSH: On, connect to device IP:22 |
-| **"I'm done developing, want to lock it down"** | SSH: Off, firewall remains on |
-| **"I'm on an untrusted network"** | SSH: Off (disable remote access entirely) |
-| **"I want to check if firewall is protecting me"** | View firewall status (always "Enabled") |
 
 ---
 
 ## Design Principles
 
-1. **Authentication is mandatory**: No bypassing Face ID/Touch ID. If authentication fails, users don't see these settings.
-2. **Defaults should be secure**: Firewall always on, SSH on (because developers need it, but with password protection).
-3. **Read-only where appropriate**: Users can't disable the firewall. It's for their own good.
-4. **Warnings over blocks**: We allow SSH (with a warning) rather than blocking it entirely. Power users need access; we just make sure they know the risk.
-5. **No false security**: We don't expose port changes or obscure firewall rules that give a false sense of security. We focus on real protections: encryption, passwords, firewalls.
+1. **Authentication is mandatory**: No bypassing biometrics/account verification.
+2. **Defaults should be secure**: Firewall always on, SSH on (with account-based protection).
+3. **Read-only where appropriate**: Users can't disable core protections.
+4. **Warnings over blocks**: We allow SSH (with a warning) rather than blocking it entirely.
+5. **No false security**: We focus on real protections: encryption, account ownership, firewalls.

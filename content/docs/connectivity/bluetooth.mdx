@@ -53,7 +53,7 @@ flowchart TD
     Found -->|"No (30s timeout)"| EnableBLE["Auto-Enable BLE Discovery"]
     EnableBLE --> ShowQR["E-ink: Show QR + 'Offline'"]
     ShowQR --> AppConnect["App Connects via BLE"]
-    AppConnect --> Authenticate{"Device Password OK?"}
+    AppConnect --> Authenticate{"Registered Account OK?"}
     Authenticate -->|No| Reject["Reject Command"]
     Reject --> AppConnect
     Authenticate -->|Yes| ProvisionWiFi["App Sends New Wi-Fi Creds"]
@@ -98,10 +98,10 @@ Bluetooth is inherently promiscuous. Anyone nearby can see a discoverable device
 We allow *anyone* to initiate a BLE connection (the "Handshake"). This ensures that in an emergency, your phone can find the device instantly without struggling with OS-level pairing dialogs.
 
 ### The Gatekeeper (Locked)
-Once the connection is established, the device is **deaf** to commands until it receives the **Device Password**.
+Once the connection is established, the device is **deaf** to commands until it verifies **Registered Account Ownership**.
 - **Can I see the device name?** Yes.
-- **Can I change the Wi-Fi?** No (Password Required).
-- **Can I reboot it?** No (Password Required).
+- **Can I change the Wi-Fi?** No (Account Verification Required).
+- **Can I reboot it?** No (Account Verification Required).
 
 ---
 

@@ -155,11 +155,10 @@ User can trigger it at any time by scanning QR code (even if self-healing is run
 - If multiple devices nearby → App shows list with RSSI (signal strength) to help user pick closest
 
 **4. Authentication**
-- App requests device password (security gate)
-- User enters password set during onboarding
-- Device validates password
-- If wrong → Show error, allow retry (up to 5 attempts)
-- If correct → Unlock BLE commands
+- App verifies account ownership (security gate)
+- App checks if the current user is the registered owner of this Distiller
+- If account doesn't match -> Show "Access Denied" error
+- If correct -> Unlock BLE commands (Sign-In token validated)
 
 **5. WiFi Selection**
 - App sends BLE command: "Scan for networks"
@@ -187,7 +186,7 @@ User can trigger it at any time by scanning QR code (even if self-healing is run
 Check: Is BLE connected?
 ├─ NO → Start from QR scan
 └─ YES → Check: Is device authenticated?
-    ├─ NO → Jump to password entry
+    ├─ NO → Jump to account verification
     └─ YES → Jump to WiFi selection
 ```
 

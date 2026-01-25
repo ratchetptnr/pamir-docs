@@ -37,7 +37,7 @@ Self-healing: Tries cached credentials (fails - wrong password)
 Display shows: "No Internet - Scan QR"
 BLE turns ON
 ↓
-User scans QR → BLE connects → Enters device password
+User scans QR → BLE connects → App verifies account
 ↓
 App shows WiFi networks → User selects network → Enters NEW password
 ↓
@@ -159,7 +159,7 @@ User moves device closer OR connects via BLE to provision stronger network
 ```
 Initial State: RECOVERING
 ↓
-User scans QR → BLE connects → Enters device password
+User scans QR → BLE connects → App verifies account
 ↓
 App showing WiFi list
 ↓
@@ -218,34 +218,28 @@ Recovery proceeds normally
 
 </Accordion>
 
-<Accordion title="Wrong Device Password During Recovery">
+<Accordion title="Access Denied (Account Mismatch)">
 
-**Scenario:** User connects via BLE but enters wrong device password.
+**Scenario:** User connects via BLE but is not the registered owner of the device.
 
 **What Happens:**
 ```
 User scans QR → BLE connects
 ↓
-App requests: Device password
+App requests: Account Verification
 ↓
-User enters: Wrong password
+Account check: UNKNOWN / MISMATCH
 ↓
-Device validates: WRONG
-↓
-Device sends: "Invalid Password" (explicit error)
+Device sends: "Access Denied" (explicit error)
 ↓
 BLE connection stays OPEN (does NOT disconnect)
 ↓
-App shows: "Incorrect device password. Try again."
+App shows: "You are not the registered owner of this Distiller."
 ↓
-User can immediately re-enter password (no rescan needed)
-↓
-User retries (up to 5 attempts before disconnect for DoS protection)
-↓
-Correct password → Recovery proceeds
+User can switch accounts or contact support
 ```
 
-**Result:** User doesn't have to restart entire flow on typo. Respects user recovery attempts.
+**Result:** Security is enforced based on account ownership. Unregistered users cannot provision WiFi.
 
 </Accordion>
 

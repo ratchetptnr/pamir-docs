@@ -16,6 +16,7 @@ This guide walks you through every step of setting up your Distiller, with detai
 - Your Distiller (unboxed and plugged in)
 - Your smartphone (iOS or Android)
 - WiFi network name and password
+- A Google or Apple account
 - 5 minutes of time
 
 **Important Notes:**
@@ -65,7 +66,7 @@ Then, after 10 seconds:
 
 ---
 
-## Step 2: Download and Open the App
+## Step 2: Download the App and Sign In
 
 **What to do:**
 1. Open your phone's camera app
@@ -91,7 +92,7 @@ Camera detects QR:
 
 **If App Already Installed:**
 - App opens immediately
-- Shows "Searching for devices..." screen
+- Shows Welcome screen with sign-in options
 
 **If App NOT Installed:**
 ```
@@ -107,8 +108,31 @@ Camera detects QR:
 - Download the app (takes ~30 seconds)
 - App opens automatically after install
 
+### Sign In to Your Account
+
+After the app opens, you'll see the Welcome screen:
+
+```
+┌────────────────────────┐
+│                        │
+│   Welcome to Distiller │
+│                        │
+│   The computer agents  │
+│   use.                 │
+│                        │
+│ [  Continue with Apple ] │
+│ [  Continue with Google] │
+│                        │
+└────────────────────────┘
+```
+
+**What to do:**
+1. Tap "Continue with Apple" or "Continue with Google"
+2. Complete the sign-in using Face ID, Touch ID, or your password
+3. The app will automatically proceed to device search
+
 <Callout type="info">
-**Note:** The QR code only opens the app - it doesn't connect to your device. The connection happens in the next step.
+**Why sign in?** Your Distiller is registered to your account. This means only you can control it - no device passwords needed!
 </Callout>
 
 ---
@@ -243,103 +267,7 @@ When you tap to connect, device shows:
 
 ---
 
-## Step 5: Name Your Device
-
-**On Your Phone:**
-
-```
-┌──────────────────────────┐
-│ Name your Distiller      │
-│                          │
-│ Give it a name you'll    │
-│ recognize:               │
-│                          │
-│ [My Distiller        ]   │
-│                          │
-│ Examples:                │
-│ • Kitchen Distiller      │
-│ • Lab Device 1           │
-│ • Office Pamir           │
-│                          │
-│      [Next]              │
-└──────────────────────────┘
-```
-
-**On Device Display:**
-
-```
-┌─────────────────────┐
-│                     │
-│   Setting up...     │
-│                     │
-│   Step 1 of 2       │
-│                     │
-└─────────────────────┘
-```
-
-**What to do:**
-- Enter a name you'll remember
-- This is how the device will appear in the app
-- You can change it later in settings
-
-**Tips:**
-- Use a descriptive name if you have multiple devices
-- Keep it short (fits better on small screens)
-- Avoid special characters
-
----
-
-## Step 6: Set Device Password
-
-**On Your Phone:**
-
-```
-┌──────────────────────────┐
-│ Protect your device      │
-│                          │
-│ Create a password to     │
-│ prevent unauthorized     │
-│ access:                  │
-│                          │
-│ Password: [••••••••]     │
-│ Confirm:  [••••••••]     │
-│                          │
-│ Requirements:            │
-│ • At least 6 characters  │
-│                          │
-│      [Next]              │
-└──────────────────────────┘
-```
-
-**On Device Display:**
-
-```
-┌─────────────────────┐
-│                     │
-│   Setting up...     │
-│                     │
-│   Step 2 of 2       │
-│                     │
-└─────────────────────┘
-```
-
-**What to do:**
-1. Enter a secure password (at least 6 characters)
-2. Confirm by entering it again
-3. Tap "Next"
-
-<Callout type="warn">
-**Important:** Remember this password! You'll need it if you ever need to reconnect the device to WiFi or change settings.
-</Callout>
-
-**Why is this needed?**
-- Anyone with Bluetooth can discover your device
-- The password prevents strangers from accessing it
-- It's like the lock screen on your phone
-
----
-
-## Step 7: Connect to WiFi
+## Step 5: Connect to WiFi
 
 **On Your Phone:**
 
@@ -380,14 +308,15 @@ Then shows available networks:
 ```
 After tapping network:
 ┌──────────────────────────┐
-│ Connect to HomeNetwork   │
+│ Join "HomeNetwork"       │
 │                          │
-│ Password:                │
-│ [****************]       │
+│ Enter the password to    │
+│ connect your Distiller   │
+│ to this network.         │
 │                          │
-│ ☑ Show password          │
+│ Password: [____________] │
 │                          │
-│      [Connect]           │
+│  [X]              [✓]    │
 └──────────────────────────┘
 ```
 
@@ -412,7 +341,7 @@ This takes 10-30 seconds depending on your network.
 
 ---
 
-## Step 8: Verify Connection
+## Step 6: Verify Connection
 
 **What happens behind the scenes:**
 
@@ -490,6 +419,10 @@ This is important because WiFi can work while internet is down.
 - Turns OFF to save battery
 - Will turn back ON if WiFi is lost
 
+**Device Name:**
+- Your Distiller is automatically named "[Your Name]'s Distiller"
+- You can change it later in Settings
+
 ---
 
 ## Common Questions
@@ -502,22 +435,11 @@ Yes! Go to Settings in the app → Device Info → Edit Name
 
 </Accordion>
 
-<Accordion title="What if I forget the device password?">
-
-You'll need to factory reset the device. This will erase all settings and you'll need to set it up again from scratch.
-
-To factory reset:
-1. Hold the power button for 10 seconds
-2. Device will show "Factory Reset?"
-3. Confirm by pressing the button again
-
-</Accordion>
-
 <Accordion title="Can I connect to a different WiFi network later?">
 
 Yes! Open the app → Settings → Change WiFi Network
 
-You'll need to enter your device password to authorize the change.
+The change will be authorized automatically since you're signed in to the registered account.
 
 </Accordion>
 
@@ -537,12 +459,22 @@ Total: 20-30 seconds is normal.
 
 **Good news:** You can continue where you left off!
 
-- If you quit before setting the password: Start from the beginning
-- If you quit after setting the password:
-  1. Reopen the app
-  2. App will find your device via Bluetooth
-  3. Enter your device password
-  4. Continue from WiFi setup
+1. Reopen the app
+2. Sign in with the same account
+3. App will find your device via Bluetooth
+4. Continue from WiFi setup
+
+</Accordion>
+
+<Accordion title="What if I need to reset my device?">
+
+You can factory reset your device if needed:
+
+1. Hold the power button for 10 seconds
+2. Device will show "Factory Reset?"
+3. Confirm by pressing the button again
+
+After reset, you'll need to set it up again from the beginning.
 
 </Accordion>
 
