@@ -1,0 +1,341 @@
+---
+title: Offline UX
+description: Connectivity states and action guards
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+
+<Callout title="Product Philosophy">
+  **Offline doesn't mean broken.** Users should always know what's happening and have a clear path forward. We guard actions rather than hiding features—visibility builds trust.
+</Callout>
+
+The app monitors two independent connectivity layers: the phone's network connection and each device's reachability. These states combine to determine what actions are available and what messaging to show.
+
+---
+
+## Two Kinds of Offline
+
+Understanding the difference between these states is critical to the user experience:
+
+| State | What It Means | User Perception |
+| :--- | :--- | :--- |
+| **Phone Offline** | iPhone has no internet (WiFi/Cellular) | "My phone can't reach the internet" |
+| **Device Offline** | Distiller isn't reachable via cloud | "My device isn't responding" |
+
+These are independent conditions. A phone with perfect WiFi cannot communicate with a device that's lost its connection. Conversely, a device may be online and healthy while the user's phone has no signal.
+
+---
+
+## Action Availability Matrix
+
+Different actions require different connectivity. The app guards each action appropriately:
+
+| Action | Phone Offline | Device Offline | Available? |
+| :--- | :--- | :--- | :--- |
+| Browse cached projects | Any | Any | ✅ Always |
+| Switch between devices | Any | Any | ✅ Always |
+| View project history | Any | Any | ✅ Always |
+| Send chat message | ❌ Blocked | ❌ Blocked | Requires both |
+| Create new project | ❌ Blocked | ❌ Blocked | Requires both |
+| Git clone repository | ❌ Blocked | ❌ Blocked | Requires both |
+| Run terminal command | ❌ Blocked | ❌ Blocked | Requires both |
+| Refresh project list | ❌ Blocked | ❌ Blocked | Requires both |
+
+**The Pattern**: Actions that modify state or require real-time communication are blocked. Read-only access to cached content remains available.
+
+---
+
+## Alert System
+
+<Mermaid chart={`
+flowchart TD
+    Start([User taps blocked action]) --> Check{Which offline?}
+
+    Check -->|Phone| PhoneAlert[Phone Offline Alert]
+    Check -->|Device| DeviceAlert[Device Offline Alert]
+    Check -->|Both| PhoneAlert
+
+    PhoneAlert --> PhoneMsg["Your iPhone is offline"]
+    PhoneMsg --> PhoneAction["Check your connection"]
+    PhoneAction --> Dismiss([Alert dismissed])
+
+    DeviceAlert --> DeviceMsg["Device Name is offline"]
+    DeviceMsg --> DeviceAction["Recover via Bluetooth"]
+    DeviceAction --> Choice{User taps CTA?}
+
+    Choice -->|No| Dismiss
+    Choice -->|Yes| Recovery([Recovery Flow starts])
+
+    style Start fill:#fff4e6
+    style Recovery fill:#d4edff
+    style Dismiss fill:#e1f5e1
+    style PhoneAlert fill:#ffebee
+    style DeviceAlert fill:#ffebee
+`} />
+
+### Phone Offline Alert
+
+When the phone lacks internet connectivity:
+
+- **Title**: "No Internet Connection"
+- **Message**: "Your phone is offline. Connect to WiFi or cellular to manage your Distillers."
+- **Actions**: "OK" — the user must resolve this outside the app
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/alert-phone-offline.png"
+    alt="Phone offline alert dialog"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Device Offline Alert
+
+When the device is unreachable:
+
+- **Title**: "[Device Name] is Offline"
+- **Message**: "Unable to reach your Distiller. AI agents are paused. Recover the connection via Bluetooth to resume."
+- **Primary Action**: "Recover via Bluetooth" → Launches recovery flow
+- **Secondary Action**: "Cancel"
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/alert-device-offline.png"
+    alt="Device offline alert with recovery CTA"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+The device alert includes a recovery path because the app can actually help. For phone connectivity, the user must fix it themselves.
+
+---
+
+## State Detection
+
+### Phone Network Status
+
+The app passively monitors the phone's network status. Changes are detected automatically without polling. When connectivity drops, the app immediately updates its internal state and guards affected actions.
+
+### Device Reachability
+
+Device status is determined by the Cloud Agent heartbeat. Each device periodically signals its presence. When heartbeats stop arriving, the device is marked offline after a brief grace period to avoid false positives from transient network hiccups.
+
+---
+
+## Visual Treatment
+
+### Device Selector Indicator
+
+The device selector pill in the navigation bar provides immediate visibility into device status:
+
+#### Online (Normal State)
+Device name displayed normally with no indicators.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/device-selector-online.png"
+    alt="Device selector in normal online state"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+#### Active Device Offline
+WiFi slash icon (orange) appears next to the device name.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/device-selector-active-offline.png"
+    alt="Device selector showing WiFi slash icon when active device is offline"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+#### Other Device Offline
+Small orange badge dot appears on the selector, indicating attention needed elsewhere.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/device-selector-badge.png"
+    alt="Device selector showing orange badge when another device is offline"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+The badge follows iOS's standard pattern used in Settings and other system apps — tapping the selector reveals which devices need recovery.
+
+### Device Menu
+
+When opening the device dropdown menu:
+
+- **Online devices**: Show a checkmark (for the selected device) or no icon
+- **Offline devices**: Show a WiFi slash icon next to their name
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/device-menu-offline.png"
+    alt="Device menu showing offline indicators"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+This allows users to see at a glance which of their devices are currently reachable and which have lost connection.
+
+### Settings Icon Badge
+
+When the active device is offline, a red badge dot appears on the gear icon in the toolbar, indicating that Settings contains an action item.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/toolbar-settings-badge.png"
+    alt="Toolbar showing red badge on settings gear icon when device is offline"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+This follows iOS's convention of using badges to indicate "attention needed" — the user can tap the gear to access the recovery option.
+
+### Settings Page (Device Offline)
+
+When navigating to Settings while the selected device is offline, a device status row appears as the first item in the Connectivity section:
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/settings-device-offline.png"
+    alt="Settings page showing device offline row in Connectivity section"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+**Row components:**
+- **Icon**: WiFi slash on orange rounded rectangle (matches iOS settings icon style)
+- **Title**: Device name
+- **Trailing**: "Offline" status text + orange badge dot
+- **Action**: Tapping launches the BLE recovery flow
+
+This design follows iOS's "Software Update available" pattern — the indicator appears inline within an existing section rather than as a separate banner. Settings rows that require device communication are still visible but guarded, showing alerts when tapped.
+
+### Blocked Actions
+
+When a user attempts a blocked action:
+
+1. **Don't disable the button** — Users should be able to tap and learn why it's unavailable
+2. **Show contextual alert** — Explain what's wrong and what they can do
+3. **Provide path forward** — Device offline alerts include recovery; phone offline alerts explain the situation
+
+### List View Behavior
+
+Cached content remains fully navigable. Users can:
+- Scroll through their project list
+- Open project details
+- View historical data
+- Switch between devices
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/list-cached-browsing.png"
+    alt="Project list remains browsable while offline"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+This ensures the app never feels "dead" even when connectivity is compromised.
+
+---
+
+## Design Principles
+
+1. **Visibility Over Mystery**: Show alerts with clear explanations, don't silently fail
+2. **Actionable When Possible**: Device offline has a recovery path; phone offline doesn't
+3. **Preserve Read Access**: Cached content is always browsable
+4. **Phone First**: When both are offline, address phone connectivity first—nothing works without it
+5. **Grace Periods**: Brief connectivity blips shouldn't trigger alerts—wait for persistent issues
+6. **iOS Native Patterns**: Follow established iOS patterns (badges, inline indicators) rather than custom UI
+
+---
+
+## Multi-Device Scenarios
+
+Users with multiple Distillers need visibility into each device's status:
+
+| Scenario | Active Device | Other Devices | UX Treatment |
+| :--- | :--- | :--- | :--- |
+| All online | ✅ Online | ✅ Online | Normal UI, no indicators |
+| Active offline | ❌ Offline | ✅ Online | wifi.slash icon, auto-alert, actions blocked |
+| Other offline | ✅ Online | ❌ Offline | Badge on selector, menu shows which |
+| Mixed | ❌ Offline | ❌ Some offline | wifi.slash + badge, prioritize active |
+
+**Key insight**: When the active device is offline, the user is blocked. When other devices are offline, it's informational — they can continue working and recover the other device later.
+
+The device menu shows all devices with their status, allowing users to:
+- See which devices need attention
+- Switch to a working device
+- Tap an offline device to trigger its recovery flow
+
+---
+
+## Haptic Feedback
+
+Alerts include haptic feedback to reinforce urgency:
+
+- **Trigger**: When showing any offline alert (phone or device)
+- **Type**: `UINotificationFeedbackGenerator.warning`
+- **Purpose**: Physical reinforcement without additional visual noise
+
+This is especially useful when the user repeatedly taps blocked actions — the haptic provides immediate feedback that something requires attention.
+
+---
+
+## Testing with Developer Settings
+
+<Callout title="Internal Use Only">
+  Developer Settings are for internal testing and QA purposes. This section should not be visible to end users in production builds.
+</Callout>
+
+The app includes simulation tools for testing offline UX scenarios:
+
+**Settings → Developer → Enable Developer Mode**
+
+### Network Simulation
+- **Phone Offline**: Toggle to simulate iPhone having no internet
+
+### Device Simulation
+Per-device toggles allow testing multi-device scenarios:
+
+```
+┌───────────────────────────────────────────┐
+│ Device Simulation                         │
+├───────────────────────────────────────────┤
+│ 📶 Home Office (Active)            [ ]    │
+│ ⚠️ Dev Server                      [✓]    │  ← Simulated offline
+│ 📶 Lab Unit                        [ ]    │
+└───────────────────────────────────────────┘
+```
+
+**Test scenarios:**
+1. Toggle one non-active device offline → verify badge appears on selector
+2. Toggle active device offline → verify alert appears, wifi.slash shows
+3. Toggle multiple devices → verify menu shows all offline indicators
+4. Test recovery flow → verify BLE sheet launches correctly
+
+---
+
+## Future: Push Notifications
+
+<Callout title="Not Yet Implemented">
+  This section describes intended behavior for a future release.
+</Callout>
+
+When the app is backgrounded and a device goes offline, users should receive a push notification:
+
+**Intended behavior:**
+- **Trigger**: Device heartbeat stops while app is backgrounded
+- **Notification**: "[Device Name] went offline"
+- **Action**: Tapping opens app to recovery flow
+
+**Considerations:**
+- Notification should not fire if user is not near the device (geofencing)
+- Debounce to avoid notification spam from brief connectivity blips
+- User should be able to disable per-device in settings
+
+This ensures users are informed even when not actively using the app, enabling faster recovery of critical devices.
