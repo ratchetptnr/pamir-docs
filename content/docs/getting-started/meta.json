@@ -2,6 +2,7 @@
     "title": "Getting Started",
     "pages": [
         "index",
-        "quick-start"
+        "quick-start",
+        "troubleshooting"
     ]
 }

@@ -1,0 +1,222 @@
+---
+title: Recovery Flow
+description: Bluetooth-based device recovery
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+
+<Callout title="Product Philosophy">
+  **Recovery should be simple.** When a device loses WiFi, the user's phone becomes the rescue tool. The path back should be direct—no scanning, no searching, no debugging.
+</Callout>
+
+The recovery flow reconnects a known device to WiFi using Bluetooth as the communication channel. Unlike initial onboarding, recovery skips device discovery entirely—the app already knows which device needs help.
+
+---
+
+## Why Skip BLE Scanning?
+
+During initial setup, the app scans for nearby Distillers because it doesn't know which device the user wants to configure. But recovery is different:
+
+| Scenario | Device Known? | Scan Needed? |
+| :--- | :--- | :--- |
+| **First-time Setup** | No | Yes—find and select device |
+| **Add Device** | No | Yes—discover new hardware |
+| **Recovery** | Yes | No—app knows the target |
+
+The device that triggered the offline alert is the device that needs recovery. Scanning would waste time and potentially confuse users if multiple Distillers are nearby.
+
+---
+
+## The Recovery Journey
+
+<Mermaid chart={`
+flowchart TD
+    Start([Device Offline Alert]) --> Tap["User taps 'Recover via Bluetooth'"]
+
+    Tap --> Connecting[Reconnecting...]
+    Connecting --> BLEResult{BLE Connection}
+
+    BLEResult -->|Failed| RetryPrompt[Connection failed]
+    RetryPrompt --> UserChoice{User choice}
+    UserChoice -->|Try Again| Connecting
+    UserChoice -->|Cancel| End([Return to app])
+
+    BLEResult -->|Success| WiFiList[WiFi Network Selection]
+
+    WiFiList --> SelectNetwork[User selects network]
+    SelectNetwork --> EnterPass[Enter WiFi password]
+    EnterPass --> Sending[Sending credentials...]
+
+    Sending --> WiFiResult{WiFi Connection}
+
+    WiFiResult -->|Wrong Password| PassError[Password incorrect]
+    PassError --> EnterPass
+
+    WiFiResult -->|Timeout| TimeoutError[Connection failed]
+    TimeoutError --> TimeoutChoice{User choice}
+    TimeoutChoice -->|Try Again| Sending
+    TimeoutChoice -->|Different Network| WiFiList
+
+    WiFiResult -->|Success| Complete[Recovery Complete]
+    Complete --> Done([Device back online])
+
+    style Start fill:#ffebee
+    style Done fill:#e1f5e1
+    style Complete fill:#d4edff
+    style End fill:#fff4e6
+    style RetryPrompt fill:#ffebee
+    style PassError fill:#ffebee
+    style TimeoutError fill:#ffebee
+`} />
+
+### Step 1: Reconnecting
+
+The app immediately attempts to establish a Bluetooth connection with the known device. The user sees a simple "Reconnecting..." state with a spinner. No device list, no selection—direct connection.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-reconnecting.png"
+    alt="Reconnecting spinner state"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Step 2: WiFi Selection
+
+Once Bluetooth is established, the device scans for available WiFi networks and reports them to the app. The user selects a network—often the same one that failed, possibly a different one if they've moved or the network changed.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-wifi-list.png"
+    alt="WiFi network selection during recovery"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Step 3: Credential Entry
+
+The user enters the WiFi password. The app sends credentials via Bluetooth to the device.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-wifi-password.png"
+    alt="WiFi password entry screen"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Step 4: Completion
+
+On success, the user sees the unified completion screen confirming the device is back online. The flow ends cleanly—no lingering states or ambiguous outcomes.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-complete.png"
+    alt="Recovery complete screen showing device back online"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+---
+
+## Recovery vs. Full Onboarding
+
+The recovery flow shares infrastructure with onboarding but takes shortcuts appropriate to its context:
+
+| Aspect | Full Onboarding | Recovery |
+| :--- | :--- | :--- |
+| **BLE Scan** | Required—discover devices | Skipped—device known |
+| **Device Selection** | User picks from list | Automatic—one target |
+| **Security Setup** | Required—set name/password | Skipped—already configured |
+| **WiFi Setup** | Required | Required |
+| **Completion Screen** | "All Set!" variant | "Back Online" variant |
+
+Recovery is onboarding minus everything that's already done.
+
+---
+
+## Entry Points
+
+Recovery can be triggered from multiple places:
+
+<div className="flex justify-center gap-4 my-8">
+  <img
+    src="/docs/ios/recovery-entry-alert.png"
+    alt="Recovery triggered from offline alert"
+    className="w-full max-w-[280px] rounded-2xl border shadow-xl"
+  />
+  <img
+    src="/docs/ios/recovery-entry-banner.png"
+    alt="Recovery triggered from banner"
+    className="w-full max-w-[280px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+1. **Device Offline Alert** — Primary path; user taps "Recover via Bluetooth"
+2. **Project List Banner** — If current device goes offline, banner appears with recovery action
+3. **Device Settings** — Manual "Reconnect via Bluetooth" option for proactive recovery
+
+All paths lead to the same flow, ensuring consistent experience regardless of how the user arrives.
+
+---
+
+## Error Handling
+
+### Bluetooth Connection Failed
+
+The device may be out of range, powered off, or experiencing hardware issues.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-error-ble.png"
+    alt="Bluetooth connection failed error"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+- **Message**: "Couldn't connect to [Device Name]"
+- **Options**: Try Again or Cancel
+- **Guidance**: Suggest moving closer to the device
+
+### WiFi Authentication Failed
+
+Wrong password entered.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-error-password.png"
+    alt="Wrong WiFi password error"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+- **Message**: "Password incorrect"
+- **Behavior**: Return to password entry with network pre-selected
+- **Guidance**: After two attempts, remind that passwords are case-sensitive
+
+### WiFi Connection Timeout
+
+The device couldn't join the network within the expected time.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-error-timeout.png"
+    alt="WiFi connection timeout error"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+- **Message**: "Couldn't connect to [Network Name]"
+- **Options**: Try Again or Choose Different Network
+- **Guidance**: Network may be unavailable or signal too weak
+
+---
+
+## Design Principles
+
+1. **Skip What's Known**: Device identity and security are already established—don't repeat them
+2. **Direct Connection**: No scanning, no selection—the target is predetermined
+3. **Same WiFi Flow**: Once connected via Bluetooth, WiFi setup is identical to onboarding
+4. **Clear Completion**: Recovery ends at the same unified completion screen as other flows
+5. **Graceful Failure**: Every error has a retry option and clear messaging

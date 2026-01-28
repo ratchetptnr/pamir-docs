@@ -1,0 +1,14 @@
+{
+    "title": "Archive",
+    "description": "Historical reference documentation. This content is archived and may be outdated.",
+    "pages": [
+        "wifi",
+        "bluetooth",
+        "full-original",
+        "detailed-guide",
+        "developer",
+        "performance",
+        "notifications",
+        "system-philosophy"
+    ]
+}

@@ -2,10 +2,9 @@
     "title": "Documentation",
     "pages": [
         "getting-started",
-        "setup",
         "app",
-        "connectivity",
-        "hardware",
-        "system"
+        "device",
+        "design",
+        "archive"
     ]
 }

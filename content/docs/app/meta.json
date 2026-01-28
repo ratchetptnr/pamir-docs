@@ -1,12 +1,15 @@
 {
     "title": "App",
     "pages": [
+        "index",
         "onboarding",
-        "project-list-view",
+        "project-list",
         "workspace",
         "chat",
         "terminal",
         "editor",
+        "offline-ux",
+        "recovery",
         "shadow-agent"
     ]
 }

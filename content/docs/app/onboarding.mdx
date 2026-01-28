@@ -164,3 +164,139 @@ This table shows what the user sees on both the mobile app and the device screen
 4.  **Respect Time**: Auto-retry shows progress, not just waiting
 5.  **Clear Status**: Processing states explain what's happening
 
+---
+
+## Completion Flows
+
+<Callout title="Product Philosophy">
+  **One screen, many contexts.** Whether setting up a first device, adding another, or recovering a disconnected one—users arrive at the same completion screen with context-appropriate messaging.
+</Callout>
+
+The app handles three distinct scenarios that all culminate in a device being connected. Rather than building separate completion flows, we use a single adaptive screen that adjusts its content based on how the user arrived.
+
+### Three Paths to Completion
+
+<Mermaid chart={`
+flowchart LR
+    subgraph Journeys
+        First([First-Time Setup])
+        Add([Add Device])
+        Recovery([Recovery])
+    end
+
+    subgraph Completion
+        Screen[Unified Completion Screen]
+    end
+
+    First --> Screen
+    Add --> Screen
+    Recovery --> Screen
+
+    style First fill:#d4edff
+    style Add fill:#e8f5e9
+    style Recovery fill:#fff4e6
+    style Screen fill:#f3e5f5
+`} />
+
+| Flow Type | When It Happens | User's Starting Point |
+| :--- | :--- | :--- |
+| **First-Time Setup** | New user, no devices | Welcome screen |
+| **Add Device** | Existing user, adding hardware | Device list or settings |
+| **Recovery** | Device went offline | Offline alert |
+
+Each journey has different context and emotional state. A first-time user is excited and learning. Someone adding a device is expanding their setup. A user in recovery mode is frustrated and wants to get back to work.
+
+### Adaptive Completion Screen
+
+The completion screen adjusts four elements based on flow type:
+
+<div className="flex justify-center gap-4 my-8">
+  <img
+    src="/docs/ios/complete-first-time.png"
+    alt="First-time setup completion screen"
+    className="w-full max-w-[200px] rounded-2xl border shadow-xl"
+  />
+  <img
+    src="/docs/ios/complete-add-device.png"
+    alt="Add device completion screen"
+    className="w-full max-w-[200px] rounded-2xl border shadow-xl"
+  />
+  <img
+    src="/docs/ios/complete-recovery.png"
+    alt="Recovery completion screen"
+    className="w-full max-w-[200px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+#### Content Variations
+
+| Flow Type | Headline | Subtitle |
+| :--- | :--- | :--- |
+| **First-Time** | "You're All Set!" | "Your Distiller is ready to use" |
+| **Add Device** | "Device Added" | "[Device Name] is now connected" |
+| **Recovery** | "Back Online" | "[Device Name] is reconnected" |
+
+#### Primary Action
+
+| Flow Type | Button Text | Destination |
+| :--- | :--- | :--- |
+| **First-Time** | "Get Started" | Main app (project list) |
+| **Add Device** | "Done" | Device list |
+| **Recovery** | "Continue" | Previous location in app |
+
+The action returns users to the most logical place given their context.
+
+### Desktop URL: Always Visible
+
+<Callout title="Why Show the URL?" type="info">
+  Users often forget their device's web address. By displaying it on every completion screen, we ensure they can always find it—even if they didn't write it down during setup.
+</Callout>
+
+Every completion screen prominently displays the device's desktop URL:
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/complete-desktop-url.png"
+    alt="Completion screen highlighting desktop URL with copy action"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+```
+[devicename].distiller.dev
+```
+
+This serves multiple purposes:
+
+- **First-time users** learn where to access their device from a computer
+- **Add device users** are reminded of the new device's unique address
+- **Recovery users** can verify they recovered the right device
+
+The URL is presented with a copy action for easy transfer to other devices or note-taking apps.
+
+### Navigation Behavior
+
+#### Back Button: Hidden
+
+Completion screens are **terminal states**. There's nothing meaningful to go back to:
+
+- First-time setup? The onboarding flow is complete—going back would restart it
+- Add device? The device is added—going back would show incomplete state
+- Recovery? The device is recovered—going back would show the recovery flow
+
+Hiding the back button prevents confusion and signals "you're done."
+
+#### Sheet Dismissal
+
+When onboarding or recovery runs inside a sheet (modal presentation), dismissing the sheet after completion returns to the main app. The completion screen uses binding-based dismissal to ensure proper cleanup of navigation state.
+
+### Flow Comparison
+
+| Aspect | First-Time | Add Device | Recovery |
+| :--- | :--- | :--- | :--- |
+| **BLE Scanning** | Yes | Yes | No |
+| **Security Setup** | Yes | Yes | No |
+| **WiFi Setup** | Yes | Yes | Yes |
+| **Desktop URL Shown** | Yes | Yes | Yes |
+| **Headline Tone** | Celebratory | Confirmatory | Reassuring |
+| **Back Button** | Hidden | Hidden | Hidden |

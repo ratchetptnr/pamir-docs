@@ -1,0 +1,11 @@
+{
+    "title": "Design",
+    "description": "Architecture decisions and implementation patterns",
+    "pages": [
+        "index",
+        "connectivity",
+        "settings-framework",
+        "multi-modal-ux",
+        "security"
+    ]
+}

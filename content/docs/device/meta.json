@@ -1,0 +1,12 @@
+{
+    "title": "Device",
+    "description": "Hardware settings and device controls",
+    "pages": [
+        "index",
+        "display",
+        "audio",
+        "led",
+        "storage",
+        "updates"
+    ]
+}

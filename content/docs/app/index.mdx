@@ -1,0 +1,75 @@
+---
+title: App
+description: Guide to using the Pamir mobile app
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  **Native means intuitive.** The app follows platform conventions so users feel immediately at home. Every interaction should feel natural.
+</Callout>
+
+The Distiller app serves as your mobile command center for managing devices. It handles initial setup, monitors connectivity, and provides recovery when things go wrong.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/hero-device-connected.png"
+    alt="Main app view with connected device"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+---
+
+## Core Principles
+
+The app is built around three fundamental beliefs:
+
+### 1. Offline Doesn't Mean Broken
+
+Connectivity issues are expected, not exceptional. The app gracefully handles network hiccups while keeping users informed and in control. Users can always browse their cached content and switch between devices, even when networks fail.
+
+### 2. Recovery Should Be Simple
+
+When a device loses its WiFi connection, the phone becomes the lifeline. The app provides a direct Bluetooth-based recovery path that bypasses network complexity entirely. No debugging, no IT support—just tap and recover.
+
+### 3. Every Flow Ends Clearly
+
+Whether setting up a new device, adding another to an account, or recovering a disconnected one, users always arrive at a clear completion state. The app adapts its messaging to the context while maintaining a consistent experience.
+
+---
+
+## Architecture Overview
+
+The app manages two distinct connectivity relationships:
+
+| Connection | Purpose | Behavior |
+| :--- | :--- | :--- |
+| **Phone Network** | General app functionality | Passive monitoring via system APIs |
+| **Device Reachability** | Device communication | Active heartbeat via Cloud Agent |
+
+These layers operate independently. A phone with perfect WiFi cannot reach a device that's offline, and vice versa. The app tracks both states separately and surfaces appropriate actions for each scenario.
+
+---
+
+## Documentation
+
+| Section | Focus |
+| :--- | :--- |
+| [Onboarding](/docs/app/onboarding) | Device setup and login flows |
+| [Project List](/docs/app/project-list) | Managing your projects |
+| [Workspace](/docs/app/workspace) | Tabs and navigation |
+| [Chat](/docs/app/chat) | Chat interface |
+| [Terminal](/docs/app/terminal) | Terminal usage |
+| [Editor](/docs/app/editor) | Code editor |
+| [Offline UX](/docs/app/offline-ux) | Connectivity states and action guards |
+| [Recovery](/docs/app/recovery) | Bluetooth-based device recovery |
+
+---
+
+## Design Principles
+
+1. **Guard, Don't Hide**: When actions aren't available, explain why—don't remove the buttons
+2. **Two-Layer Awareness**: Phone connectivity and device reachability are distinct concepts
+3. **Context-Aware Messaging**: Same screens, different copy based on flow type
+4. **Terminal States Are Clear**: Completion screens hide back navigation—there's nothing to go back to

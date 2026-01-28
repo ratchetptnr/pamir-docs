@@ -1,0 +1,52 @@
+---
+title: Design
+description: Architecture decisions and implementation patterns
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Developer Reference">
+  This section documents **why** things work the way they do. It's intended for developers who need to understand the system architecture, make implementation decisions, or debug complex issues.
+</Callout>
+
+The Pamir system follows consistent design principles across all components. This documentation explains the reasoning behind architectural choices and provides implementation guidance.
+
+---
+
+## Documentation
+
+| Section | Focus |
+| :--- | :--- |
+| [Connectivity](/docs/design/connectivity) | State machine for device and network connectivity |
+| [Settings Framework](/docs/design/settings-framework) | Philosophy and patterns for user settings |
+| [Multi-Modal UX](/docs/design/multi-modal-ux) | Framework for e-ink, audio, and LED interactions |
+| [Security](/docs/design/security) | Security architecture and access controls |
+
+---
+
+## Design Philosophy
+
+### 1. User-Focused Architecture
+
+Technical decisions should improve user experience. Complex state machines exist to provide clear, consistent feedback—not to satisfy engineering elegance.
+
+### 2. Explicit Over Implicit
+
+State transitions, error handling, and user messaging should be explicit and documented. Hidden behaviors create debugging nightmares.
+
+### 3. Graceful Degradation
+
+When systems fail (and they will), users should understand what happened and have clear paths forward. Offline doesn't mean broken.
+
+### 4. Platform Conventions
+
+Follow iOS and web platform conventions. Users shouldn't need to learn new interaction patterns for familiar concepts.
+
+---
+
+## When to Reference This Section
+
+- **Implementing new features**: Understand existing patterns before adding code
+- **Debugging connectivity issues**: The state machine docs explain expected behavior
+- **Making architectural decisions**: See rationale for previous choices
+- **Onboarding new developers**: Learn why, not just what
