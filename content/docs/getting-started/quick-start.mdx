@@ -18,7 +18,7 @@ Your Distiller boots up and is ready to be set up.
 
 ### Boot & Ready
 
-When powered on, the device boots and displays a QR code with instructions.
+When powered on, the device boots and displays a QR code and a 4-digit pairing code.
 
 **Device Display:**
 ```
@@ -31,10 +31,12 @@ When powered on, the device boots and displays a QR code with instructions.
 │   Scan QR code           │
 │   to set up              │
 │                          │
+│   Code: 8X29             │
+│                          │
 └──────────────────────────┘
 ```
 
-The device is ready for setup. It's showing a QR code that links to the Distiller app.
+The device is ready for setup. The QR code links to the Distiller app. The 4-digit code is a fallback for manual pairing.
 
 ---
 
@@ -48,8 +50,6 @@ The device is ready for setup. It's showing a QR code that links to the Distille
 3. Tap the notification to open the Distiller app
 4. On the Welcome screen, tap **Continue with Apple** or **Continue with Google**
 
-**App Display:**
-
 <div className="flex justify-center my-8">
   <img
     src="/docs/app/01-welcome.png"
@@ -58,38 +58,37 @@ The device is ready for setup. It's showing a QR code that links to the Distille
   />
 </div>
 
-### Step 2: Search for Devices
+### Step 2: Pair Your Device
 
-**What happens automatically:**
-- Once signed in, the app searches for your Distiller via Bluetooth
-- Finds your device and shows it in the list of nearby devices
+After signing in, the app shows a pairing screen. You have two options:
 
-**App Display:**
+1. **Scan the QR code again** — this time using the in-app scanner to identify your specific device
+2. **Enter the 4-digit code** shown on your Distiller's screen (e.g. `8X29`)
+
+Once the device is identified, the app automatically connects via Bluetooth.
 
 <div className="flex justify-center my-8">
   <img
-    src="/docs/app/02-ble-searching.png"
-    alt="App found Distiller - tap to connect via Bluetooth"
+    src="/docs/ios/02-device-pairing.png"
+    alt="App pairing screen with QR scanner and code entry"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
-**What to do:** Tap your Distiller's name to connect.
+**What to do:** Point your phone at the QR code, or type the 4-digit code and tap **Connect**.
 
 ---
 
 ## Connect to WiFi
 
-Your device is now linked to your account. Now it's time to get it online.
+Your device is now paired to your account. Now it's time to get it online.
 
 ### Step 3: Select WiFi Network
 
 **What happens:**
-1. App requests WiFi network list from device via BLE
+1. App requests WiFi network list from device via Bluetooth
 2. Device scans nearby networks and sends list back to app
 3. App displays available networks
-
-**App Display:**
 
 <div className="flex justify-center my-8">
   <img
@@ -110,8 +109,6 @@ Your device is now linked to your account. Now it's time to get it online.
 2. You enter your WiFi password
 3. App sends credentials to device via Bluetooth
 4. Device attempts to connect to WiFi
-
-**App Display:**
 
 <div className="flex justify-center my-8">
   <img
@@ -136,14 +133,14 @@ Your device successfully connected to WiFi and is now online.
 ```
 ┌──────────────────────────┐
 │                          │
-│   Distiller Online       │
+│   Pamir Distiller        │
 │                          │
-│   distiller.local        │
+│   [QR CODE]              │
+│                          │
+│   distiller-8x29.local   │
 │                          │
 └──────────────────────────┘
 ```
-
-**App Display:**
 
 <div className="flex justify-center my-8">
   <img
@@ -155,22 +152,22 @@ Your device successfully connected to WiFi and is now online.
 
 ---
 
-## You're All Set! 🎉
+## You're All Set!
 
 Your Distiller is now **fully online** and ready to work:
 
-- ✅ **Account Linked** - Only you can control your device
-- ✅ **Connected to WiFi** - Internet access established
-- ✅ **Ready for projects** - You can start using the app
+- **Account Linked** — Your device is tied to your account. Manage it from Settings > Account.
+- **Connected to WiFi** — Internet access established
+- **Ready for projects** — You can start using the app
 
 ---
 
 ## Troubleshooting
 
-If something went wrong, see the [Troubleshooting Guide](/docs/setup/troubleshooting) for help.
+If something went wrong, see the [Troubleshooting Guide](/docs/getting-started/troubleshooting) for help.
 
 **Common scenarios:**
-- [QR code won't scan](/docs/setup/troubleshooting#qr-code-wont-scan)
-- [Device not found in Bluetooth list](/docs/setup/troubleshooting#device-not-found)
-- [WiFi connection failed](/docs/setup/troubleshooting#wifi-connection-failed)
-- [Device shows "No Internet" after setup](/docs/setup/troubleshooting#no-internet)
+- [QR code won't scan](/docs/getting-started/troubleshooting#qr-code-wont-scan)
+- [Can't pair with 4-digit code](/docs/getting-started/troubleshooting#device-not-found)
+- [WiFi connection failed](/docs/getting-started/troubleshooting#wifi-connection-failed)
+- [Device shows "No Internet" after setup](/docs/getting-started/troubleshooting#no-internet)
