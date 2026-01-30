@@ -194,7 +194,15 @@ There are three paths into recovery:
 
 1. **Device Offline Alert** — User taps a blocked action → alert shows "Recover via Bluetooth" → launches `RecoveryView` sheet
 2. **Device Menu** — User taps an offline device in the device selector dropdown → recovery starts for that device
-3. **Settings** — Offline device row in the Connectivity section → tapping launches recovery *(planned — not yet re-implemented)*
+3. **Settings** — When the active device is offline, a standalone offline banner appears at the top of Settings (between the Account card and the Connectivity section). Tapping it launches the `RecoveryView` sheet
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/settings-device-offline.png"
+    alt="Settings screen showing offline device banner between Account card and Connectivity section"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
 
 All paths present the same `RecoveryView` sheet with the device name, ensuring a consistent experience. See [Offline UX](/docs/app/offline-ux) for the full alert system, visual indicators, and action availability matrix.
 
