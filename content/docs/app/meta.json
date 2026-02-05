@@ -3,6 +3,7 @@
     "pages": [
         "index",
         "onboarding",
+        "onboarding-changes",
         "project-list",
         "workspace",
         "chat",

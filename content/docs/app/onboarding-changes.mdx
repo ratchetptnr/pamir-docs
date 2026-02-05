@@ -1,0 +1,174 @@
+---
+title: Changes to Onboarding
+description: Device architecture, service setup, and device lifecycle — what's new in onboarding.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────┐
+│  Services (user choice)         │
+│  ┌───────────┐ ┌──────────────┐ │
+│  │ OpenClaw  │ │ Claude       │ │
+│  └───────────┘ └──────────────┘ │
+├─────────────────────────────────┤
+│  Distiller OS (always present)  │
+│  • WiFi provisioning            │
+│  • Account & device management  │
+│  • BLE connectivity             │
+│  • Display management           │
+│  • Security & firewall          │
+├─────────────────────────────────┤
+│  Hardware (CM5, BLE, WiFi, etc) │
+└─────────────────────────────────┘
+```
+
+- **Distiller OS is the platform layer** — always present on every device
+- **Services (Claude, OpenClaw) run on top** — independently enabled/disabled
+- WiFi, accounts, device management always go through Distiller OS
+- Services never handle networking or device registration
+- **Analogy:** Distiller OS = macOS. Services = apps
+
+---
+
+## Onboarding Flow (Updated)
+
+<Mermaid chart={`
+flowchart TD
+    Start([User opens App]) --> Welcome[Welcome Screen]
+    Welcome -->|Sign in| Auth[Apple / Google Sign-In]
+    Auth --> HasDevices{Existing devices?}
+    HasDevices -->|Yes| SkipToApp([Skip to main app])
+    HasDevices -->|No| Pairing[Device Pairing - QR / Code]
+    Pairing -->|Skip| EmptyState([Main app - no devices])
+    Pairing --> BLE[BLE Auto-Connect]
+    BLE --> WiFiList[WiFi Network Selection]
+    WiFiList --> WiFiPass[WiFi Password]
+    WiFiPass --> WiFiConnect{WiFi Connection}
+    WiFiConnect -->|Failed| WiFiList
+    WiFiConnect -->|Success| ServiceSetup[Service Setup - NEW]
+    ServiceSetup -->|Configure| SetupComplete[Setup Complete]
+    ServiceSetup -->|Skip| SetupComplete
+    SetupComplete --> MainApp([Main App])
+
+    style ServiceSetup fill:#4a9eff,color:#fff
+    style Start fill:#e1f5e1
+    style MainApp fill:#e1f5e1
+    style SkipToApp fill:#e1f5e1
+    style EmptyState fill:#e1f5e1
+`} />
+
+### Service Setup Screen Options
+
+| Option | What Happens | Required? |
+| :--- | :--- | :--- |
+| **Claude** | User connects their own Anthropic subscription via OAuth. | No — user brings own sub |
+| **OpenClaw** | Distiller OS enables OpenClaw daemon. User completes OpenClaw setup through its web UI. | No |
+| **Skip** | No services enabled. User can enable later in Settings. | — |
+
+<Callout type="info">
+Claude and OpenClaw are independent. User can enable both, one, or neither. Skip is always available — we never block the user.
+</Callout>
+
+### What's New
+
+The current onboarding has no service setup step. After WiFi, it goes straight to setup complete. These are the additions:
+
+| Addition | Details |
+| :--- | :--- |
+| **Service setup step** | New screen after WiFi connected. Choice: Claude (own sub) / OpenClaw / Skip. Entirely new — didn't exist before. |
+| **Skip device setup** | After sign-in, if user has no devices, they can skip pairing entirely and land in the app with no devices. They can add a device later from Settings. |
+| **Setup complete** | Now shows status of all enabled services (Claude, OpenClaw) instead of just device info. |
+
+---
+
+## Service Management (Settings)
+
+| Service | Status States | Actions |
+| :--- | :--- | :--- |
+| **Claude** | Not configured · Connected · Error | Connect subscription · Disconnect |
+| **OpenClaw** | Not enabled · Running · Stopped · Error | Enable · Disable · Open Web UI |
+
+### OpenClaw on device
+
+- Distiller OS starts the OpenClaw gateway daemon
+- Device exposes OpenClaw web UI on a port (e.g., `http://[device-ip]:18789`)
+- Distiller app shows the URL + "Open in Browser" action
+- All OpenClaw config (models, chat platforms, API keys, skills) happens through OpenClaw's own interface
+- Distiller app only manages on/off state and shows status
+
+### Claude on device
+
+- User authenticates with their Anthropic account (OAuth)
+- Claude is available through native Distiller chat experience
+- Configuration happens within the Distiller app
+
+---
+
+## Device Removal
+
+<Mermaid chart={`
+flowchart TD
+    Remove["User taps Remove Device\n(Settings > Account > Device)"] --> Online{"Device online?"}
+    Online -->|No| Blocked(["Action unavailable\n(device must be online)"])
+    Online -->|Yes| Confirm{"Confirm: Factory reset\nand remove all data?"}
+    Confirm -->|Cancel| Done1([Back to Settings])
+    Confirm -->|Remove| Cloud["Cloud: Revoke tokens,\nstop monitoring"]
+    Cloud --> Device[Device: Factory Reset]
+    Device --> Wipe["Wipe: WiFi, projects,\nchat, services, account"]
+    Wipe --> Reboot["Reboot into fresh\nDistiller OS"]
+    Reboot --> Ready(["RECOVERING state\nBLE on, QR showing"])
+    Cloud --> App["App: Remove from\ndevice list"]
+
+    style Remove fill:#c0392b,color:#fff
+    style Ready fill:#e1f5e1
+    style Blocked fill:#555,color:#aaa
+`} />
+
+### What Gets Wiped
+
+| Data | Wiped? |
+| :--- | :--- |
+| WiFi credentials (all cached networks) | Yes |
+| Account association | Yes |
+| Projects & files | Yes |
+| Chat history | Yes |
+| Agent configurations | Yes |
+| Services (Claude, OpenClaw configs) | Yes |
+| Distiller OS itself | No — returns to setup mode |
+
+### V1 Constraints
+
+- **Device must be online to remove.** The "Remove Device" action is only available when the device is reachable. This keeps v1 simple — no queued resets or deferred cleanup.
+- **Removing active device:** App switches to next available device. If none remain, app goes to the empty state (no devices, not onboarding).
+
+---
+
+## Device Lifecycle
+
+<Mermaid chart={`
+stateDiagram-v2
+    [*] --> FreshDevice: New or Factory Reset
+    FreshDevice --> Recovering: Boot into setup mode
+    Recovering --> Onboarding: User pairs via app
+    Onboarding --> Online: WiFi + Account + Services configured
+    Online --> Recovering: WiFi lost
+    Recovering --> Online: Self-healing or user recovery
+    Online --> FactoryReset: User removes device
+    FactoryReset --> FreshDevice: Wipe complete
+
+    note right of Recovering
+        BLE ON
+        QR code visible
+        Self-healing active
+    end note
+
+    note right of Online
+        BLE OFF
+        Services running
+        Normal operation
+    end note
+`} />

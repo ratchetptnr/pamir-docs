@@ -11,9 +11,7 @@ import { Callout } from 'fumadocs-ui/components/callout'
 
 ## The Conversation Model
 
-Chat tabs are the primary way to interact with the Shadow Agent. Each tab is an independent conversation with its own persistent history, context window, and working state. You can run multiple chats in parallel — one debugging a server issue, another drafting documentation — without cross-contamination.
-
-The conversation goes beyond simple text exchange. The AI produces structured outputs when appropriate: help cards, context gauges, plan task lists, terminal results, and research summaries. Each response type exists because a user needed something more than prose.
+Each chat window is an independent conversation with its own history and context. Multiple chat windows can run in parallel without affecting each other.
 
 <div className="flex justify-center my-8">
   <img
@@ -24,14 +22,12 @@ The conversation goes beyond simple text exchange. The AI produces structured ou
 </div>
 
 <Callout type="info">
-Each Chat tab has a unique persistent history. Opening the same tab later will restore all previous messages.
+Each chat window has a unique persistent history. Opening the same window later will restore all previous messages.
 </Callout>
 
 ### Messages
 
-Your messages appear as blue bubbles aligned to the right, following the familiar iMessage pattern. The agent's responses appear left-aligned with full markdown rendering — headings, bold, italic, inline code, syntax-highlighted code blocks, and lists.
-
-While the AI is working, you'll see a **thinking indicator** (animated dots) to signal processing is underway. Once the response arrives, it appears in full with proper formatting. The LED strip provides visual feedback about what the agent is doing — thinking, executing commands, or analyzing — without requiring you to stare at the input waiting for a response.
+AI responses are rendered as markdown with syntax-highlighted code blocks. A thinking indicator shows while the AI is processing, and the LED strip above the input reflects the current activity state.
 
 ---
 
@@ -41,36 +37,15 @@ While the AI is working, you'll see a **thinking indicator** (animated dots) to 
   "One surface for everything." The input area is where you compose, attach, and command. It adapts to what you're doing without requiring you to switch modes or open separate dialogs.
 </Callout>
 
-The input area at the bottom of the screen holds a growing text field (expands from one line up to six as you type), attachment chips for images and files you've added, and controls for mode and model selection.
+The input area at the bottom of the screen contains a growing text field (expands from one line up to six as you type) and a row of action buttons: **+** (attachments), **terminal**, and **send**. When you attach files, their chips appear above the text field.
 
 <div className="flex justify-center my-8">
   <img
     src="/docs/app/chat-input-system.png"
-    alt="Chat input area with text field, attachment chips, mode toggle, and model selector"
+    alt="Chat input area with text field and action buttons"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
-
-### Mode Toggle
-
-The chat supports two conversation modes, toggled via the mode button or the `/plan` command:
-
-| Mode | Behavior | When to Use |
-| :--- | :--- | :--- |
-| **Auto** | Freeform conversation. The AI responds naturally with text, code, and explanations. | General questions, debugging, brainstorming, code generation |
-| **Plan** | Structured task output. The AI breaks work into discrete steps with checkable items. | Multi-step implementations, project planning, complex refactors |
-
-Plan mode changes the visual tone of the input card (purple accent) to signal you're in a structured workflow. The AI's responses shift from prose to actionable task lists.
-
-### Model Selector
-
-Not every question needs the same model. The input card includes a model selector for choosing the right tool for the task:
-
-| Model | Strength |
-| :--- | :--- |
-| **Claude Haiku** | Fast responses. Best for quick questions, simple code generation, and conversational exchanges. |
-| **Claude Sonnet** | Balanced reasoning. Better for complex analysis, multi-file changes, and nuanced problems. |
-| **Claude Opus** | Deep reasoning and structured output. Best for planning, long-context tasks, and intricate problem-solving. |
 
 ---
 
@@ -82,32 +57,39 @@ Not every question needs the same model. The input card includes a model selecto
 
 ### The Attachment Menu
 
-Tap the **+** button to open the attachment menu — a grid of six tiles organized by intent:
+Tap the **+** button to open the attachment menu — a grid of tiles organized by intent:
 
 | Category | Tile | Purpose |
 | :--- | :--- | :--- |
 | **Capture** | **Camera** | Photograph a whiteboard, error screen, or physical document |
-| | **Photos** | Select images from your photo library (up to 20 per conversation) |
+| | **Photos** | Select images from your photo library |
 | **Reference** | **Files** | Browse and attach documents from your iPhone (PDFs, text files, spreadsheets, images, archives) |
 | | **Distiller** | Browse and attach files from the Distiller device's filesystem |
-| **Action** | **Terminal** | Open an inline terminal session without leaving the chat |
-| | **Commands** | Jump straight to the slash command menu |
+| **Action** | **Commands** | Jump straight to the slash command menu |
+
+<Callout type="warn">
+Camera and Photos are not part of v1. The tiles are present in the UI but image capture and photo library selection are planned for a future release.
+</Callout>
 
 **Why two file sources?** "Files" opens your iPhone's native file browser — iCloud, local storage, third-party providers. "Distiller" opens the device's project filesystem. They serve different contexts: your phone's documents vs. the device's working directory.
 
-When you attach images or files, they appear as **chips** inside the input card — small thumbnails for images, labeled pills for files — so you can see and remove them before sending.
+When you attach files, they appear as **chips** inside the input card — labeled pills so you can see and remove them before sending.
 
 <div className="flex justify-center my-8">
   <img
     src="/docs/app/chat-attachment-menu.png"
-    alt="Attachment menu showing six tiles: Camera, Photos, Files, Distiller, Terminal, Commands"
+    alt="Attachment menu showing tiles: Camera, Photos, Files, Distiller, Commands"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
 ### Quick Terminal Access
 
-One of the attachment menu tiles is **Terminal** — a full-featured command-line session that opens directly in the chat without leaving your conversation. This is ideal for quickly running commands, checking system status, or listing directories while maintaining your chat context.
+The input bar includes a dedicated **terminal button** to quickly open a terminal session without leaving the chat.
+
+<Callout type="warn">
+**Planned UX update:** Terminal sessions opened from within a chat should also be accessible from the Workspace (and vice versa). The terminal sheet should show existing open terminal windows and allow creating new ones — unifying terminal access across chat and workspace.
+</Callout>
 
 <div className="flex justify-center my-8">
   <img
@@ -123,7 +105,7 @@ Type **@** in the input to trigger the **file reference picker** — a filtered 
 
 <div className="flex justify-center my-8">
   <img
-    src="/docs/app/chat-file-reference-picker.png"
+    src="/docs/app/chat-file-picker.png"
     alt="File reference picker popup showing filtered files"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
@@ -146,7 +128,7 @@ Type **/** to open the **command menu** — a categorized popup of structured ac
 | Command | Category | What It Does |
 | :--- | :--- | :--- |
 | `/help` | Core | Show a formatted card with all available commands |
-| `/clear` | Core | Clear the conversation history for this tab |
+| `/clear` | Core | Clear the conversation history for this window |
 | `/compact` | Core | Compress message history to free up context space |
 | `/context` | Core | Show a detailed breakdown of context usage (tokens, messages, percentage) |
 | `/plan` | Core | Toggle Plan mode on or off |
@@ -179,7 +161,7 @@ Every conversation has a finite context window determined by the Claude model in
 | :--- | :--- | :--- |
 | Below 60% | Green | Plenty of room |
 | 60–85% | Yellow | Getting full — consider compacting |
-| Above 85% | Red | Near limit — compact or start a new tab |
+| Above 85% | Red | Near limit — compact or start a new window |
 
 **The `/context` Card** — type `/context` to see a detailed breakdown: total tokens used, message count, and a visual progress bar. This is the "check engine light" — you use it when you want specifics, not just a glance.
 
@@ -199,34 +181,19 @@ When context runs high, use `/compact` to compress the conversation history. The
 
 Responses appear as markdown-rendered text with support for headings, bold, italic, inline code, syntax-highlighted code blocks, and lists. When Claude is processing your request, you'll see a **thinking indicator** showing it's working.
 
-The app also provides custom response cards for certain commands:
-
-| Response Type | When It Appears | What It Contains |
-| :--- | :--- | :--- |
-| **Text** | Standard replies | Markdown-rendered prose, code, lists |
-| **Thinking** | While processing | Animated indicator showing Claude is working |
-| **Help Card** | After `/help` | Formatted card with all available commands |
-| **Context Card** | After `/context` | Visual gauge with token count, message count, and usage percentage |
-
 ### File References from Claude
 
-When Claude references a file in its response — whether it's a code file, PDF, document, or any other file type — the app renders it as a rich attachment card rather than plain text. This follows the same pattern you're familiar with from messaging apps: files appear as tappable cards with previews, not just links.
+When Claude references a file in its response — whether it's a code file, PDF, document, or any other file type — the app renders it as a rich attachment card rather than plain text. Files appear as tappable cards with previews. Images display inline; PDFs, text files, and code files appear as downloadable attachments with appropriate icons and metadata.
 
-Images display inline; PDFs, text files, and code files appear as downloadable attachments with appropriate icons and metadata. This makes it easy to grab files Claude is discussing without hunting through URLs.
+<Callout type="warn">
+Not part of v1. Planned for a future release.
+</Callout>
 
 ### Images in Conversation
 
-When you attach images (via Camera or Photos), they appear in your sent message as tappable thumbnails. A single image displays at a comfortable preview size; multiple images arrange in a compact grid.
-
-<div className="flex justify-center my-8">
-  <img
-    src="/docs/app/chat-with-images.png"
-    alt="Chat showing user message with image attachments in a grid"
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
-
-**Tap any image** to open a full-screen preview using the native iOS viewer — pinch-to-zoom, share, and dismiss are all standard gestures.
+<Callout type="warn">
+Image attachments in conversation are not part of v1. This feature is planned for a future release alongside Camera and Photos support.
+</Callout>
 
 ### System Messages
 
@@ -243,26 +210,42 @@ These are deliberately minimal and centered to distinguish them from the convers
 
 ## Persistence & Continuity
 
-Chat history is saved to disk on a per-tab basis. Closing the app, switching projects, or restarting your phone will not lose your conversation — messages, images, and attachments all persist together.
+Chat history is saved to disk on a per-window basis. Closing the app, switching projects, or restarting your phone will not lose your conversation — messages and attachments all persist together.
 
-Deleting a tab removes its entire message history.
-
-### Memory Integration [Experimental]
-
-The **brain icon** in the chat toolbar opens your project's Memory — a growing knowledge base of insights and decisions. This feature is still in MVP and evolving.
-
-See [Memory](/docs/app/shadow-agent/notes) for more details.
+Closing a chat window from the [Workspace](./workspace) archives it — the full message history is preserved and can be restored at any time from Chat History. Chat messages are never deleted.
 
 ---
 
-## Empty State
+## Navigation Bar
 
-When a chat has no messages, it displays a centered prompt encouraging you to start a conversation. This is intentionally minimal — the empty state should feel like a blank page, not a tutorial.
+The chat toolbar shows two lines: the **chat title** on top and a **project breadcrumb** below it in a smaller, secondary style.
+
+The chat title is auto-generated from the first message you send — the first few words of your prompt become the window's name in the Workspace list. Before the first message, it simply reads "Chat."
+
+The breadcrumb shows which project (and device) you're working in:
+- **Single device** — just the project name (e.g., "Pamir App")
+- **Multiple devices** — device and project (e.g., "Home Office / Pamir App")
+
+The trailing side of the toolbar shows the **context meter** — a compact circular gauge indicating how much of the context window has been used.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/app/chat-nav-bar.png"
+    alt="Chat navigation bar showing title, breadcrumb, and context meter"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Empty State & Suggestions
+
+When a chat has no messages, it displays a time-based greeting ("Good morning", "Good afternoon", or "Good evening") with a prompt to get started. Below the input, four **suggestion chips** appear — randomly selected from a pool of common starting prompts like "Help me debug an error", "Write a Python script", or "Explain this code." Tapping a chip sends it as your first message.
 
 <div className="flex justify-center my-8">
   <img
     src="/docs/app/chat-empty.png"
-    alt="Empty chat state"
+    alt="Empty chat state with greeting and suggestion chips"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
+
+Suggestions also appear dynamically after AI responses when the agent offers follow-up actions or next steps. These replace the starter chips once the conversation is underway.

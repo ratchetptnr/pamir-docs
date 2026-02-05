@@ -48,6 +48,58 @@ const darkThemeVars = {
   nodeTextColor: '#e6edf3',
 };
 
+// Detect if a hex color is "light" (needs dark text for contrast)
+function isLightColor(hex: string): boolean {
+  const clean = hex.replace('#', '');
+  if (clean.length < 6) return false;
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  return luminance > 150;
+}
+
+// Extract fill color from an SVG element (attribute or inline style)
+function getFill(el: Element): string | null {
+  const attr = el.getAttribute('fill');
+  if (attr && attr.startsWith('#')) return attr;
+  const style = el.getAttribute('style') || '';
+  const match = style.match(/fill:\s*(#[0-9a-fA-F]{3,8})/);
+  return match ? match[1] : null;
+}
+
+// In dark mode, nodes with light fill need dark text for contrast
+function fixDarkModeContrast(svgString: string): string {
+  // Mermaid uses HTML <br> inside <foreignObject> — normalize to XHTML for XML parsing
+  const normalized = svgString.replace(/<br\s*(?!\/)>/gi, '<br/>');
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(normalized, 'image/svg+xml');
+
+  // If parsing failed, return original SVG untouched
+  if (doc.querySelector('parsererror')) return svgString;
+
+  const darkText = '#1f2328';
+
+  doc.querySelectorAll('.node, .label').forEach((node) => {
+    const shapes = node.querySelectorAll('rect, polygon, circle, ellipse, path');
+    let hasLightBg = false;
+    shapes.forEach((shape) => {
+      const fill = getFill(shape);
+      if (fill && isLightColor(fill)) hasLightBg = true;
+    });
+    if (hasLightBg) {
+      node.querySelectorAll('span, p').forEach((el) => {
+        (el as HTMLElement).style.color = darkText;
+      });
+      node.querySelectorAll('text, tspan').forEach((el) => {
+        el.setAttribute('fill', darkText);
+      });
+    }
+  });
+
+  return new XMLSerializer().serializeToString(doc);
+}
+
 let idCounter = 0;
 
 export function Mermaid({ chart }: { chart: string }) {
@@ -75,7 +127,7 @@ export function Mermaid({ chart }: { chart: string }) {
         idRef.current,
         chart.trim(),
       );
-      setSvg(rendered);
+      setSvg(dark ? fixDarkModeContrast(rendered) : rendered);
     } catch {
       setSvg('');
     }

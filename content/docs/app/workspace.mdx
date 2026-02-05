@@ -1,89 +1,134 @@
 ---
 title: Workspace
-description: Managing open tabs and navigating between Chat, Terminal, and Editor views.
+description: Managing open windows and navigating between Chat, Terminal, and Editor views.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout'
 
-The Workspace is your primary work environment within a project. It displays all open tabs and provides quick access to your project's centralized **Notes** hub.
+<Callout title="Product Philosophy">
+The Workspace is a window manager, not a file manager. It shows what you're working on **right now**. Closing a window doesn't mean destroying its contents — the system handles persistence intelligently behind the scenes.
+</Callout>
+
+The Workspace is your primary work environment within a project. It displays all open windows and provides quick access to **Chat History**.
 
 ## Overview
 
-The Workspace follows a clean, native iOS list design that shows all active tabs for the current project. Each tab represents a Chat, Terminal, or Editor instance with its own persistent state.
+The Workspace follows a clean, native iOS list design that shows all active windows for the current project. Each window represents a Chat, Terminal, or Editor instance. Windows are sorted by most recent activity.
 
 <div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/workspace-main.png" 
-    alt="Workspace main view with open tabs" 
+  <img
+    src="/docs/app/workspace-main.png"
+    alt="Workspace main view with open windows"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
 <Callout type="info">
-Each project maintains its own set of tabs, so switching projects will show that project's workspace.
+Each project maintains its own set of windows, so switching projects shows that project's workspace.
 </Callout>
 
-## Tab Types
+The toolbar header shows the **project name**. When the user has multiple devices, the **device name** appears below it — giving context about which device you're working on. With a single device, the device name is omitted since it's redundant.
 
-The Workspace supports three types of tabs, each with a distinct icon and color:
+## Window Types
 
-- [**Chat**](./chat) (Blue) - Conversational AI interface for natural language interaction
-- [**Terminal**](./terminal) (Black) - Command-line interface for direct system access
-- [**Editor**](./editor) (Purple) - Code editor for viewing and editing project files
+The Workspace supports three types of windows, each with a distinct icon and color:
 
-## Creating Tabs
+- [**Chat**](./chat) (Blue) — Conversational AI interface. **Persistent** — closing archives the session for later.
+- [**Terminal**](./terminal) (Gray) — Command-line interface. **Ephemeral** — closing ends the session.
+- [**Editor**](./editor) (Orange) — Code viewer/editor. **Ephemeral** — closing ends the session; files remain on device.
 
-Tap the **+** button in the top-right corner to create a new tab. You can choose which type of tab to create:
+## Creating Windows
+
+Tap the **+** button in the top-right corner to create a new window:
 
 1. Tap the **+** button
 2. Select **Chat**, **Terminal**, or **Editor** from the menu
-3. The new tab appears in the list and becomes active
+3. The new window appears in the list and opens immediately
 
 <div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/workspace-new-tab.png" 
-    alt="Creating a new tab" 
+  <img
+    src="/docs/app/workspace-new-window.png"
+    alt="Creating a new window"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
-## Managing Tabs
+## Closing Windows
 
-### Opening a Tab
-Tap any tab in the list to open it. The view transitions to show the tab's content.
-
-### Closing Tabs
-Swipe left on any tab to reveal the **Close** action. This removes the tab and its state from the workspace.
+Swipe left on any window to close it. No confirmation dialog — you're just closing a window.
 
 <div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/workspace-swipe-delete.png" 
-    alt="Swipe to close a tab" 
+  <img
+    src="/docs/app/workspace-swipe-close.png"
+    alt="Swipe to close a window"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
-<Callout type="warn">
-Closing a Chat tab will permanently remove its message history from your device.
+The gesture is the same for all three types. What happens behind the scenes differs:
+
+| Type | What "close" does | Why |
+|------|------------------|-----|
+| **Chat** | Archived — preserved and restorable from History | Chat sessions hold valuable context for future work |
+| **Terminal** | Removed — session ends | Ephemeral by nature, like closing a terminal window |
+| **Editor** | Removed — session ends | Ephemeral session; the file still lives on the device |
+
+<Callout title="The Window Manager Mental Model">
+Think of it like a desktop OS. Closing a Finder window doesn't delete your files. Closing a Terminal window ends that session. The Workspace works the same way — it manages what's currently open, and the system preserves what matters.
 </Callout>
 
-## Notes Access
+## Chat History
 
-The **notes icon** in the top-right toolbar provides quick access to the Universal Notes sheet, where you can view:
+Closed chats don't disappear — they move to **Chat History**. This is accessible via the clock icon in the toolbar (only visible when archived chats exist).
 
-- **Centralized Hub**: Every note taken across all project tabs.
-- **Search & Filter**: Quickly find insights by keyword or date.
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/app/workspace-history-button.png"
+    alt="History button in workspace toolbar"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
 
-See [Notes](./notes) for more details.
+History groups archived chats by time:
+- **Recent** — archived in the last 24 hours
+- **This Week** — archived 1–7 days ago
+- **Earlier** — everything older
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/app/workspace-history-sheet.png"
+    alt="Chat History sheet with archived chats"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+To restore a chat, tap it or swipe right. The chat returns to the active workspace with its full message history intact.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/app/workspace-history-restore.png"
+    alt="Swipe to restore an archived chat"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Window Metadata
+
+Each window in the list shows:
+- **Type icon** with color coding
+- **Title** — auto-generated from the first message (for chats) or the window type
+- **Preview** — last message snippet or default text
+- **Timestamp** — time if today, date otherwise
+- **Unread indicator** — blue dot when the AI has responded since you last viewed
 
 ## Empty State
 
-When a project has no open tabs, the Workspace displays a helpful empty state prompting you to create your first tab.
+When a project has no open windows, the Workspace shows a prompt to get started.
 
 <div className="flex justify-center my-8">
-  <img 
-    src="/docs/app/workspace-empty.png" 
-    alt="Workspace empty state" 
+  <img
+    src="/docs/app/workspace-empty.png"
+    alt="Workspace empty state"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
