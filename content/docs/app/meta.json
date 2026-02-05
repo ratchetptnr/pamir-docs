@@ -6,7 +6,7 @@
         "onboarding-changes",
         "project-list",
         "workspace",
-        "chat",
+        ["chat", "Chat (WIP)"],
         "terminal",
         "editor",
         "offline-ux",
