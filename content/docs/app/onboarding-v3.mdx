@@ -1,0 +1,572 @@
+---
+title: Onboarding (v3.0)
+description: Single source of truth for device onboarding — all scenarios, flows, and error handling.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+
+<Callout title="This supersedes previous onboarding docs">
+  This document is the single source of truth for onboarding in Distiller OS v3.0+. It replaces [Onboarding](/docs/app/onboarding) (original spec) and [Changes to Onboarding](/docs/app/onboarding-changes) (architecture additions). Those docs remain for historical reference.
+</Callout>
+
+## What Changed in v3.0
+
+Distiller OS v3.0 is a platform reset. The update (`distiller-platform-update`) replaces the previous interface layer and makes the Pamir app the default interface.
+
+| | v2.1.1 (current shipping) | v3.0.0 |
+| :--- | :--- | :--- |
+| **Onboarding** | AP-based (hotspot) | BLE-based (QR code + 4-digit code) |
+| **Interface** | Open-Claw | Pamir App |
+| **Account system** | None | Email / Apple / Google sign-in |
+| **Services** | Open-Claw bundled | Claude Code + Clawdbot as optional apps |
+| **Device registration** | None | Tied to user account |
+
+**What the v3.0 update preserves:** WiFi credentials, user files.
+**What it wipes:** Open-Claw (force-removed, re-installable as optional package), old interface.
+
+---
+
+## Onboarding Scenarios
+
+There are four distinct scenarios that lead to device setup. All converge on the same core flow but enter at different points.
+
+<Mermaid chart={`
+flowchart TD
+    Launch([User opens app]) --> Auth[Sign In - Apple / Google]
+    Auth --> HasDevices{Account has\nregistered devices?}
+
+    HasDevices -->|Yes| MainApp([Main App - Dashboard])
+
+    HasDevices -->|No| FirstTime{First-time or\nmigration?}
+    FirstTime -->|Fresh device| FullOnboarding[Full Onboarding\nBLE + WiFi + Services]
+    FirstTime -->|v2.1.1 migration| MigrationOnboarding[Migration Onboarding\nBLE + Skip WiFi + Services]
+    FirstTime -->|Skip| EmptyState([Main App - No Devices])
+
+    MainApp -->|Settings > Add Device| AddDevice[Add Device\nBLE + WiFi + Services]
+
+    FullOnboarding --> Done([Setup Complete])
+    MigrationOnboarding --> Done
+    AddDevice --> Done
+
+    style Launch fill:#e1f5e1
+    style Done fill:#e1f5e1
+    style MainApp fill:#e1f5e1
+    style EmptyState fill:#e1f5e1
+    style FullOnboarding fill:#dbeafe
+    style MigrationOnboarding fill:#fef3c7
+    style AddDevice fill:#e0e7ff
+`} />
+
+| Scenario | Auth | BLE Pairing | WiFi Setup | Services | Entry Point |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Fresh device, new user** | Yes | Yes | Yes | Yes (skippable) | First launch |
+| **v2.1.1 → v3.0 migration** | Yes (first time) | Yes | Skip (device has WiFi) | Yes (skippable) | First launch |
+| **Returning user, has devices** | Yes | — | — | — | Straight to app |
+| **Add device from app** | Already signed in | Yes | Yes | Yes (skippable) | Settings > Account |
+
+<Callout type="info">
+  **Skip is always available.** Users can skip device pairing entirely during first launch (lands in empty state, add device later from Settings). Services are individually skippable. We never block the user.
+</Callout>
+
+---
+
+## Master Flow
+
+This is the complete onboarding flow covering all paths, including the migration shortcut.
+
+<Mermaid chart={`
+flowchart TD
+    Start([User opens app]) --> AuthCheck{Signed in?}
+    AuthCheck -->|No| SignIn[Sign In - Apple / Google]
+    AuthCheck -->|Yes| DeviceCheck
+
+    SignIn --> DeviceCheck{Account has\nregistered devices?}
+
+    DeviceCheck -->|Yes| Dashboard([Main App])
+    DeviceCheck -->|No| PairingChoice
+
+    PairingChoice{User action}
+    PairingChoice -->|Pair Device| Pairing[Device Pairing Screen]
+    PairingChoice -->|Skip| EmptyState([Main App - No Devices])
+
+    Pairing --> PairMethod{Pairing method}
+    PairMethod -->|Scan QR| QRScan[In-app QR scanner]
+    PairMethod -->|Enter code| CodeEntry[4-digit code entry]
+
+    QRScan --> BLEConnect[BLE Auto-Connect]
+    CodeEntry --> BLEConnect
+
+    BLEConnect --> BLEResult{BLE connected?}
+    BLEResult -->|No| BLEFailed[Connection Failed]
+    BLEFailed --> FailAction{User action}
+    FailAction -->|Try Again| BLEConnect
+    FailAction -->|Scan Different Device| Pairing
+
+    BLEResult -->|Yes| WiFiCheck{Device has\nWiFi credentials?}
+
+    WiFiCheck -->|Yes - Migration| WiFiConfirm[Confirm existing WiFi\nor setup new]
+    WiFiCheck -->|No - Fresh| WiFiSetup
+
+    WiFiConfirm -->|Keep existing| ServiceSetup
+    WiFiConfirm -->|Setup new WiFi| WiFiSetup
+
+    WiFiSetup[WiFi Network Selection] --> NetworkChoice{User action}
+    NetworkChoice -->|Select from list| SelectNetwork[Select network]
+    NetworkChoice -->|Network not listed| ManualSSID[Enter SSID manually]
+
+    SelectNetwork --> EnterPass[Enter WiFi password]
+    ManualSSID --> EnterPass
+
+    EnterPass --> SendCreds[Send credentials via BLE]
+    SendCreds --> WiFiResult{Connection result}
+
+    WiFiResult -->|Success| ServiceSetup
+    WiFiResult -->|Wrong password| WrongPass[Password error]
+    WiFiResult -->|Timeout| WiFiTimeout[Timeout error]
+    WiFiResult -->|BLE lost| BLELost[BLE connection lost]
+
+    WrongPass --> RetryCount{Attempts}
+    RetryCount -->|< 2| EnterPass
+    RetryCount -->|>= 2| HelperText[Show helper text]
+    HelperText --> EnterPass
+
+    WiFiTimeout --> TimeoutAction{User action}
+    TimeoutAction -->|Try Again| SendCreds
+    TimeoutAction -->|Different Network| WiFiSetup
+
+    BLELost --> Pairing
+
+    ServiceSetup[Service Setup] --> ServiceChoice{User action}
+    ServiceChoice -->|Configure Claude Code| ClaudeSetup[Claude Code Setup]
+    ServiceChoice -->|Configure Clawdbot| ClawdbotSetup[Clawdbot Setup]
+    ServiceChoice -->|Skip| SetupComplete
+
+    ClaudeSetup --> MoreServices{Add another service?}
+    ClawdbotSetup --> MoreServices
+    MoreServices -->|Yes| ServiceSetup
+    MoreServices -->|No / Done| SetupComplete
+
+    SetupComplete[Setup Complete] --> End([Main App])
+
+    style Start fill:#e1f5e1
+    style End fill:#e1f5e1
+    style Dashboard fill:#e1f5e1
+    style EmptyState fill:#e1f5e1
+    style BLEFailed fill:#ffebee
+    style WrongPass fill:#ffebee
+    style WiFiTimeout fill:#ffebee
+    style BLELost fill:#ffebee
+    style ServiceSetup fill:#4a9eff,color:#fff
+    style ClaudeSetup fill:#dbeafe
+    style ClawdbotSetup fill:#dbeafe
+    style WiFiConfirm fill:#fef3c7
+`} />
+
+---
+
+## Phase 1: Authentication
+
+<Mermaid chart={`
+sequenceDiagram
+    actor User
+    participant App
+
+    User->>App: Opens app
+    App->>App: Check auth status
+
+    alt Not signed in
+        App->>User: Show Welcome screen
+        User->>App: Sign in (Apple / Google)
+        App->>App: Create / fetch account
+    end
+
+    App->>App: Check for registered devices
+
+    alt Has devices
+        App->>User: Navigate to Main App
+    else No devices
+        App->>User: Show pairing screen (with Skip option)
+    end
+`} />
+
+**Key details:**
+- Auth is Apple or Google sign-in. This is the first time v3.0 devices get proper account registration.
+- "Has devices" means the account has at least one registered device in the cloud.
+- Skip option takes user to an empty main app. They can add a device later from Settings > Account.
+
+---
+
+## Phase 2: Device Pairing (BLE)
+
+<Mermaid chart={`
+sequenceDiagram
+    actor User
+    participant App
+    participant Device
+
+    Note over Device: Device is in RECOVERING state<br/>BLE on, QR + 4-digit code on e-ink
+
+    App->>User: Request pairing method
+
+    alt Scan QR
+        User->>App: Scans QR code
+        Note right of App: QR contains device ID + BLE MAC
+    else Manual Code
+        User->>App: Enters 4-digit code
+    end
+
+    App->>Device: Attempt BLE connection
+
+    alt Connection Failed
+        Device--xApp: Error / Timeout
+        App->>User: Show "Connection Failed"
+        User->>App: "Try Again" or "Scan Different Device"
+        Note over App: Loop breaks or restarts
+    else Connected
+        Device-->>App: BLE connected
+        App->>Device: Read device info
+        Device-->>App: Device state (has WiFi? fresh?)
+    end
+`} />
+
+**Key details:**
+- The QR code on the device's e-ink display serves double duty: scanned from the Camera app it opens/installs the Pamir app; scanned inside the app it identifies the device for BLE pairing.
+- The 4-digit code is a manual fallback (bright lighting, QR won't scan, etc).
+- BLE connection happens inline on the pairing screen (spinner + "Connecting to Distiller-8X29...") — no separate screen.
+- On failure: "Try Again" retries the same device; "Scan Different Device" goes back to the pairing screen.
+
+---
+
+## Phase 3: WiFi Setup
+
+After BLE connects, the app reads the device state. If the device already has WiFi credentials (v2.1.1 migration), the user can skip this phase entirely.
+
+<Mermaid chart={`
+flowchart TD
+    BLEConnected([BLE Connected]) --> HasWiFi{Device has\nWiFi credentials?}
+
+    HasWiFi -->|Yes| Confirm[Show current network name\n+ confirm or change]
+    HasWiFi -->|No| NetworkList
+
+    Confirm -->|Keep| ServiceSetup([Service Setup])
+    Confirm -->|Change| NetworkList
+
+    NetworkList[App shows WiFi networks\nfrom device scan] --> Action{User action}
+    Action -->|Select network| Password[Enter WiFi password]
+    Action -->|Not listed| Manual[Enter SSID manually]
+
+    Manual --> Password
+    Password --> Send[Send credentials via BLE]
+    Send --> Result{Result}
+
+    Result -->|Success| ServiceSetup
+    Result -->|Wrong password| WrongPass
+    Result -->|Timeout| Timeout
+    Result -->|BLE lost| Restart([Restart pairing])
+
+    WrongPass{Retry count} -->|< 2| Password
+    WrongPass -->|>= 2| Helper[Show helper text\n+ password entry]
+    Helper --> Password
+
+    Timeout --> TimeoutChoice{User action}
+    TimeoutChoice -->|Try again| Send
+    TimeoutChoice -->|Different network| NetworkList
+
+    style BLEConnected fill:#e1f5e1
+    style ServiceSetup fill:#4a9eff,color:#fff
+    style WrongPass fill:#ffebee
+    style Timeout fill:#ffebee
+    style Restart fill:#ffebee
+    style Confirm fill:#fef3c7
+`} />
+
+### WiFi Provisioning (App ↔ Device detail)
+
+This shows what happens between App and Device during WiFi credential exchange, including the parallel monitoring.
+
+<Mermaid chart={`
+sequenceDiagram
+    actor User
+    participant App
+    participant Device
+
+    Device->>App: Send scanned WiFi networks list
+
+    alt Select from list
+        App->>User: Display network list
+        User->>App: Selects SSID
+    else Manual entry
+        User->>App: Enters SSID manually
+    end
+
+    User->>App: Enters WiFi password
+    App->>Device: Send WiFi credentials (via BLE)
+
+    par Device attempts WiFi
+        Device->>Device: Attempt WiFi connect
+    and App monitors BLE
+        App->>App: Monitor BLE connection
+    end
+
+    alt BLE connection lost during setup
+        App->>User: Show "Connection Lost"
+        User->>App: Restart pairing
+    else WiFi connection result
+        Device-->>App: Return connection status
+
+        alt Success
+            App->>User: WiFi connected
+        else Wrong password
+            App->>App: Increment retry count
+            alt Count < 2
+                App->>User: "Wrong password, try again"
+            else Count >= 2
+                App->>User: Show helper text + prompt
+            end
+        else Timeout
+            App->>User: Show timeout options
+            alt Try again
+                App->>Device: Resend credentials
+            else Different network
+                App->>User: Show network list
+            end
+        end
+    end
+`} />
+
+---
+
+## Phase 4: Service Setup
+
+After WiFi is connected (or confirmed from migration), the user configures optional services. Both services are independent — user can enable both, one, or neither.
+
+<Mermaid chart={`
+flowchart TD
+    WiFiDone([WiFi Connected / Confirmed]) --> ServiceScreen[Service Setup Screen]
+
+    ServiceScreen --> Claude[Claude Code]
+    ServiceScreen --> Clawdbot[Clawdbot]
+    ServiceScreen --> Skip[Skip All]
+
+    Claude --> ClaudeAuth[User connects Anthropic account\nvia OAuth]
+    ClaudeAuth --> ClaudeDone[Claude Code ready]
+
+    Clawdbot --> ClawdbotEnable[Distiller OS enables\nClawdbot daemon]
+    ClawdbotEnable --> ClawdbotDone[Clawdbot running\nWeb UI available]
+
+    ClaudeDone --> More{Configure another\nservice?}
+    ClawdbotDone --> More
+
+    More -->|Yes| ServiceScreen
+    More -->|Done| Complete
+
+    Skip --> Complete[Setup Complete]
+
+    style WiFiDone fill:#e1f5e1
+    style ServiceScreen fill:#4a9eff,color:#fff
+    style Claude fill:#dbeafe
+    style Clawdbot fill:#dbeafe
+    style Complete fill:#d4edff
+    style Skip fill:#f3f4f6
+`} />
+
+| Service | What happens during setup | What it needs from user | Skippable? |
+| :--- | :--- | :--- | :--- |
+| **Claude Code** | OAuth flow to connect user's Anthropic subscription | Anthropic account credentials | Yes |
+| **Clawdbot** | Distiller OS starts the Clawdbot daemon, exposes web UI on device | Nothing (toggle on) | Yes |
+
+<Callout type="info">
+  Services can always be configured later from **Settings > Services** in the main app. Skipping during onboarding is zero commitment.
+</Callout>
+
+---
+
+## Phase 5: Setup Complete
+
+<Mermaid chart={`
+flowchart LR
+    subgraph Entry
+        FirstTime([First-Time Setup])
+        Migration([Migration])
+        AddDevice([Add Device])
+    end
+
+    subgraph Completion
+        Screen[SetupCompleteView]
+    end
+
+    FirstTime --> Screen
+    Migration --> Screen
+    AddDevice --> Screen
+
+    style FirstTime fill:#dbeafe
+    style Migration fill:#fef3c7
+    style AddDevice fill:#e0e7ff
+    style Screen fill:#f3e5f5
+`} />
+
+The completion screen adapts based on context:
+
+| | First-Time | Migration | Add Device |
+| :--- | :--- | :--- | :--- |
+| **Headline** | "Your Distiller is ready!" | "Your Distiller is updated!" | "[Device Name] is ready!" |
+| **Services shown** | Status of enabled services | Status of enabled services | Status of enabled services |
+| **Desktop URL** | Shown | Shown | Shown |
+| **Button** | "Continue to App" | "Continue to App" | "Done" (dismisses sheet) |
+| **Back button** | Hidden | Hidden | Hidden |
+
+---
+
+## v2.1.1 → v3.0 Migration Path
+
+This is the most common scenario at launch, since devices are already shipping on v2.1.1.
+
+<Mermaid chart={`
+sequenceDiagram
+    actor User
+    participant App
+    participant Device
+
+    Note over Device: Device receives v3.0 OTA update<br/>Open-Claw removed, Pamir App becomes interface<br/>WiFi credentials + user files preserved
+
+    Device->>Device: Reboot into v3.0<br/>Enter RECOVERING state (BLE on)
+
+    User->>App: Opens app (first time)
+    App->>User: Welcome + Sign In
+    User->>App: Signs in (Apple / Google)
+    App->>App: No devices on account
+
+    App->>User: Show pairing screen
+
+    Note over User,App: Standard BLE pairing (QR or code)
+
+    User->>App: Scans QR / enters code
+    App->>Device: BLE connect
+    Device-->>App: Connected + device state
+
+    Note over App: Device reports: has WiFi credentials
+
+    App->>User: "Device has WiFi configured.<br/>Keep current network or set up new?"
+
+    alt Keep existing WiFi
+        User->>App: Keep
+        App->>Device: Verify WiFi connectivity
+        Device-->>App: WiFi confirmed online
+    else Setup new WiFi
+        Note over User,Device: Standard WiFi setup flow
+    end
+
+    App->>User: Service Setup screen
+    Note over User,App: Claude Code / Clawdbot / Skip
+
+    App->>User: Setup Complete
+    App->>User: Navigate to Dashboard
+`} />
+
+**Migration-specific details:**
+- The v3.0 update preserves WiFi credentials and user files but wipes Open-Claw (force-removed).
+- Device enters RECOVERING state after update (BLE on, QR showing) because it needs account registration.
+- Even though WiFi works, the user still needs to BLE-pair so the app can register the device to their account.
+- After BLE connects, the app reads device state and discovers existing WiFi — offers to keep or change.
+- Open-Claw can be re-installed as an optional service (now called "Clawdbot") during service setup.
+
+---
+
+## Add Device (from Main App)
+
+Users who already have the app set up can add additional devices from Settings > Account.
+
+<Mermaid chart={`
+sequenceDiagram
+    actor User
+    participant App
+    participant Device
+
+    User->>App: Settings > Account > Add Device
+    App->>User: Show pairing screen (sheet)
+
+    Note over User,Device: Same flow as first-time:<br/>BLE pairing → WiFi → Services
+
+    User->>App: Scans QR / enters code
+    App->>Device: BLE connect
+    Device-->>App: Connected
+
+    Note over App,Device: WiFi setup (unless migration)
+
+    App->>User: Service Setup
+    App->>App: Register device to active account
+
+    App->>User: "[Device Name] is ready!"
+    App->>User: Done (dismiss sheet)
+`} />
+
+The flow is identical to first-time onboarding minus the auth steps. The device gets registered to the already-active account. Completion shows "Done" (dismisses the sheet) instead of "Continue to App".
+
+---
+
+## Error Handling Summary
+
+All error states provide a clear path forward. No dead ends.
+
+### BLE Errors
+
+| Error | What user sees | Recovery |
+| :--- | :--- | :--- |
+| **Connection failed** | Inline error on pairing screen | "Try Again" or "Scan Different Device" |
+| **Bluetooth off / denied** | Modal prompt | "Open Settings" to enable Bluetooth |
+| **Connection lost during WiFi setup** | "Connection lost" message | Restart pairing from scratch |
+
+### WiFi Errors
+
+| Error | What user sees | Recovery |
+| :--- | :--- | :--- |
+| **Wrong password (< 2 attempts)** | "Wrong password, try again" | Re-enter password, network pre-selected |
+| **Wrong password (>= 2 attempts)** | Helper text ("Password is case-sensitive") + re-entry | Re-enter password with guidance |
+| **Connection timeout (30s)** | Timeout options | "Try Again" (resend) or "Different Network" |
+| **No networks found** | "No networks detected" with auto-retry | "Scan Again" or manual SSID entry |
+
+### Migration Errors
+
+| Error | What user sees | Recovery |
+| :--- | :--- | :--- |
+| **Existing WiFi no longer works** | WiFi verification fails after "Keep" | Falls back to standard WiFi setup flow |
+
+---
+
+## Device Behavior During Onboarding
+
+| Step | Device Display (e-ink) | Device State |
+| :--- | :--- | :--- |
+| **Waiting for pairing** | QR code + 4-digit code | RECOVERING (BLE on) |
+| **BLE connected, WiFi setup** | QR code + 4-digit code | RECOVERING (BLE on) |
+| **WiFi connecting** | QR code + 4-digit code | CONNECTING (BLE on) |
+| **WiFi connected** | Online status + device URL | ONLINE (BLE off) |
+
+The device display stays on the QR/code screen throughout setup. All interactive complexity lives in the app. The display only changes once the device is fully online.
+
+---
+
+## Architecture Reference
+
+```
+┌─────────────────────────────────┐
+│  Services (user choice)         │
+│  ┌───────────┐ ┌──────────────┐ │
+│  │ Claude    │ │ Clawdbot     │ │
+│  │ Code      │ │ (optional)   │ │
+│  └───────────┘ └──────────────┘ │
+├─────────────────────────────────┤
+│  Distiller OS v3.0              │
+│  • BLE-based onboarding         │
+│  • WiFi provisioning            │
+│  • Account & device management  │
+│  • Security & firewall          │
+├─────────────────────────────────┤
+│  Hardware (CM5, BLE, WiFi, etc) │
+└─────────────────────────────────┘
+```
+
+- **Distiller OS is the platform layer.** Always present. Handles WiFi, accounts, BLE, device registration.
+- **Services run on top.** Independently enabled/disabled. Never touch networking.
+- **Analogy:** Distiller OS = macOS. Services = apps.

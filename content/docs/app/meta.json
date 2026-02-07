@@ -2,6 +2,7 @@
     "title": "App",
     "pages": [
         "index",
+        "onboarding-v3",
         "onboarding",
         "onboarding-changes",
         "project-list",
