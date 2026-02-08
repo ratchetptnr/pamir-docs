@@ -1,0 +1,401 @@
+---
+title: AI Provider Setup
+description: How Distiller connects to AI providers — setup flow, no-provider UX, and settings.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Mermaid } from '@/components/mermaid'
+
+<Callout type="warn" title="Work in Progress">
+  This document is actively being developed. Sections marked **WIP** are not yet finalized.
+</Callout>
+
+## What is a Provider?
+
+Distiller is an AI hardware device. To power AI features like Chat, it needs an **AI provider** — think of it as the brain. The user brings their own subscription to a provider, and Distiller connects to it.
+
+Distiller is **provider-agnostic**. The architecture supports any AI provider. Currently supported:
+
+- **Claude Code** (Anthropic) — first supported provider
+- **OpenAI** — planned
+
+The model is "bring your own subscription." The user authenticates with their existing provider account, and Distiller uses their credentials to access the AI service.
+
+<Callout type="info">
+  Terminal, Editor, and file management all work without a provider. **Chat is the feature that requires an active provider connection.**
+</Callout>
+
+---
+
+## Providers vs Services
+
+Distiller has two distinct concepts that are often confused:
+
+| | Providers | Services / Apps |
+| :--- | :--- | :--- |
+| **What** | AI brains — external AI services | Software that runs on the device |
+| **Examples** | Anthropic (Claude), OpenAI | Clawdbot, VSCode, Happy Client |
+| **Setup** | OAuth to the provider's website | Enable/configure in the app |
+| **Subscription** | User's own (bring your own) | None — runs locally on device |
+| **Dependency** | Distiller connects to provider's API | Services may use a provider, or run independently |
+
+**Services can be anything** — an AI-powered app like Clawdbot, a code editor like VSCode, a stock exchange monitor, or any tool a user wants to run on their device. Some services may depend on a provider (e.g. an AI chat app needs an AI brain), others run independently (e.g. a monitoring tool). Services are a broad concept and will have their own documentation — this page focuses on providers only.
+
+---
+
+## Setup During Onboarding
+
+After WiFi is connected (or confirmed from migration), the app presents the provider setup screen. This is Phase 4 of [Onboarding](/docs/app/onboarding-v3).
+
+<Mermaid chart={`
+flowchart TD
+    WiFiDone([WiFi Connected]) --> SetupScreen[Provider Setup Screen]
+
+    SetupScreen --> Connect[Connect a Provider]
+    SetupScreen --> Skip["I'll do this later"]
+
+    Connect --> ProviderList[Select provider\ne.g. Claude Code]
+
+    ProviderList --> OAuth[In-app browser opens\nprovider authorization page]
+
+    OAuth --> OAuthResult{Result}
+    OAuthResult -->|Authorized| Connecting[Connecting...\nSending credentials to device]
+    OAuthResult -->|Cancelled| SetupScreen
+    OAuthResult -->|Failed| OAuthError[Error + Retry or Skip]
+
+    OAuthError -->|Retry| OAuth
+    OAuthError -->|Skip| SetupComplete
+
+    Connecting --> ConfigResult{Provider configured\non device?}
+    ConfigResult -->|Yes| Ready[Provider Ready\nSuccess + account info]
+    ConfigResult -->|No| ConfigError[Configuration failed\n+ Retry or Skip]
+
+    ConfigError -->|Retry| Connecting
+    ConfigError -->|Skip| SetupComplete
+
+    Ready --> SetupComplete([Setup Complete])
+    Skip --> SetupComplete
+
+    style WiFiDone fill:#e1f5e1
+    style SetupComplete fill:#e1f5e1
+    style SetupScreen fill:#4a9eff,color:#fff
+    style Connect fill:#dbeafe
+    style Skip fill:#f3f4f6
+    style OAuthError fill:#ffebee
+    style ConfigError fill:#ffebee
+`} />
+
+### Authorization Sequence
+
+This is how the app, provider, and device communicate during setup. The flow is the same regardless of which provider is being connected — only the authorization page changes.
+
+<Mermaid chart={`
+sequenceDiagram
+    actor User
+    participant App
+    participant Provider as AI Provider
+    participant Device
+
+    App->>User: Provider Setup Screen
+    User->>App: Taps "Connect a Provider"
+    App->>User: Show available providers
+    User->>App: Selects a provider
+
+    App->>Provider: Open authorization page (in-app browser)
+    User->>Provider: Signs in with provider account
+    Provider->>Provider: Authorize Distiller
+
+    alt Authorized
+        Provider-->>App: Auth credentials returned
+        App->>User: Connecting screen (spinner)
+        App->>Device: Send credentials to device
+        Device->>Device: Configure provider
+        Device-->>App: Provider configured
+        App->>User: Ready screen (account info + success)
+        User->>App: Taps Continue
+    else Cancelled
+        Provider-->>App: User cancelled
+        App->>User: Return to setup screen
+    else Failed
+        Provider--xApp: Network error or auth rejected
+        App->>User: Error + Retry or Skip
+    end
+`} />
+
+### Screen by Screen
+
+| Screen | What it shows | Actions |
+| :--- | :--- | :--- |
+| **Provider Setup** | "Connect an AI provider to power Chat on your Distiller." List of available providers. | Select a provider (primary), "I'll do this later" (text link) |
+| **Authorization** | In-app browser at the provider's authorization page | User authenticates externally with their provider account |
+| **Connecting** | Spinner + "Setting up [Provider Name]..." | Auto-advances on success. Shows error with retry on failure. |
+| **Ready** | Success state + connected account info | "Continue" proceeds to Setup Complete |
+
+---
+
+## "No Provider" UX
+
+When a user skips provider setup during onboarding (or hasn't set one up yet), the app needs to make setup accessible without being annoying.
+
+**Design principle: helpful when relevant, invisible otherwise.**
+
+### Tier 1 — Contextual
+
+These appear **in the moment** the user tries to do something that needs a provider.
+
+**Chat empty state:**
+When a user opens a Chat tab with no provider configured, the chat area shows a setup prompt:
+
+- "Connect an AI provider to start chatting"
+- Description of what providers power (Chat, AI features)
+- List of available providers to connect
+- "Set up later in Settings" text link
+
+**Chat input guard:**
+If the user reaches the message input (e.g. restored an old chat), tapping send shows:
+- Alert: **"AI Provider Required"**
+- Body: "Connect a provider to use Chat."
+- Actions: "Set Up" (opens Settings > Providers) | "Cancel"
+
+### Tier 2 — Proactive
+
+A **dismissible sheet** presented once after the user enters the main app, if they skipped provider setup during onboarding. This follows standard iOS patterns for subscription/setup prompts.
+
+The sheet shows:
+- Available providers with brief descriptions
+- What AI features are unlocked by connecting
+- "Connect" button for each provider
+- Dismiss action (swipe down or close button)
+
+**Once dismissed, the sheet never appears again** (persisted). This is a one-time prompt, not a recurring nag.
+
+### Tier 3 — Always Available
+
+Zero-pressure, user-initiated.
+
+- **Settings > Providers** — full configuration page, always accessible
+- **Settings badge** — small dot indicator on the Providers row when no provider is configured. Subtle visual cue, no text.
+
+### Nudge Placement Summary
+
+<Mermaid chart={`
+flowchart TD
+    Skipped([User skips provider\nduring onboarding]) --> App[Enters main app]
+
+    App --> Sheet["Tier 2: Dismissible sheet\n(one-time, standard iOS pattern)"]
+    Sheet --> Dismiss[User dismisses]
+    Dismiss --> ProjectList
+
+    ProjectList[Project List] --> Workspace[Opens a project]
+    ProjectList --> Settings[Opens Settings]
+
+    Workspace --> Chat[Opens Chat]
+    Workspace --> Terminal[Opens Terminal]
+    Workspace --> Editor[Opens Editor]
+
+    Chat --> ChatPrompt["Tier 1: Setup prompt\nin chat area\n(contextual, every time)"]
+
+    Terminal --> Nothing1[No nudge\nworks without provider]
+    Editor --> Nothing2[No nudge\nworks without provider]
+
+    Settings --> Badge["Tier 3: Badge on\nProviders row"]
+    Badge --> SettingsPage["Settings > Providers\nFull configuration"]
+
+    style Skipped fill:#fef3c7
+    style ChatPrompt fill:#dbeafe
+    style Sheet fill:#e0e7ff
+    style Badge fill:#f3f4f6
+    style SettingsPage fill:#f3f4f6
+    style Nothing1 fill:#e1f5e1
+    style Nothing2 fill:#e1f5e1
+`} />
+
+### What We Don't Do
+
+- No modals on app launch
+- No blocking the workspace or project list
+- No recurring notifications or reminders
+- No countdown timers or urgency language
+- No "you're missing out" messaging
+- No nudges in Terminal or Editor — they work without a provider
+
+---
+
+## Provider States
+
+<Mermaid chart={`
+stateDiagram-v2
+    [*] --> none: Setup_complete
+
+    none --> connected: Onboarding_OAuth
+    none --> skipped: Taps_skip
+
+    skipped --> connected: Settings_or_chat_OAuth
+
+    connected --> none: Disconnects
+
+    note right of none
+        Not yet configured.
+        Same UX as skipped.
+    end note
+
+    note right of skipped
+        User deferred setup.
+        Nudges active (Tier 1-3).
+    end note
+
+    note right of connected
+        Provider linked.
+        Full Chat functionality.
+        No nudges.
+    end note
+`} />
+
+| State | Meaning | How user gets here | App behavior |
+| :--- | :--- | :--- | :--- |
+| `none` | Not configured | Fresh device, hasn't reached provider setup yet | Same behavior as `skipped` |
+| `skipped` | User deferred | Tapped "I'll do this later" during onboarding | Tier 1-3 nudges active. Chat shows setup prompt. |
+| `connected` | Provider linked | Completed OAuth (onboarding, Settings, or Chat prompt) | Full Chat functionality. No nudges. Account info in Settings. |
+
+---
+
+## Terminal Setup Path
+
+Providers don't have to be configured through the setup wizard. If a user configures a provider via **terminal commands** — for example, by setting API keys directly on the device — the app should detect this and reflect the connected state.
+
+- The app periodically checks the device's provider configuration
+- If a provider is detected that wasn't set up through the wizard, the app transitions to the `connected` state
+- The user sees the same UX as if they used the setup wizard — no difference
+- This is a **valid and supported setup path**, not a workaround
+
+This matters because power users and developers may prefer terminal-based configuration, and the app should respect that.
+
+---
+
+## Settings > Providers
+
+<Callout type="warn" title="WIP">
+  Settings > Providers is being designed. The structure below is directional.
+</Callout>
+
+Located at **Settings > Providers**. This is the Tier 3 entry point — always accessible, never pushy.
+
+### When Not Configured (`none` / `skipped`)
+
+- List of available providers (Claude Code, OpenAI when supported)
+- "Connect" button per provider — triggers the same OAuth flow as onboarding
+- Brief description of what each provider enables
+
+### When Connected
+
+- Provider name + status: **"Connected"** with green badge
+- Connected account info (e.g. email)
+- **"Disconnect"** action
+  - Confirmation: "Disconnect [Provider]? Chat will be unavailable until you connect a provider."
+  - Confirm → state returns to `none`, nudges reactivate
+
+### Items Under Consideration
+
+<Callout>
+  The following are listed for awareness. **No design decisions have been made** on these yet.
+</Callout>
+
+- **Model selection** — letting user pick a default model per provider (e.g. Haiku, Sonnet, Opus for Claude). Not yet designed.
+- **Usage display** — showing token usage or costs. Likely useful, design TBD.
+- **Subscription status** — showing active/expired/payment status from the provider. No decision taken.
+- **Multi-device** — managing one provider subscription across multiple Distillers. No decision taken.
+
+---
+
+## Authorization Flow
+
+<Callout type="warn" title="WIP">
+  OAuth integration is not yet implemented. The demo app uses a mock authorization view. This section outlines the intended approach. The **user experience** below is what we're committing to — the under-the-hood mechanics are our best understanding and are open to engineer feedback. If a different mechanism achieves the same or better UX, we're open to it.
+</Callout>
+
+### What the User Experiences
+
+The authorization flow follows the standard "bring your own subscription" pattern — the same experience as connecting a service on a PC or web app:
+
+1. User taps "Connect" and selects a provider
+2. A browser opens to the provider's authorization page
+3. User signs in with their existing provider account and authorizes Distiller
+4. Browser closes, app shows the provider is ready
+
+| Step | Detail |
+| :--- | :--- |
+| **Auth method** | `ASWebAuthenticationSession` (iOS native in-app browser) |
+| **Redirect** | App opens the provider's authorization page (URL is provider-specific, configured per provider) |
+| **User action** | User signs in and authorizes Distiller on the provider's website |
+
+### Under the Hood
+
+<Callout type="info" title="Open to feedback">
+  This is our current understanding of how the authorization works mechanically. Engineers — if you see a better approach that delivers the same user experience, let us know.
+</Callout>
+
+The provider's CLI (e.g. Claude Code) is already installed on the device. The app acts as an intermediary to make the login seamless:
+
+1. **App sends a login command** to the device terminal (e.g. `/login` for Claude Code)
+2. **Provider CLI generates an authorization URL** — it outputs a link the user needs to visit
+3. **Device sends the URL back to the app** — the app detects or receives this URL
+4. **App opens the URL** in an in-app browser (`ASWebAuthenticationSession`)
+5. **User authenticates** on the provider's website
+6. **Auth completes** — credentials are stored on the device by the provider's CLI itself
+7. **App detects the provider is now connected** and updates its state accordingly
+
+### Entry Points
+
+The OAuth flow is identical regardless of where it's triggered:
+
+<Mermaid chart={`
+flowchart LR
+    Onboarding[Onboarding\nPhase 4] --> OAuth[Same OAuth Flow]
+    ChatPrompt[Chat setup\nprompt] --> OAuth
+    Settings[Settings >\nProviders] --> OAuth
+    Sheet[Provider\nsetup sheet] --> OAuth
+
+    OAuth --> Result{Result}
+    Result -->|Authorized| Connected[Provider connected]
+    Result -->|Cancelled| Previous[Return to\nprevious screen]
+    Result -->|Failed| Error[Show error\n+ retry]
+
+    style OAuth fill:#4a9eff,color:#fff
+    style Connected fill:#e1f5e1
+`} />
+
+---
+
+## Error Handling
+
+| Error | Where | What user sees | Recovery |
+| :--- | :--- | :--- | :--- |
+| **Authorization cancelled** | Onboarding or Settings | Nothing — returns to setup screen | Tap "Connect" again |
+| **Network failure** | Onboarding or Settings | "Couldn't connect. Check your internet and try again." | Retry or Skip |
+| **Auth rejected** | Onboarding or Settings | "Authorization failed. Please try again." | Retry or Skip |
+| **Device configuration failed** | After authorization | "Couldn't configure provider on your device." | Retry or Skip |
+| **Disconnect failed** | Settings | "Couldn't disconnect. Please try again." | Retry |
+
+All errors provide a clear path forward. Skip is always available during onboarding. From Settings, the user can dismiss and try again later.
+
+---
+
+## WIP / Future
+
+<Callout type="warn" title="Not Yet Designed">
+  The following items are on the radar but not yet spec'd. Items marked "no decision taken" are listed for awareness only — they may or may not become features.
+</Callout>
+
+**Likely:**
+- **OpenAI provider support** — second provider, same setup flow pattern
+- **Additional providers** — architecture is open, any provider can be added
+- **Model selection per provider** — letting user pick default model. Design TBD.
+- **Usage tracking** — token counts, cost display. Likely useful, design TBD.
+
+**No decision taken:**
+- Subscription status sync with provider
+- Multi-device provider management (one sub across multiple Distillers)
+
+**Separate documentation:**
+- Services (Clawdbot, VSCode, Happy Client, etc.) — will have their own setup docs
+- Service ↔ provider relationships (which services use which providers)

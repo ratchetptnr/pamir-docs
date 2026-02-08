@@ -3,6 +3,7 @@
     "pages": [
         "index",
         "onboarding-v3",
+        "provider-setup",
         "onboarding",
         "onboarding-changes",
         "project-list",
