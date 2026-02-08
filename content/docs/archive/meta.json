@@ -2,6 +2,8 @@
     "title": "Archive",
     "description": "Historical reference documentation. This content is archived and may be outdated.",
     "pages": [
+        "onboarding",
+        "onboarding-changes",
         "wifi",
         "bluetooth",
         "full-original",
