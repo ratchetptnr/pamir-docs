@@ -64,7 +64,7 @@ Step names change based on state — present continuous while running, past tens
 
 | Running | Complete | SF Symbol |
 | :--- | :--- | :--- |
-| Thinking | Thought | `brain` |
+| Thinking | Thought | `lightbulb` |
 | Reading | Read | `doc.text` |
 | Editing | Edited | `pencil.line` |
 | Writing | Wrote | `doc.badge.plus` |
@@ -81,7 +81,19 @@ Every row uses identical structure:
 
 - **Running**: Native `ProgressView` spinner replaces the icon
 - **Complete**: Type-specific SF Symbol icon, label shows duration or filename
-- **Tap any row**: Opens a detail sheet with full output
+- **Tap any row**: Expands inline to show detail output (no sheet). Chevron rotates to indicate state. Line-limited to 12 lines.
+- **Chevron only appears** when there is detail text to show (e.g., not while running)
+
+### Step Grouping (TODO)
+
+When the AI performs multiple calls of the same type consecutively (e.g., reads 3 files), they should be grouped into a single row instead of 3 separate rows:
+
+- **Single**: `Read  ChatViewModel.swift`
+- **Grouped**: `Read  3 files` — expanding shows all 3 filenames
+
+Same principle applies to other tool types (Edit 2 files, Ran 3 commands, etc.). This keeps the steps card compact and scannable. When expanded, grouped rows show each individual item.
+
+**Status**: Not yet implemented. Currently each tool call is its own row.
 
 ### Step Count
 
@@ -103,8 +115,7 @@ The actual AI response text — rendered as markdown with syntax-highlighted cod
 | :--- | :--- |
 | `Chat/Messages/EnhancedAIBubble.swift` | Message dispatcher — renders `StepsCardView` + response content |
 | `Chat/Messages/ActivitySummaryView.swift` | `StepsCardView` — two modes: execution (accumulating rows) and accordion (collapsible) |
-| `Chat/Messages/ToolCallRowView.swift` | `StepRowView` — unified row for thinking + tool calls. `ToolCallDetailSheet` for tap-to-expand |
-| `Chat/Messages/ThinkingBlockView.swift` | `ThinkingDetailSheet` — full thinking text in a sheet |
+| `Chat/Messages/ToolCallRowView.swift` | `StepRowView` — unified row for thinking + tool calls. Inline accordion expansion (no sheet). |
 | `Chat/Models/ToolCall.swift` | `ToolCall` model, `ToolCallType` (with `runningName`/`completeName`), `ToolCallStatus` |
 | `Chat/Models/ChatModels.swift` | `ChatMessage` — `thinkingText`, `isThinkingComplete`, `toolCalls`, `activityStartTime` |
 | `Services/DemoChatService.swift` | Demo simulation — `//demo` prefix triggers thinking → tool calls → response |
