@@ -1,0 +1,232 @@
+---
+title: First Principles (WIP)
+description: The foundation that every product decision at Pamir must satisfy.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="What This Document Is">
+  This is not a style guide. This is not a brand book. This is the **decision-making foundation** for everything we build. Every feature, every screen, every line of copy, every animation must satisfy the framework defined here. If it doesn't, it doesn't ship.
+</Callout>
+
+## Why This Exists
+
+We are less than 10 people building a hardware and software product. We cannot compete on feature count, engineering headcount, or marketing budget. We compete on **clarity of thought and quality of execution.**
+
+The goal is not for users to say "that's pretty good for a small team." The goal is for users to say **"how is this small team building something this good?"**
+
+That only happens when every person on the team makes decisions from the same foundation. Not from taste, not from trends, not from what competitors do — from a shared understanding of what this product actually is.
+
+---
+
+## The Three Truths
+
+These are observations about reality. Not aspirations, not values, not marketing statements. They describe the fundamental nature of what Pamir is. Everything else derives from these.
+
+### 1. The Agent Works. The Human Directs.
+
+The Distiller runs AI agents that have full control of a computer. The human is not the operator — the agent is. The human is the owner, the supervisor, the director.
+
+This changes the entire relationship between user and product. When someone opens the Pamir app, they are not "starting work." They are checking in on work that may already be happening. It is closer to walking into your office and seeing what your team accomplished than it is to opening a text editor.
+
+**What this means for us:**
+- The app is a **command center**, not a workbench
+- The primary mode is **review and direction**, not operation
+- Features should help the human supervise, steer, and decide — not do the agent's job
+
+### 2. The Device Exists Without You.
+
+Unlike a phone or laptop, the Distiller is always on, always running. It does not wait for the user. The relationship between the user and their device is fundamentally **asynchronous**.
+
+When someone opens the app after 8 hours away, the product's job is to collapse the gap between "what happened while I was gone" and "what I want to happen next." This is not a dashboard refresh. This is the core interaction pattern.
+
+**What this means for us:**
+- Every screen must handle the returning user, not just the present user
+- Temporal context (when did this happen, how long ago, is it current) is not optional
+- Notifications, summaries, and status are more important than real-time interaction
+- The app should never assume the user has been watching
+
+### 3. Trust Is the Product.
+
+We are asking people to give an AI agent full access to a computer in their home. That is an extraordinary level of trust. Every single design decision — typography, animation speed, information density, error messages, loading states — either builds trust or erodes it. There is no neutral.
+
+Trust is built through **transparency**, **competence**, and **consistency**. It is destroyed by surprises, hidden behavior, and vague communication.
+
+**What this means for us:**
+- Never hide what the system is doing
+- Failure states are more important than success states — they're where trust is tested
+- Visual quality signals engineering quality. Sloppy UI implies sloppy systems.
+- The product should feel like it was made by people who deeply understand what they built
+
+---
+
+## The Five Filters
+
+These are decision tests derived from the Three Truths. Before any feature, screen, interaction, or piece of copy ships, it must pass the relevant filters.
+
+### Filter 1: The Director Test
+
+> **"Does this help the human direct, or does this make the human do the agent's job?"**
+
+The user's role is supervisory. If a feature requires the human to perform operational work that the agent should handle, it fails this filter.
+
+| Pass | Fail |
+| :--- | :--- |
+| A summary of what the agent accomplished while you were away | Requiring the user to manually configure agent parameters through a complex settings page |
+| A single button to approve or redirect the agent's plan | A multi-step wizard to set up something the agent could figure out |
+| Surfacing a decision point: "The agent needs your input on X" | Burying the decision inside a log the user has to scroll through |
+
+### Filter 2: The Reentry Test
+
+> **"If someone opens the app after 12 hours, does this still make sense?"**
+
+The device runs 24/7. Users check in periodically. Every screen, feature, and interaction must handle the asynchronous relationship. If something assumes the user has been watching continuously, it fails.
+
+| Pass | Fail |
+| :--- | :--- |
+| The workspace showing timestamped activity with clear "what changed" indicators | A real-time log that only makes sense if you've been watching it scroll |
+| "3 tasks completed since your last visit" | A counter that increments live but provides no context for returning users |
+| State indicators that show current status + how long it's been that way | A status dot with no temporal context |
+
+### Filter 3: The Trust Test
+
+> **"If this goes wrong, does the user have enough information to understand what happened?"**
+
+Trust is built in success and tested in failure. Every interaction should leave the user feeling informed, never confused. If the user cannot understand what the system did and why, it fails.
+
+| Pass | Fail |
+| :--- | :--- |
+| "WiFi connection lost at 3:42 AM. Device reconnected automatically at 3:47 AM." | "Something went wrong. Please try again." |
+| "The agent stopped because it encountered a permission error on /etc/config. Waiting for your direction." | "Process interrupted." |
+| A clear error state with what happened, what the system is doing about it, and what (if anything) the user needs to do | A generic error screen with a retry button |
+
+### Filter 4: The Craft Test
+
+> **"Would this hold up next to the best product in its category?"**
+
+This is the quality bar. Not about features — about execution quality. Animation timing, typography, spacing, error states, edge cases. Every detail should feel intentional. If it looks like "good enough for now," it fails.
+
+This filter applies to everything:
+- Does the loading state feel purposeful, or is it a spinner?
+- Does the empty state guide the user, or is it a blank screen?
+- Does the transition between screens feel connected, or does it feel like page loads?
+- Does the error state feel designed, or does it feel like an afterthought?
+
+### Filter 5: The Necessity Test
+
+> **"If we remove this, does the product get worse?"**
+
+With a small team, every feature is a maintenance burden. Every screen is a surface area for bugs. Every option is a decision the user has to make. This filter fights scope creep, feature bloat, and complexity accumulation.
+
+| Keep | Remove |
+| :--- | :--- |
+| BLE recovery flow — critical path, irreplaceable | A "tips and tricks" section that nobody reads |
+| Device status indicator — core to the supervisory model | A customization option that 5% of users would change |
+| Chat history — preserves valuable context | A feature parity checkbox copied from a competitor |
+
+**The default answer is "remove."** A feature must actively argue for its existence, not the other way around.
+
+---
+
+## Design Language
+
+The visual and interaction design of Pamir is not a matter of taste. It derives directly from the Three Truths.
+
+### Visual Identity
+
+**Precision over playfulness.** The user is trusting AI agents with a computer. The interface should communicate competence, not personality. Clean typography, deliberate spacing, restrained color. No bouncy animations, no emoji in system messages, no visual gimmicks.
+
+**Information density over decoration.** Every pixel should serve a purpose. White space exists for readability, not aesthetics. If something is purely decorative, it must at minimum reinforce the feeling of quality and care.
+
+**Calm confidence.** The best control interfaces — cockpits, mission control, surgical theaters — project calm even during emergencies. Pamir's UI should never feel anxious or frantic. Error states are firm and clear, not alarming. Success states are understated, not celebratory.
+
+**Material honesty.** This is a hardware company. The software should feel connected to the physical device — not like a generic SaaS dashboard. The design language should acknowledge that there is a real object in the user's home that this software controls.
+
+### Interaction Patterns
+
+**Surface, don't search.** Key information should be visible without navigation. The user is checking in, not doing research. Status, activity, and attention items should be immediately apparent.
+
+**Guard, don't hide.** When something is not available, explain why. Do not remove buttons. Do not gray out without explanation. The user is a director — they need to understand the state of their system, including what is currently not possible and why.
+
+**Temporal awareness.** Every piece of information should carry time context. When did this happen? How long ago? Is it current? The user's relationship with the device is asynchronous — time is essential orientation.
+
+**Progressive disclosure.** Keep the primary interface supervisory. Put operational controls behind intentional gestures. The first layer is "what's happening and what needs my attention." The deeper layer is "let me adjust how this works."
+
+### Voice and Copy
+
+**State facts, not feelings.**
+
+| Do | Don't |
+| :--- | :--- |
+| "Device offline since 3:42 AM" | "Oops! Your device seems to be having trouble" |
+| "Update available: v3.1.0" | "Great news! A shiny new update is ready for you" |
+| "Agent paused — waiting for direction" | "Hmm, looks like something needs your attention" |
+
+**Respect the user's intelligence.** No hand-holding for obvious things. No "Did you know?" tooltips. No tutorial modals for straightforward interactions. The user bought a headless AI computer. They can handle direct communication.
+
+**Precision in failure.** When things go wrong, communicate three things, always:
+
+1. **What happened** — the specific event
+2. **What the system is doing about it** — automatic recovery, waiting, or nothing
+3. **What (if anything) the user needs to do** — a clear action or explicit "nothing needed"
+
+**No marketing in the product.** The product interface is not a sales channel. No upsells, no "Pro features," no engagement nudges, no celebration screens designed to make the company feel good. The user already bought the device. Serve them.
+
+---
+
+## Anti-Patterns
+
+Things we never do, with the reasoning.
+
+### Never hide system state behind optimism
+"Connecting..." when the real state is "failed and retrying for the 4th time" is a lie. It trades short-term comfort for long-term trust erosion. Say what is actually happening.
+
+### Never add visual complexity to signal quality
+Gradients, shadows, parallax, and animations do not make a product feel premium. Precision, consistency, and correct behavior do. A perfectly aligned, well-spaced screen with system font communicates more quality than a screen full of custom effects that jank on scroll.
+
+### Never ship a feature without its failure state
+Every feature has an error case. If the error state has not been designed, the feature is not done. The failure path is where trust lives.
+
+### Never mimic another product's pattern to save time
+If a pattern does not derive from our Three Truths, it does not belong — even if "everyone does it that way." We can learn from other products, but we adopt patterns because they serve our users, not because they are familiar to us as builders.
+
+### Never break an established mental model
+The workspace is a window manager. Settings are user preferences. The device is autonomous. Once a mental model is established and documented, every subsequent feature must respect it. Violating a mental model to ship faster creates compounding confusion.
+
+### Never add a feature to solve a communication problem
+If users are confused about something, the answer is almost always better copy, clearer state indication, or a redesigned flow — not a new feature. Features solve capability gaps. Copy and design solve understanding gaps.
+
+---
+
+## Applying This Framework
+
+### For New Features
+
+Before building, answer:
+1. Which truth does this feature serve? If none, it does not belong.
+2. Does it pass the Director Test? Is the human directing, or doing the agent's work?
+3. Does it pass the Reentry Test? Does it work for returning users, not just present ones?
+4. Does it pass the Trust Test? Are failure states designed?
+5. Does it pass the Craft Test? Is every detail intentional?
+6. Does it pass the Necessity Test? Does removing it make the product worse?
+
+### For Existing Features
+
+Periodically audit the product against these filters. Features that passed the Necessity Test six months ago may not pass it today. The product should get simpler and more focused over time, not more complex.
+
+### For Design Reviews
+
+These filters are the shared language for design critique. "This fails the Reentry Test" is more useful than "I don't like this." "This doesn't pass the Trust Test" is more actionable than "this feels off." The framework removes personal taste from the conversation and replaces it with shared standards.
+
+---
+
+## Related Frameworks
+
+This document is the root. The following frameworks derive from it:
+
+| Framework | Applies To | Root Filter |
+| :--- | :--- | :--- |
+| [Settings Framework](/docs/design/settings-framework) | What belongs in user settings vs SDK | Director Test, Necessity Test |
+| [Multi-Modal UX](/docs/design/multi-modal-ux) | When to use device hardware vs app | Trust Test, Director Test |
+| [Connectivity](/docs/design/connectivity) | Device state management | Trust Test, Reentry Test |
+| [Offline UX](/docs/app/offline-ux) | App behavior when device is unreachable | Reentry Test, Trust Test |

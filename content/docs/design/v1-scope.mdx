@@ -1,0 +1,226 @@
+---
+title: v1 Scope (WIP)
+description: What the Pamir app ships with in its first release — and what it doesn't.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="This is the v1 contract">
+  If a feature is listed under **Core Features**, it must ship and it must work. If it's listed under **Not in v1**, no one should be building toward it. This document is the single source of truth for what v1 of the Pamir app is.
+</Callout>
+
+## What v1 Is
+
+A pocket IDE that gives you full access to your Distiller device from your iPhone. You chat with Claude Code running on the device, browse and edit files, run terminal commands, and manage device connectivity — all from your phone. The chat is not just for coding. It is the universal interface: coding, writing, research, debugging, planning — anything you would ask a capable coworker.
+
+---
+
+## How It Works
+
+The app is a remote interface. All AI compute happens on the Distiller device, not on the phone.
+
+```
+┌──────────────┐         ┌──────────────────────────┐
+│   iPhone     │         │   Distiller Device       │
+│              │  WiFi   │                          │
+│  Pamir App ──┼────────►│  Distiller OS            │
+│              │         │  ├── Claude Code (AI)    │
+│  • Chat      │◄────────┼  ├── Filesystem          │
+│  • Terminal  │         │  ├── Shell                │
+│  • Editor    │         │  └── Services             │
+│              │         │                          │
+│         BLE ─┼─ ─ ─ ──►│  (Recovery only)         │
+└──────────────┘         └──────────────────────────┘
+```
+
+- **Chat** messages route to Claude Code running on the device. The device processes the request and streams the response back to the app.
+- **Terminal** provides a remote shell session to the device.
+- **Editor** reads from and writes to the device's filesystem.
+- **BLE** is used exclusively for device setup and WiFi recovery — not for regular operation.
+
+---
+
+## Core Features
+
+Everything below must ship and must work in v1.
+
+### Device Management
+
+| Feature | What it does | Reference |
+| :--- | :--- | :--- |
+| **Onboarding** | Sign in (Apple/Google) → BLE pairing (QR/code) → WiFi setup → Provider setup | [Onboarding](/docs/app/onboarding-v3) |
+| **Migration** | v2.1.1 → v3.0 path. Preserves WiFi, registers device to account, offers service setup. Most common scenario at launch. | [Onboarding - Migration](/docs/app/onboarding-v3#v211--v30-migration-path) |
+| **Multi-device** | Add, switch, and remove devices from a single app | [Project List](/docs/app/project-list) |
+| **Recovery** | BLE-based WiFi recovery when device loses connection | [Recovery](/docs/app/recovery) |
+| **Device status** | Online/offline monitoring with visual indicators (WiFi slash icon, badge dots) | [Offline UX](/docs/app/offline-ux) |
+| **Settings** | Connectivity (WiFi, Bluetooth), Hardware (display, LED, volume), System (security, storage, updates) | [Settings Framework](/docs/design/settings-framework) |
+
+### Workspace
+
+| Feature | What it does | Reference |
+| :--- | :--- | :--- |
+| **Project list** | All projects on the active device. Search, create, delete, switch. | [Project List](/docs/app/project-list) |
+| **Device switcher** | Selector pill in nav bar. Status indicators for offline devices. | [Project List](/docs/app/project-list#device-management) |
+| **Window manager** | Workspace shows open Chat, Terminal, and Editor windows per project. Sorted by recency. | [Workspace](/docs/app/workspace) |
+| **Create projects** | Empty project, open local folder, git clone (with GitHub OAuth) | [Project List](/docs/app/project-list#creating-projects) |
+| **Chat history** | Closing a chat archives it. Clock icon opens history sheet. Tap or swipe to restore. | [Workspace](/docs/app/workspace#chat-history) |
+| **Swipe-to-close** | Unified gesture for all window types. Chat archives, Terminal/Editor remove. | [Workspace](/docs/app/workspace#closing-windows) |
+
+### Chat
+
+Chat is the primary interface. It is a remote session to Claude Code running on the Distiller device.
+
+| Feature | What it does |
+| :--- | :--- |
+| **AI conversation** | Send messages to Claude Code on the device. Streaming responses rendered as markdown with syntax-highlighted code blocks. |
+| **File attachments (iPhone)** | Attach documents, PDFs, text files from the iPhone's file system via native file picker. |
+| **File attachments (Distiller)** | Browse and attach files from the Distiller device's project filesystem. |
+| **@-mention references** | Type `@` to trigger inline file picker. Filter files from the device in real time. Appears as chip in message. |
+| **Slash commands** | `/help`, `/clear`, `/compact`, `/context`, `/plan`, `/commit`, `/review`. Core commands execute immediately. Skill commands send to AI. |
+| **Context meter** | Circular gauge in toolbar showing token usage. Green/yellow/red thresholds. `/context` for detailed breakdown. |
+| **Multiple sessions** | Each project can have multiple concurrent chat windows with independent histories. |
+| **Persistence** | Chat history saved to disk per window. Survives app restarts, project switches, phone restarts. |
+| **Thinking indicator** | Visible indicator while AI is processing a request. |
+
+<Callout type="info">
+  Chat is not just for coding. Users should be able to ask Claude Code to write, research, plan, debug, explain — anything. The interface is the same regardless of what the user is doing. This is a coworker, not a code autocomplete.
+</Callout>
+
+**What the chat empty state shows:**
+- Project context (which project, which device)
+- Suggestion chips relevant to the project type
+- Clear input area ready for the first message
+
+### Terminal
+
+| Feature | What it does |
+| :--- | :--- |
+| **Remote shell** | Shell session to the Distiller device. Standard Unix commands. |
+| **Command input** | Fixed input bar at bottom with `user@pamir %` prompt. |
+| **Output display** | Scrollable chronological output of commands and responses. |
+| **Session history** | Commands logged within the active session. |
+| **Dual access** | Accessible as a workspace window and via the terminal button in chat input. |
+
+Terminal sessions are ephemeral. Closing a terminal window ends the session.
+
+### Editor
+
+| Feature | What it does |
+| :--- | :--- |
+| **File browser** | Project Explorer sheet showing the Distiller device's file tree. Expand folders, tap files to open. |
+| **Syntax highlighting** | Automatic language detection by file extension. IDE-quality highlighting. |
+| **Full editing** | Read and write. Users can edit files on the device and save changes. |
+| **Line numbers** | Standard IDE-style line numbering. |
+| **Monospaced font** | Code-appropriate typography. |
+
+Editor sessions are ephemeral. Closing an editor window ends the session. Files remain on the device.
+
+### Offline UX
+
+| Feature | What it does | Reference |
+| :--- | :--- | :--- |
+| **Two-layer monitoring** | Phone network and device reachability tracked independently. | [Offline UX](/docs/app/offline-ux) |
+| **Guard, don't hide** | Blocked actions show contextual alerts explaining why and what to do — buttons are never silently removed. | [Offline UX](/docs/app/offline-ux#blocked-actions) |
+| **Device offline alert** | Shows device name, explains what's wrong, offers "Recover via Bluetooth" CTA. | [Offline UX](/docs/app/offline-ux#device-offline-alert) |
+| **Cached browsing** | Project list, project details, and history remain browsable when offline. | [Offline UX](/docs/app/offline-ux#list-view-behavior) |
+| **Visual indicators** | WiFi slash icon on device selector, badge dots for other-device-offline, red badge on settings gear. | [Offline UX](/docs/app/offline-ux#visual-treatment) |
+
+### Provider Setup
+
+| Feature | What it does | Reference |
+| :--- | :--- | :--- |
+| **Claude Code** | First and only supported provider in v1. User's own Anthropic subscription. | [Provider Setup](/docs/app/provider-setup) |
+| **OAuth flow** | In-app browser to Anthropic authorization page. Same flow from onboarding, Settings, or Chat prompt. | [Provider Setup](/docs/app/provider-setup#authorization-flow) |
+| **3-tier nudges** | Tier 1: Chat empty state prompt. Tier 2: One-time dismissible sheet. Tier 3: Settings badge. | [Provider Setup](/docs/app/provider-setup#no-provider-ux) |
+| **Terminal path** | If user configures provider via terminal commands on device, app detects and reflects connected state. | [Provider Setup](/docs/app/provider-setup#terminal-setup-path) |
+
+---
+
+## Not in v1
+
+These features are designed, discussed, or planned — but they do not ship in v1. Engineers should not build toward them.
+
+### Cut Features
+
+| Feature | Why it's cut |
+| :--- | :--- |
+| **The Desk** (agent activity monitor) | Not part of v1 release scope |
+| **Shadow Agent / Timeline** | Future capability |
+| **Notes / Memory** | Removed from v1 |
+| **Camera and Photos** in chat | Attachment tiles present in UI but functionality deferred |
+| **Image attachments** in conversation | Not supported in v1 |
+| **Rich file cards** from Claude responses | File references render as text, not tappable cards |
+| **Push notifications** for device offline | Future release |
+| **Desktop / web app** | iOS only for v1 |
+
+### Deferred Decisions
+
+| Decision | Status |
+| :--- | :--- |
+| Model selection per provider | Not designed |
+| Usage / cost tracking display | Not designed |
+| Multi-device provider management | Not designed |
+| OpenAI or other providers | Architecture supports it, not built |
+| Agent-initiated messages | Future (bidirectional chat) |
+| Diff-focused editor mode | Future |
+
+---
+
+## Quality Bar
+
+Every feature that ships in v1 must meet this bar. These are derived from the [First Principles](/docs/design/first-principles) framework.
+
+### Failure States Are Designed
+
+Every feature has error cases. If the failure state is not designed, the feature is not done. No feature ships with only the happy path implemented.
+
+### Three-Part Error Messages
+
+When something goes wrong, the user sees:
+
+1. **What happened** — the specific event, not a vague description
+2. **What the system is doing** — automatic recovery, waiting, or nothing
+3. **What the user should do** — a clear action, or explicit "nothing needed"
+
+| Do | Don't |
+| :--- | :--- |
+| "WiFi connection failed. Device is retrying. Move closer to your router or check the password." | "Something went wrong. Please try again." |
+| "Claude Code is not responding. The device may be processing a large request. Wait or check device status in Settings." | "Error. Retry?" |
+
+### No Mock Data in Production
+
+Every data source is real. File trees come from the device filesystem. Chat responses come from Claude Code on the device. Device status comes from actual heartbeat monitoring. If a data source is not ready, the feature waits — it does not ship with placeholder data.
+
+### iOS-Native Patterns
+
+- **Guard, don't hide**: Blocked actions explain why, not disappear
+- **Grouped lists**: `insetGrouped` styling for settings and lists
+- **Standard navigation**: Push/pop, sheets, alerts — no custom navigation paradigms
+- **Haptic feedback**: Warning haptics for offline alerts
+- **`ContentUnavailableView`**: Native empty states, not custom blank screens
+
+### Loading States Are Purposeful
+
+| Do | Don't |
+| :--- | :--- |
+| Inline progress in project list during git clone ("Cloning...") | Full-screen spinner with no context |
+| Thinking indicator in chat showing AI is processing | Bare activity indicator with no label |
+| Connecting screen with device name during BLE setup | Generic "Loading..." |
+
+### Empty States Guide
+
+Every screen that can be empty tells the user what to do:
+- Empty project list → "Tap + to create your first project"
+- Empty workspace → prompt to create a window
+- Empty chat → project context + suggestion chips
+- Empty editor → "Open a file to get started"
+
+### Copy Is Direct
+
+| Do | Don't |
+| :--- | :--- |
+| "Device offline since 3:42 AM" | "Oops! Your device seems to be having trouble" |
+| "No internet connection" | "Hmm, we can't seem to reach the internet right now" |
+| "Agent paused — waiting for direction" | "Your AI buddy needs a little help" |
+
+No cute language. No emoji in system messages. No marketing copy in the product. The user bought a headless AI computer. Speak to them accordingly.

@@ -3,6 +3,8 @@
     "description": "Architecture decisions and implementation patterns",
     "pages": [
         "index",
+        "first-principles",
+        "v1-scope",
         "connectivity",
         "settings-framework",
         "multi-modal-ux",
