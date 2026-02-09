@@ -1,0 +1,144 @@
+---
+title: Chat WIP
+description: Working document for chat UI changes in progress. Will be merged into the main Chat page once finalized.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout type="warn">
+This is a working document. Changes documented here are actively being developed and tested. Once finalized, content will be merged into the main [Chat](/docs/app/chat) page.
+</Callout>
+
+## AI Message Anatomy
+
+A single AI response turn has two parts:
+
+```
+1. Steps card       ← all activity (thinking + tool calls), accumulating rows
+2. Response         ← the hero content (markdown, always visible)
+```
+
+### Design Principle
+
+**The response is the hero.** Everything above it — thinking, tool calls — is supporting context that accumulates in a steps card during execution, then collapses into an accordion. Users never scroll past meta-information to reach the actual answer.
+
+All step types (thinking, Read, Edit, Write, Bash, Search) use **uniform row styling**. No visual hierarchy or weight differences between them.
+
+---
+
+## Steps Card
+
+Steps accumulate in real-time as the AI works. After all activity completes, the rows wrap into a collapsible accordion.
+
+### During Execution (rows accumulate)
+
+Steps appear one by one as they start. Completed steps stay visible, new ones append below:
+
+```
+  ⏳  Thinking                      ˅      ← spinner + present continuous
+```
+
+```
+  🧠  Thought  43 seconds         ˅      ← completed = past tense + duration
+  📄  Read  filename.format        ˅      ← completed = past tense + filename
+  ⏳  Writing  filename.format     ˅      ← running = spinner + present continuous
+```
+
+### After Completion (accordion)
+
+All steps wrap into a collapsible "N steps" accordion:
+
+```
+  ≡  4 steps                       ˅      ← tap to expand/collapse
+    🧠  Thought  43 seconds       ˅
+    📄  Read  filename.format     ˅
+    ✏️  Edited  filename.format   ˅
+    💻  Ran  swift build          ˅
+```
+
+When collapsed: just the "4 steps" header row. Response text always below.
+
+### Dynamic Step Names
+
+Step names change based on state — present continuous while running, past tense when complete:
+
+| Running | Complete | SF Symbol |
+| :--- | :--- | :--- |
+| Thinking | Thought | `brain` |
+| Reading | Read | `doc.text` |
+| Editing | Edited | `pencil.line` |
+| Writing | Wrote | `doc.badge.plus` |
+| Running | Ran | `terminal` |
+| Searching | Searched | `magnifyingglass` |
+
+### Row Layout
+
+Every row uses identical structure:
+
+```
+[icon/spinner 14pt]  [Name .medium]  [label .tertiary]    Spacer    [chevron ˅]
+```
+
+- **Running**: Native `ProgressView` spinner replaces the icon
+- **Complete**: Type-specific SF Symbol icon, label shows duration or filename
+- **Tap any row**: Opens a detail sheet with full output
+
+### Step Count
+
+The count includes everything: thinking (if present) + all tool calls. A turn with thinking + 3 tool calls = "4 steps".
+
+---
+
+## Response
+
+The actual AI response text — rendered as markdown with syntax-highlighted code blocks, headings, lists, and inline code. Always visible, never inside the steps card.
+
+---
+
+## Implementation Notes
+
+### Key Files
+
+| File | Purpose |
+| :--- | :--- |
+| `Chat/Messages/EnhancedAIBubble.swift` | Message dispatcher — renders `StepsCardView` + response content |
+| `Chat/Messages/ActivitySummaryView.swift` | `StepsCardView` — two modes: execution (accumulating rows) and accordion (collapsible) |
+| `Chat/Messages/ToolCallRowView.swift` | `StepRowView` — unified row for thinking + tool calls. `ToolCallDetailSheet` for tap-to-expand |
+| `Chat/Messages/ThinkingBlockView.swift` | `ThinkingDetailSheet` — full thinking text in a sheet |
+| `Chat/Models/ToolCall.swift` | `ToolCall` model, `ToolCallType` (with `runningName`/`completeName`), `ToolCallStatus` |
+| `Chat/Models/ChatModels.swift` | `ChatMessage` — `thinkingText`, `isThinkingComplete`, `toolCalls`, `activityStartTime` |
+| `Services/DemoChatService.swift` | Demo simulation — `//demo` prefix triggers thinking → tool calls → response |
+
+### StepsCardView Modes
+
+`StepsCardView` has a single `isAccordion` parameter:
+
+- **`false`** (during execution): No header, rows accumulate as steps start/complete
+- **`true`** (after all done): "N steps" header appears, rows are indented and collapsible
+
+`EnhancedAIBubble` sets `isAccordion = allStepsComplete` — which triggers when response text starts arriving.
+
+### Demo Flow
+
+Send `//demo [anything]` to trigger the full simulation:
+1. 500ms pause → "Thinking" row appears (spinner)
+2. Thinking completes (~2s) → "Thought 43s" (brain icon, duration label)
+3. Tool calls one by one (2s each): Reading → Read, Editing → Edited, Running → Ran
+4. Response streams below
+5. "4 steps" header wraps all rows into collapsed accordion
+
+---
+
+## Chat Behaviors (TODO)
+
+### Scroll to Latest Message
+
+When a user opens a chat, it must scroll to the most recent message automatically. This is standard chat UX — the user should always land at the bottom of the conversation.
+
+**Status**: Not yet implemented.
+
+### Reference: Open Source iOS Chat Apps
+
+We should look into open source iOS chat apps on GitHub for standard chat behaviors (scroll management, keyboard avoidance, message grouping, read receipts, typing indicators, etc.). These are solved problems in the chat UI space and we shouldn't reinvent the wheel.
+
+**TODO**: Research and identify a good reference app (e.g., MessageKit, Stream Chat, or similar) to inform our chat UX decisions.
