@@ -1,0 +1,283 @@
+---
+title: OpenClaw Setup
+description: Get your Distiller online and connected to OpenClaw.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+## Video Walkthrough
+
+<div className="my-8 aspect-video w-full overflow-hidden rounded-2xl border shadow-xl">
+  <iframe
+    src="https://www.youtube.com/embed/eOzQgOqQ7hk"
+    title="OpenClaw Setup Walkthrough"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+    className="h-full w-full"
+  />
+</div>
+
+<Callout type="info">
+  OpenClaw was previously called **Clawdbot** and briefly **Moltbot**. Same service, different names.
+</Callout>
+
+---
+
+## Step 1: Power the Device
+
+The Distiller has two USB-C ports on its side. The **power port** is the one **farthest from you** when facing the device, closest to the display.
+
+Plug a USB-C cable into that port and connect it to a power source.
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-power.png"
+    alt="Distiller powered on with USB-C plugged into the power port"
+    className="w-full max-w-[400px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+<Callout type="warn">
+  Use the correct port. The second USB-C port (closer to you) is for data — plugging power into the wrong port won't boot the device.
+</Callout>
+
+## Step 2: Connect to the Distiller's Hotspot
+
+Once the device boots, the display enters **Setup Mode** showing:
+
+- **SSID**: the device's WiFi hotspot name (e.g. `Distiller-A412`)
+- **QR code**: scan to connect instantly
+- **URL**: the captive portal address (e.g. `http://distiller-a412.local:8080`)
+
+The hotspot is an open network — no password required.
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-setup-mode.png"
+    alt="Distiller display in Setup Mode showing SSID, QR code, and captive portal URL"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+On your phone or laptop:
+
+1. **Scan the QR code** on the display to connect automatically
+2. Or open your WiFi settings and search for the SSID (e.g. `Distiller-A412`)
+
+## Step 3: Configure WiFi
+
+Once connected to the hotspot, a **captive portal** opens in your browser. If it doesn't, navigate to the URL shown on the device display.
+
+The captive portal lists all WiFi networks the Distiller can detect nearby.
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-captive-portal.png"
+    alt="Captive portal showing nearby WiFi networks"
+    className="w-full max-w-[400px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+1. **Tap the WiFi network** you want the Distiller to connect to
+2. **Enter the password** for that network
+3. The Distiller connects and establishes its own internet connection
+
+<Callout type="info">
+  After the Distiller connects to WiFi, it disconnects from its setup hotspot. Your phone/laptop will automatically rejoin your regular network.
+</Callout>
+
+## Step 4: Open the OpenClaw Dashboard
+
+The display changes to **Connected** and shows:
+
+- **OpenClaw Access**: IP address and port (e.g. `192.168.8.153:18789`)
+- **OpenClaw Password**: gateway password (e.g. `clwdbt-s3tup`)
+- **Network**: the WiFi network your Distiller is on
+- **QR code**: scan to open the dashboard
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-connected.png"
+    alt="Distiller display showing Connected status with OpenClaw access IP, password, and QR code"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+Scan the QR code, or type the IP address into your browser. This works from any device on the same WiFi — phone, tablet, or desktop.
+
+## Step 5: Authenticate with Gateway Access
+
+1. Go to **Overview > Gateway Access**
+2. Enter the **OpenClaw Password** shown on the device display into the **Password** field
+3. Click **Connect**
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-gateway-access.png"
+    alt="OpenClaw dashboard — Gateway Access password field"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+## Step 6: Add Your AI Provider API Key
+
+OpenClaw needs an API key from an AI provider. You can use **Anthropic (Claude)**, **OpenAI**, or both.
+
+### Getting Your API Keys
+
+<Callout>
+  You'll need your own account with the provider. OpenClaw does not include API credits.
+</Callout>
+
+| Provider | How to Get a Key |
+| :--- | :--- |
+| **Anthropic (Claude)** | Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) — create an account, add billing, then generate an API key. See [Anthropic's quickstart guide](https://docs.anthropic.com/en/docs/initial-setup). |
+| **OpenAI** | Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys) — sign in, add billing, then create a new secret key. See [OpenAI's quickstart guide](https://platform.openai.com/docs/quickstart). |
+
+### Adding Keys to OpenClaw
+
+1. Go to **Config > Environment > All**
+2. Scroll down to **Custom entries**
+3. Click **+ Add Entry**
+4. Add your key(s):
+
+| Name | Value |
+| :--- | :--- |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key |
+| `OPENAI_API_KEY` | Your OpenAI API key |
+
+You can add one or both.
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-custom-entries.png"
+    alt="Config > Environment > Custom entries with API key fields"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+5. Click **Save**
+
+<Callout type="warn">
+  Don't skip this. You'll see an "unsaved change" banner — your keys won't take effect until you click **Save**.
+</Callout>
+
+## Step 7: Test Your Setup
+
+Open the **Chat** tab in the OpenClaw dashboard and send a test message. If the AI responds, your Distiller is set up and ready to use.
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/openclaw-chat.png"
+    alt="OpenClaw Chat tab with a test message and AI response"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+If you don't get a response, double-check that:
+- Your API key is correct and has billing enabled
+- You clicked **Save** after adding the key
+- The Distiller is connected to the internet (check the device display)
+
+---
+
+## Telegram Setup
+
+You can also talk to your Distiller through Telegram. This is optional but lets you chat from anywhere — no need to be on the same WiFi network.
+
+### Step 1: Create a Telegram Bot
+
+1. Open Telegram and search for **@BotFather**
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/tg-botfather-search.png"
+    alt="Searching for @BotFather in Telegram"
+    className="w-full max-w-[400px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+2. Send `/newbot`
+3. BotFather asks for two things:
+   - **Name**: a display name for your bot (e.g. `DistillerBot`)
+   - **Username**: a unique handle that must end in `bot` (e.g. `Distiller_123_bot`) — this is what you'll search for later
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/tg-botfather-newbot.png"
+    alt="BotFather conversation — sending /newbot, choosing a name and username, receiving the bot token"
+    className="w-full max-w-[400px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+4. BotFather replies with a **bot token** (looks like `8506960630:AAG_yVQ22Wc4j...`) — copy it
+
+### Step 2: Add the Token to OpenClaw
+
+1. In the OpenClaw dashboard, go to **Channels**
+2. Scroll down to the **Telegram** section
+3. Paste your bot token into the **Telegram Bot Token** field
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/tg-token-field.png"
+    alt="OpenClaw Channels page — Telegram Bot Token field"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+4. Scroll down to the bottom of the Telegram section and click **Save**
+
+<Callout type="warn">
+  The **Save** button is at the very bottom of the Telegram section. You'll need to scroll past several other fields to find it.
+</Callout>
+
+### Step 3: Start the Bot
+
+1. In Telegram, search for the **username** you gave your bot (e.g. `Distiller_123_bot`)
+2. Open the chat and tap **Start**
+3. The bot replies with your **Telegram user ID** — copy it
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/tg-bot-start.png"
+    alt="Telegram bot chat — tapping Start and receiving user ID"
+    className="w-full max-w-[400px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Step 4: Allowlist Your User ID
+
+1. Back in the OpenClaw dashboard, go to **Channels > Telegram**
+2. Find the **Allow From** section and click **+ Add**
+3. Paste your **Telegram user ID** into the field
+
+{/* TODO: Replace with final image */}
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/getting-started/tg-allow-from.png"
+    alt="OpenClaw Channels — Telegram Allow From field with user ID"
+    className="w-full rounded-2xl border shadow-xl"
+  />
+</div>
+
+4. Scroll down and click **Save**
+
+### Step 5: Verify
+
+Go back to your bot in Telegram and send a message. If the AI responds, Telegram is connected and your Distiller is fully set up.
+
+---
+
+For more advanced configuration like group access, custom commands, and WhatsApp integration, see the [official OpenClaw documentation](https://docs.openclaw.ai/start/getting-started).
