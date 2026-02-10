@@ -31,14 +31,13 @@ import { Callout } from 'fumadocs-ui/components/callout'
 | **Custom tunnel** | Expandable form to add manual port forwards |
 | **Status line** | Connection state, latency, tunnel count — always visible |
 
-### IDE Quick Access
+### SSH Access
 
 | Feature | What it does |
 | :--- | :--- |
-| **VS Code** | Generates `vscode://vscode-remote/ssh-remote+...` URI and opens it |
-| **Cursor** | Generates `cursor://vscode-remote/ssh-remote+...` URI and opens it |
-| **Terminal** | Opens system terminal with pre-filled `ssh` command |
-| **Copy SSH config** | Copies the SSH config block for manual setup in any tool |
+| **SSH host** | A copyable hostname (e.g. `distiller-8x29`) that works in any IDE with SSH remote support |
+| **SSH config management** | App writes and maintains `~/.ssh/config` entries so `ssh distiller-8x29` just works |
+| **Copy to clipboard** | One-click copy of the SSH host for pasting into VS Code, Cursor, JetBrains, or any tool |
 
 ### Device Management
 

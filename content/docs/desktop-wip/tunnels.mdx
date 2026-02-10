@@ -51,24 +51,23 @@ Connected · 22ms · 3 tunnels
 
 ### 2. Access
 
-The SSH connection itself. This is how you get into the machine.
+The SSH connection itself. One copyable hostname that works everywhere.
 
 ```
 ── Access ──────────────────────────
 
->_ SSH                       [Copy]
-   localhost:2222 → device:22
-
-Open in:  [VS Code]  [Cursor]  [Terminal]
+>_ SSH Host
+   ┌──────────────────────────────┐
+   │ distiller-8x29          [📋]│
+   └──────────────────────────────┘
+   Use this host in any IDE with SSH
+   remote support.
 ```
 
-- **Copy** button copies the full SSH command: `ssh -p 2222 user@localhost`
-- **Open in VS Code** generates and opens: `vscode://vscode-remote/ssh-remote+distiller-1/home/user`
-- **Open in Cursor** generates and opens: `cursor://vscode-remote/ssh-remote+distiller-1/home/user`
-- **Open in Terminal** opens the system's default terminal with the SSH command pre-filled
+The app manages `~/.ssh/config` behind the scenes so that `ssh distiller-8x29` just works. VS Code Remote SSH, Cursor, JetBrains Gateway — they all read from `~/.ssh/config`. No IDE-specific buttons, no URI schemes. One host, works everywhere.
 
 <Callout type="info">
-  The "Open in" buttons are the primary call-to-action. This is what most users will click. The app should detect which IDEs are installed and only show relevant buttons.
+  The SSH host is the primary value of the app. The user copies it, pastes it into their tool of choice, and they're connected. No detection of installed IDEs, no maintenance of URI schemes.
 </Callout>
 
 ### 3. Services
@@ -152,44 +151,27 @@ Unknown ports appear as "Port XXXX" and can be renamed by the user. Renames pers
 
 ---
 
-## IDE URI Schemes
+## SSH Config Management
 
-The "Open in" buttons generate URIs specific to each IDE's remote development protocol.
-
-### VS Code / Cursor
-
-Both use the same Remote-SSH extension protocol:
+The app manages a block in `~/.ssh/config` for each paired device:
 
 ```
-vscode://vscode-remote/ssh-remote+{ssh-host}/{remote-path}
-cursor://vscode-remote/ssh-remote+{ssh-host}/{remote-path}
-```
-
-The app also writes an SSH config entry so the Remote-SSH extension can connect:
-
-```
-# ~/.ssh/config (managed by Distiller)
-Host distiller-1
-    HostName <device-ip-or-hostname>
-    User <username>
+# ── Distiller (managed) ──────────────
+Host distiller-8x29
+    HostName 192.168.1.42
+    User distiller
     Port 22
-    # Managed by Distiller Desktop — do not edit this block
+    IdentityFile ~/.ssh/distiller_ed25519
+# ── End Distiller ────────────────────
 ```
 
-### JetBrains Gateway
+This means every tool that reads `~/.ssh/config` automatically works:
+- **VS Code Remote SSH** — sees `distiller-8x29` in the host list
+- **Cursor** — same Remote SSH extension, same config
+- **JetBrains Gateway** — reads SSH config for connection targets
+- **Plain terminal** — `ssh distiller-8x29` just works
 
-JetBrains uses its Gateway app for remote development. The app can:
-- Generate a connection string for manual entry
-- Or open the Gateway URI scheme if available
-
-### Generic Terminal
-
-Opens the system default terminal with:
-```
-ssh -p 2222 user@localhost
-```
-
-On macOS this opens Terminal.app (or iTerm2 / Warp if configured as default). On Windows, Windows Terminal or CMD. On Linux, the default terminal emulator.
+The app only writes within its own managed block (between the comment markers). It never modifies the user's other SSH config entries.
 
 ---
 

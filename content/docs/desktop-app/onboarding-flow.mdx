@@ -1,0 +1,122 @@
+---
+title: Onboarding Flow
+description: What to build for desktop onboarding — screen by screen.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Same protocol, different input">
+  The onboarding flow is identical to the [iOS onboarding](/docs/app/onboarding-v3) at the protocol level — same BLE pairing, same WiFi provisioning, same account system. The only difference is the input method: desktop uses manual 4-digit code entry instead of QR scanning (no camera), and skips service setup (handled via IDE terminal).
+</Callout>
+
+## Flow Overview
+
+```
+Sign In → Device Pairing → BLE Connect → WiFi Setup → WiFi Password → Done
+```
+
+Six screens. No service setup on desktop. The user configures Claude/OpenClaw through their IDE terminal after connecting.
+
+---
+
+## Screens
+
+### 1. Sign In
+
+- Apple or Google sign-in
+- Mandatory — no skip option on this step
+- On success, check if account has registered devices
+  - **Yes** → skip to tray (main app)
+  - **No** → device pairing
+
+### 2. Device Pairing
+
+- 4-digit code input (four individual digit boxes, auto-advance on entry)
+- Code is displayed on the Distiller's e-ink screen
+- "Connect" button — disabled until all 4 digits entered
+- "Skip for now" — lands in empty tray with no device (can pair later from device dropdown)
+- Paste support — user can paste a 4-digit code and all boxes fill
+
+### 3. BLE Connecting
+
+- Spinner state: "Connecting…" / "Looking for Distiller nearby."
+- Shows the entered code for reference
+- On success → brief "Connected" confirmation with green checkmark (auto-advances after ~1s)
+- On failure → "Connection Failed" with:
+  - "Try Again" — retries same code
+  - "Enter a different code" — back to pairing screen
+
+**No back button during connecting.** The user committed to the attempt.
+
+### 4. WiFi Network List
+
+- WiFi icon + "Connect to WiFi" headline
+- List of networks scanned by the device (sent over BLE), each showing:
+  - Network name
+  - Signal strength icon (high/medium/low)
+  - Lock icon if secured
+- Tap to select, selection highlights
+- "Continue" button — disabled until a network is selected
+- "My network isn't listed" link at bottom → manual SSID entry
+
+**This is a checkpoint.** No back button — BLE is connected, there's no going back to pairing from here.
+
+### 5. WiFi Password
+
+- Shows selected network name
+- Password input with show/hide toggle
+- "Connect" button — disabled until password entered
+- Enter key submits
+- Back button → returns to network list
+
+### 6. WiFi Connecting + Done
+
+Two states on the same screen:
+
+**Connecting:** Spinner + "Connecting to WiFi…" / "Joining [network name]"
+
+**Success:** Green WiFi icon + "WiFi Connected" / "Your Distiller is now online." → auto-advances to setup complete
+
+**Setup Complete:**
+- Green checkmark + "Your Distiller is Ready!"
+- Device info card showing device name, hostname, and WiFi network
+- "Continue to App" button → opens the tray panel
+
+**This is a checkpoint.** No back button on the complete screen.
+
+---
+
+## Navigation Model
+
+The onboarding uses a **history stack** for forward/back navigation with **checkpoints** that reset the stack:
+
+```
+history: ["welcome"]                    → no back button
+history: ["welcome", "pairing"]         → back goes to welcome
+history: ["welcome", "pairing", "connecting"]  → no back (connecting state)
+
+-- BLE connects, checkpoint --
+
+history: ["wifi"]                       → no back button (new checkpoint)
+history: ["wifi", "wifi-password"]      → back goes to wifi list
+
+-- WiFi connects, checkpoint --
+
+history: ["complete"]                   → no back button
+```
+
+**`goTo(step)`** — pushes onto history stack (enables back)
+**`checkpoint(step)`** — resets history to just that step (disables back)
+
+---
+
+## What's Different from iOS
+
+| | iOS | Desktop |
+| :--- | :--- | :--- |
+| **QR scanning** | Yes (camera) | No — 4-digit code only |
+| **Service setup** | Claude Code + Clawdbot config | Skipped — configure via IDE terminal |
+| **Pairing method** | QR or manual code | Manual code only |
+| **Back behavior** | Standard iOS navigation | History stack with checkpoints |
+
+Everything else — BLE protocol, WiFi provisioning, error handling, account registration — is identical. See [Onboarding v3](/docs/app/onboarding-v3) for the full protocol spec.
