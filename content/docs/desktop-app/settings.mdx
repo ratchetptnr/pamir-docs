@@ -1,0 +1,96 @@
+---
+title: Settings
+description: Device and app configuration for the desktop app.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Design Principle">
+  The desktop app settings are a **subset** of the iOS app settings. Hardware controls (LED, display, audio) stay on mobile. The desktop app only surfaces what's relevant to the tunnel management use case.
+</Callout>
+
+## Settings Window
+
+Clicking the gear icon (⚙️) in the tray popover opens a proper Tauri window — not the popover. Settings is a rare interaction, not a quick-access one.
+
+---
+
+## Structure
+
+### Account
+
+| Setting | What it does |
+| :--- | :--- |
+| **Signed in as** | Shows email / Apple ID |
+| **Sign Out** | Logs out, clears device associations on this machine |
+
+### Devices
+
+Per-device management. Each paired device shows:
+
+| Setting | What it does |
+| :--- | :--- |
+| **Device name** | Editable. Syncs across iOS app and desktop app. |
+| **Device ID** | Read-only identifier |
+| **Connection info** | IP address, connection method (IPv4/IPv6), last seen |
+| **WiFi network** | Currently connected network name |
+| **Remove device** | Unpairs the device from this account |
+
+"Pair New Device" button at the bottom opens the onboarding flow.
+
+### Connection
+
+| Setting | What it does |
+| :--- | :--- |
+| **Auto-connect on launch** | Toggle. When enabled, connects to the last-used device when the app starts. Default: on. |
+| **Auto-tunnel detected services** | Toggle. When enabled, new services are forwarded automatically. When disabled, detected services are shown but user must click to activate. Default: on. |
+| **SSH keep-alive interval** | Seconds between keep-alive pings. Default: 15s. |
+
+### IDE Integration
+
+| Setting | What it does |
+| :--- | :--- |
+| **Default IDE** | Which IDE the primary "Open in" button targets. Options: VS Code, Cursor, Terminal, None. Auto-detected on first launch. |
+| **Manage SSH config** | Toggle. When enabled, the app writes and maintains SSH config entries in `~/.ssh/config`. When disabled, the user manages SSH config manually. Default: on. |
+| **SSH config path** | Path to the SSH config file. Default: `~/.ssh/config`. |
+
+<Callout type="info">
+  When "Manage SSH config" is enabled, the app adds a clearly marked block to the SSH config file:
+
+  ```
+  # ── Distiller (managed) ──────────────
+  Host distiller-1
+      HostName 192.168.1.42
+      User distiller
+      Port 22
+      IdentityFile ~/.ssh/distiller_ed25519
+  # ── End Distiller ────────────────────
+  ```
+
+  The app only modifies content between these markers. It never touches other SSH config entries.
+</Callout>
+
+### App
+
+| Setting | What it does |
+| :--- | :--- |
+| **Launch on login** | Toggle. Starts the app when the OS boots. Default: off. |
+| **Check for updates** | Manual check + auto-update toggle |
+| **Version** | Current app version |
+
+---
+
+## What's NOT in Settings
+
+These belong in the iOS app, not the desktop tunnel manager:
+
+| Setting | Where it lives | Why |
+| :--- | :--- | :--- |
+| **LED controls** (stealth mode, idle color) | iOS app | Physical device personalization — mobile UX |
+| **Display settings** (orientation, inversion) | iOS app | Physical device calibration — mobile UX |
+| **Audio settings** (volume, mic gain) | iOS app | Physical device controls — mobile UX |
+| **Provider setup** (Claude, OpenClaw) | Via terminal on device | Power users configure this in their IDE terminal |
+| **Security settings** (SSH keys, firewall) | Via terminal on device | Advanced config belongs in the shell |
+| **Storage management** | iOS app | Device maintenance — mobile UX |
+
+The filter is simple: if it's about the **physical device**, it's in the iOS app. If it's about the **connection to the device**, it's in the desktop app.

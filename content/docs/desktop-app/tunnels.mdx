@@ -1,0 +1,253 @@
+---
+title: Tunnels
+description: The core feature — SSH tunnels, port forwarding, and IDE access.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  **Tunnels are the product.** Everything else in the desktop app exists to support one thing: making the Distiller's services accessible at `localhost` on the user's machine.
+</Callout>
+
+## How It Works
+
+When you connect to a Distiller device, the app:
+
+1. **Establishes an SSH connection** to the device
+2. **Queries running services** — asks the device what ports have listeners
+3. **Creates local port forwards** — maps each remote port to a local port
+4. **Monitors services** — polls periodically for new/stopped services and updates tunnels
+
+This means when Claude Code starts a dev server on port 3000 on the Distiller, within seconds `http://localhost:3000` works on your machine. No manual setup.
+
+```
+Your Machine                         Distiller Device
+┌──────────────┐    SSH Tunnel     ┌──────────────────┐
+│              │◄═════════════════►│                  │
+│ localhost:22 │────── port 22 ───│ SSH server       │
+│ localhost:3000│──── port 3000 ──│ Next.js dev      │
+│ localhost:8080│──── port 8080 ──│ API server       │
+│ localhost:5432│──── port 5432 ──│ PostgreSQL       │
+│              │                  │                  │
+└──────────────┘                  └──────────────────┘
+```
+
+---
+
+## The Main Panel
+
+The tray popover is the primary interface. It has three sections:
+
+### 1. Header
+
+```
+● Distiller 1          ▾      ⚙️
+Connected · 22ms · 3 tunnels
+```
+
+- **Device selector** (▾) — dropdown to switch between paired devices or add a new one
+- **Settings gear** (⚙️) — opens the settings window
+- **Status line** — connection state, round-trip latency, active tunnel count
+
+### 2. Access
+
+The SSH connection itself. This is how you get into the machine.
+
+```
+── Access ──────────────────────────
+
+>_ SSH                       [Copy]
+   localhost:2222 → device:22
+
+Open in:  [VS Code]  [Cursor]  [Terminal]
+```
+
+- **Copy** button copies the full SSH command: `ssh -p 2222 user@localhost`
+- **Open in VS Code** generates and opens: `vscode://vscode-remote/ssh-remote+distiller-1/home/user`
+- **Open in Cursor** generates and opens: `cursor://vscode-remote/ssh-remote+distiller-1/home/user`
+- **Open in Terminal** opens the system's default terminal with the SSH command pre-filled
+
+<Callout type="info">
+  The "Open in" buttons are the primary call-to-action. This is what most users will click. The app should detect which IDEs are installed and only show relevant buttons.
+</Callout>
+
+### 3. Services
+
+Auto-discovered services running on the device.
+
+```
+── Services ────────────────────────
+
+🟢 Web Dev (3000)        [📋] [↗]
+   http://localhost:3000
+
+🟢 API Server (8080)     [📋] [↗]
+   http://localhost:8080
+
+🟢 PostgreSQL (5432)     [📋]
+   localhost:5432
+
+🟢 Redis (6379)          [📋]
+   localhost:6379
+```
+
+Each service shows:
+- **Status indicator** — green when tunnel is active, yellow when connecting, red when the remote service stopped
+- **Friendly name** — auto-labeled from well-known ports, user-renamable
+- **Local address** — what to use on your machine
+- **Copy** (📋) — copies the local address to clipboard
+- **Open** (↗) — for HTTP services, opens in default browser. Not shown for non-HTTP services (databases, etc.)
+
+### 4. Custom Tunnel
+
+Collapsed by default. For when auto-detection misses a port or you need specific local port mapping.
+
+```
+── Custom ──────────────────────────
+[+ Add port forward]
+```
+
+Expands to:
+
+```
+Name (optional):  [My Service      ]
+Local port:       [9000] → Remote port: [9000]
+                              [Add]
+```
+
+---
+
+## Auto-Detection
+
+The app queries the device for listening ports over the SSH connection and classifies them by well-known port numbers.
+
+### Well-Known Port Labels
+
+| Port(s) | Auto-label | Icon | Actions |
+| :--- | :--- | :--- | :--- |
+| 22 | SSH | Terminal icon | Always present in Access section |
+| 80, 443 | Web Server | Globe | Copy, Open in browser |
+| 3000, 3001, 4000, 5173, 5174, 8000 | Web Dev | Globe | Copy, Open in browser |
+| 8080, 8443 | App Server | Globe | Copy, Open in browser |
+| 5432 | PostgreSQL | Database icon | Copy |
+| 3306 | MySQL | Database icon | Copy |
+| 27017 | MongoDB | Database icon | Copy |
+| 6379 | Redis | Database icon | Copy |
+| 11211 | Memcached | Database icon | Copy |
+| Any other | Port XXXX | Generic icon | Copy |
+
+Unknown ports appear as "Port XXXX" and can be renamed by the user. Renames persist across sessions.
+
+### Detection Behavior
+
+- **On connect**: Full port scan, all detected services appear immediately
+- **Polling**: Every 5 seconds, check for new/stopped services
+- **New service detected**: Tunnel created automatically, appears in list with a subtle entrance animation
+- **Service stopped**: Status dot turns red, tunnel remains in list for 30 seconds, then fades out (in case it restarts)
+- **User-renamed services**: Persist even after the service stops and restarts
+
+<Callout type="info">
+  Auto-detection means the `+` button from the current app is no longer the primary path. Users don't need to manually add tunnels — they just start a service on the device and it appears. The custom tunnel form exists only as an escape hatch.
+</Callout>
+
+---
+
+## IDE URI Schemes
+
+The "Open in" buttons generate URIs specific to each IDE's remote development protocol.
+
+### VS Code / Cursor
+
+Both use the same Remote-SSH extension protocol:
+
+```
+vscode://vscode-remote/ssh-remote+{ssh-host}/{remote-path}
+cursor://vscode-remote/ssh-remote+{ssh-host}/{remote-path}
+```
+
+The app also writes an SSH config entry so the Remote-SSH extension can connect:
+
+```
+# ~/.ssh/config (managed by Distiller)
+Host distiller-1
+    HostName <device-ip-or-hostname>
+    User <username>
+    Port 22
+    # Managed by Distiller Desktop — do not edit this block
+```
+
+### JetBrains Gateway
+
+JetBrains uses its Gateway app for remote development. The app can:
+- Generate a connection string for manual entry
+- Or open the Gateway URI scheme if available
+
+### Generic Terminal
+
+Opens the system default terminal with:
+```
+ssh -p 2222 user@localhost
+```
+
+On macOS this opens Terminal.app (or iTerm2 / Warp if configured as default). On Windows, Windows Terminal or CMD. On Linux, the default terminal emulator.
+
+---
+
+## Tunnel Lifecycle
+
+```
+Device starts a service on port 3000
+          │
+          ▼
+App detects new listener (polling)
+          │
+          ▼
+App creates SSH port forward: localhost:3000 → device:3000
+          │
+          ▼
+"Web Dev (3000)" appears in Services section
+          │
+          ▼
+User copies http://localhost:3000 or clicks [↗] to open in browser
+          │
+          ▼
+User works in their browser / IDE normally
+          │
+          ▼
+Service stops on device
+          │
+          ▼
+Status dot turns red, tunnel kept for 30s
+          │
+          ▼
+Service doesn't restart → tunnel removed from list
+```
+
+---
+
+## Multi-Device Tunnels
+
+Each device maintains its own set of tunnels. When you switch devices via the selector, the panel shows that device's tunnels. Only the active device's tunnels are forwarded to localhost.
+
+<Callout type="warn">
+  **Port conflicts**: If Distiller 1 uses port 3000 and Distiller 2 also uses port 3000, switching to Distiller 2 will remap its port 3000 to the next available local port (e.g., 3001). The app shows the actual local port clearly.
+</Callout>
+
+Future consideration: simultaneous multi-device connections where all devices' tunnels are active at once, with automatic port remapping to avoid conflicts. Not in initial scope.
+
+---
+
+## Empty State
+
+When no tunnels are detected:
+
+```
+── Services ────────────────────────
+
+No active services detected.
+
+Start a server on your Distiller and
+it will appear here automatically.
+```
+
+Direct, informative, no action required from the user. The app is watching.

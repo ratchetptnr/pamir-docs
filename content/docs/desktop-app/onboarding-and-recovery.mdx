@@ -1,0 +1,128 @@
+---
+title: Onboarding & Recovery
+description: Device pairing and WiFi recovery adapted for desktop.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+## Onboarding
+
+The desktop app needs the same device pairing flow as the iOS app, adapted for a desktop environment. Onboarding opens as a **full Tauri window** — not the tray popover. The popover is for quick access; onboarding is a focused, sequential flow.
+
+### When It Triggers
+
+- **First launch** — no account, no devices
+- **"Add Device"** — from the device selector dropdown or settings
+
+### Flow
+
+```
+1. Welcome → Sign in (Apple / Google)
+2. Device Pairing → Enter pairing code (manual entry)
+3. WiFi Setup → Select network, enter password (via BLE)
+4. Complete → Device appears in tray app, tunnel established
+```
+
+<Callout type="info">
+  The iOS app uses QR scanning for device pairing. On desktop, the primary path is **manual code entry** — the user reads the code from the device's display and types it in. If the desktop has a webcam, QR scanning can be offered as an alternative, but it should not be required.
+</Callout>
+
+### Step 1: Welcome & Sign In
+
+Same account system as the iOS app. The user signs in with Apple or Google. If they already have an account with paired devices from the iOS app, those devices appear immediately after sign-in.
+
+The sign-in happens in the Tauri webview window — no external browser redirect needed.
+
+### Step 2: Device Pairing
+
+The device displays a pairing code on its screen (same as iOS flow). The user enters this code in the desktop app. The app uses BLE to establish the initial connection.
+
+```
+┌─────────────────────────────────────┐
+│         Pair Your Distiller         │
+│                                     │
+│  Enter the code shown on your       │
+│  device's display:                  │
+│                                     │
+│  ┌───┬───┬───┬───┬───┬───┐        │
+│  │ _ │ _ │ _ │ _ │ _ │ _ │        │
+│  └───┴───┴───┴───┴───┴───┘        │
+│                                     │
+│  Make sure you're within 3 meters   │
+│  of the device.                     │
+│                                     │
+│              [Continue]             │
+└─────────────────────────────────────┘
+```
+
+### Step 3: WiFi Setup
+
+Once BLE is connected, the app discovers available WiFi networks (same as iOS flow) and lets the user select one and enter the password.
+
+### Step 4: Complete
+
+The device connects to WiFi. The desktop app establishes the SSH tunnel. The onboarding window closes and the tray popover now shows the connected device with its tunnels.
+
+---
+
+## Recovery
+
+When a Distiller device loses its WiFi connection, the desktop app can perform BLE-based recovery — identical to the iOS app's recovery flow.
+
+### When It Triggers
+
+The tray icon changes to the offline state. The popover shows:
+
+```
+┌──────────────────────────────────────┐
+│  ● Distiller 1          ▾     ⚙️    │
+│  Offline since 3:42 PM              │
+│                                      │
+│  Device lost WiFi connection.        │
+│  Tunnels are suspended.              │
+│                                      │
+│  [Recover via Bluetooth]             │
+│                                      │
+│  Make sure your computer has         │
+│  Bluetooth enabled and you're        │
+│  within 3 meters of the device.      │
+└──────────────────────────────────────┘
+```
+
+### Recovery Flow
+
+Clicking "Recover via Bluetooth" opens a **separate window** (like onboarding — not the popover) with the WiFi recovery flow:
+
+```
+1. Scanning → BLE searching for the device
+2. Found → Connected via BLE
+3. WiFi List → Select new network or re-enter password
+4. Connecting → Device attempts WiFi connection
+5. Complete → Tunnels resume automatically
+```
+
+Same steps as [iOS Recovery](/docs/app/recovery), same BLE protocol.
+
+---
+
+## BLE on Desktop
+
+BLE support on desktop requires platform-specific handling:
+
+| OS | BLE Support | Notes |
+| :--- | :--- | :--- |
+| **macOS** | CoreBluetooth | Well-supported. Requires Bluetooth permission in app entitlements. |
+| **Windows** | Windows.Devices.Bluetooth | Supported on Windows 10+. Requires BLE-capable hardware. |
+| **Linux** | BlueZ (via D-Bus) | Works on most distributions. May require `bluez` package. |
+
+The Rust `btleplug` crate abstracts these platform differences. Same GATT service and characteristics as the iOS app — see [BLE Spec](/docs/design/connectivity) for the protocol.
+
+<Callout type="warn">
+  Not all desktops have Bluetooth. If BLE is unavailable, the app should clearly state: "Bluetooth not available on this computer. Use the iOS app for device pairing and WiFi recovery." The app still works for tunnel management if the device is already online.
+</Callout>
+
+---
+
+## Existing Devices
+
+If the user signs in and already has devices paired via the iOS app, those devices appear in the desktop app immediately. No re-pairing needed — the desktop app connects via SSH over the network. BLE is only needed for initial pairing and WiFi recovery.

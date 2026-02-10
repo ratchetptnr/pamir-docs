@@ -1,0 +1,111 @@
+---
+title: Scope
+description: What the desktop app ships with — and what it doesn't.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="The Contract">
+  The desktop app is a **tunnel manager**, not an IDE. Every feature must serve the goal of connecting the user's existing tools to their Distiller device. If it doesn't serve that goal, it doesn't belong here.
+</Callout>
+
+## What Ships
+
+### Connection Management
+
+| Feature | What it does |
+| :--- | :--- |
+| **SSH tunnel establishment** | Connects to the Distiller device over SSH and maintains the connection |
+| **Auto port discovery** | Detects services running on the device and creates local port forwards automatically |
+| **Manual port forwarding** | Users can add custom tunnels for ports the auto-detection misses |
+| **Connection monitoring** | Live latency display, connection status, automatic reconnection |
+| **Multi-device support** | Pair and switch between multiple Distiller devices |
+
+### Tunnel Interface (Tray Popover)
+
+| Feature | What it does |
+| :--- | :--- |
+| **Device selector** | Dropdown showing all paired devices with connection status |
+| **Access section** | SSH connection details with one-click "Open in IDE" buttons |
+| **Services section** | Auto-populated list of forwarded ports with copy and open-in-browser actions |
+| **Custom tunnel** | Expandable form to add manual port forwards |
+| **Status line** | Connection state, latency, tunnel count — always visible |
+
+### IDE Quick Access
+
+| Feature | What it does |
+| :--- | :--- |
+| **VS Code** | Generates `vscode://vscode-remote/ssh-remote+...` URI and opens it |
+| **Cursor** | Generates `cursor://vscode-remote/ssh-remote+...` URI and opens it |
+| **Terminal** | Opens system terminal with pre-filled `ssh` command |
+| **Copy SSH config** | Copies the SSH config block for manual setup in any tool |
+
+### Device Management
+
+| Feature | What it does |
+| :--- | :--- |
+| **Onboarding** | Sign in (Apple/Google) + BLE device pairing + WiFi setup |
+| **Recovery** | BLE-based WiFi recovery when device loses connection |
+| **Device settings** | Rename device, view connectivity info, manage WiFi |
+| **Add/remove devices** | Pair new devices, unpair existing ones |
+
+### App Management
+
+| Feature | What it does |
+| :--- | :--- |
+| **Auto-launch** | Option to start on login |
+| **Auto-connect** | Reconnects to last-used device on launch |
+| **Updates** | Self-update mechanism |
+
+---
+
+## What Doesn't Ship
+
+| Feature | Why it's excluded |
+| :--- | :--- |
+| **Chat / AI interface** | Use Claude Code through your IDE terminal. The desktop has proper terminals — no need to rebuild one. |
+| **Built-in terminal** | SSH tunnel provides full terminal access through any terminal app. |
+| **Built-in editor** | Use VS Code, Cursor, JetBrains, vim — whatever you want. |
+| **Project management** | Projects are managed through the IDE or through chat in the terminal. |
+| **Provider setup** | Configure Claude/OpenClaw via the device terminal in your IDE. Not needed in the tunnel manager. |
+| **Hardware settings** (LED, display, audio) | Managed through the iOS app. These are physical device controls that belong on mobile. |
+| **The Desk** (agent monitor) | Future capability, not part of this scope. |
+| **Shadow Agent / Timeline** | Future capability. |
+| **File browser** | Your IDE handles this natively via the SSH remote connection. |
+
+---
+
+## Quality Bar
+
+Same standards as the iOS app, derived from [First Principles](/docs/design/first-principles).
+
+### Failure States Are Designed
+
+Every connection state has a clear, informative UI:
+
+| State | What the user sees |
+| :--- | :--- |
+| **Connected** | Green dot, latency, tunnel count |
+| **Connecting** | "Connecting to Distiller 1..." with progress |
+| **Connection lost** | "Connection lost at 3:42 PM. Reconnecting..." with attempt count |
+| **Device offline** | "Distiller 1 is offline. Last seen 2 hours ago." with recovery option |
+| **BLE recovery needed** | "WiFi recovery available via Bluetooth" with action button |
+| **No devices** | Clean empty state guiding to "Add Device" |
+
+### Three-Part Error Messages
+
+When something goes wrong:
+
+| Do | Don't |
+| :--- | :--- |
+| "SSH connection refused. Port 22 is not responding on the device. Check that the device is online in Settings." | "Connection failed." |
+| "Tunnel to port 3000 closed unexpectedly. The service may have stopped. Tunnel will auto-restart when the service resumes." | "Tunnel error." |
+| "BLE pairing failed — device not found. Make sure you're within 3 meters and the device is in setup mode." | "Pairing failed. Try again." |
+
+### Copy Is Direct
+
+| Do | Don't |
+| :--- | :--- |
+| "Device offline since 3:42 PM" | "Oops! Having trouble reaching your device" |
+| "3 tunnels active" | "Your tunnels are all set!" |
+| "Connection lost. Reconnecting (attempt 3)." | "Hmm, we seem to have lost the connection" |

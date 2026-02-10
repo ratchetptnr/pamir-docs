@@ -1,0 +1,89 @@
+---
+title: Desktop App
+description: A cross-platform tunnel manager that makes your Distiller feel like a local machine.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+<Callout title="Product Philosophy">
+  **We don't build the UI. We build the pipe. You bring your own UI.** The desktop app is not an IDE, not a chat client, not a dashboard. It's the plumbing that makes your Distiller device accessible to whatever tools you already use.
+</Callout>
+
+## What This App Is
+
+A tray-resident tunnel manager. It establishes SSH connections to your Distiller devices and forwards ports so that services running on the device appear at `localhost` on your machine.
+
+Want to use VS Code? Here's an SSH remote URI — paste it. Want JetBrains? Same. Want to see the website your agent just built? It's at `http://localhost:3000`. Want a raw terminal? `ssh distiller` works.
+
+The desktop app's job is three things:
+
+1. **Establish and maintain the SSH connection** to the Distiller
+2. **Auto-discover and forward ports** so device services appear at localhost
+3. **Give you copyable links** to plug into whatever tool you want
+
+---
+
+## The Analogy
+
+Think of how universities give students access to supercomputers. You don't use a custom university IDE — you SSH in from your own machine, with your own tools. The university provides the connection. That's what this app does for your Distiller.
+
+The difference: we abstract away the SSH configuration, port forwarding, and connection management into a clean tray app. No manual `~/.ssh/config` editing. No remembering ports. Click and go.
+
+---
+
+## Why Not a Full Desktop IDE?
+
+The [iOS app](/docs/app) is a full IDE (chat, terminal, editor) because phones can't run VS Code. Desktops can. Building a mediocre IDE that duplicates VS Code, Cursor, JetBrains, and every other tool would fail the [Necessity Test](/docs/design/first-principles#filter-5-the-necessity-test).
+
+Instead, we stay tiny and let the user's existing toolchain do the heavy lifting. The app binary is small (Rust + Tauri), runs in the system tray, and uses minimal resources.
+
+---
+
+## Tech Stack
+
+| Component | Technology | Why |
+| :--- | :--- | :--- |
+| **Runtime** | Rust + Tauri v2 | Cross-platform desktop apps with small binary size (~2-5MB). Native system tray support on macOS, Windows, Linux. |
+| **Frontend** | Web (HTML/CSS/JS in Tauri webview) | Tauri renders the popover and windows using the OS webview. Keeps the bundle tiny. |
+| **SSH** | Rust SSH library (e.g. `russh`) | Manages SSH connections, port forwarding, and tunnel lifecycle from the Rust backend. |
+| **BLE** | Rust BLE library (`btleplug`) | Device pairing and WiFi recovery — same BLE protocol as the iOS app. |
+
+---
+
+## How It Relates to the iOS App
+
+The iOS app and the desktop app serve the same Distiller device but from opposite ends of the spectrum.
+
+| | iOS App | Desktop App |
+| :--- | :--- | :--- |
+| **Purpose** | Full IDE experience from your phone | Connection manager for your desktop tools |
+| **Chat** | Built-in (Claude Code interface) | No — use Claude Code through your IDE's terminal |
+| **Terminal** | Built-in | No — use your own terminal via SSH |
+| **Editor** | Built-in | No — use VS Code, Cursor, JetBrains, vim, etc. |
+| **Tunnels** | Not applicable (direct connection) | Core feature — port forwarding to localhost |
+| **Onboarding** | BLE pairing + WiFi | Same flow, adapted for desktop |
+| **Recovery** | BLE-based WiFi recovery | Same mechanism |
+| **Device settings** | Full settings surface | Subset — connectivity and identity only |
+| **Provider setup** | In-app OAuth flow | Not included — configure via IDE terminal |
+| **Form factor** | Full-screen app | Tray app with popover |
+
+---
+
+## Platform Support
+
+| OS | Tray Behavior | Notes |
+| :--- | :--- | :--- |
+| **macOS** | NSStatusItem with popover | Native, clean. Same pattern as Tailscale, Docker Desktop. |
+| **Windows** | System tray icon with anchored window | Standard pattern. Discord, Slack, 1Password all do this. |
+| **Linux** | StatusNotifierItem / AppIndicator | Works natively on KDE, XFCE. GNOME needs AppIndicator extension (very common). Tauri v2 handles this. |
+
+---
+
+## Documentation
+
+| Section | Focus |
+| :--- | :--- |
+| [Scope](/docs/desktop-app/scope) | What ships, what doesn't |
+| [Tunnels](/docs/desktop-app/tunnels) | The core feature — tunnel management and IDE access |
+| [Onboarding & Recovery](/docs/desktop-app/onboarding-and-recovery) | Device pairing and WiFi recovery on desktop |
+| [Settings](/docs/desktop-app/settings) | Device and app configuration |
