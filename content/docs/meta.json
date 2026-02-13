@@ -1,5 +1,6 @@
 {
-    "title": "Documentation",
+    "title": "Design Docs",
+    "root": true,
     "pages": [
         "getting-started",
         "app",

@@ -16,15 +16,13 @@ The recovery flow reconnects a known device to WiFi using Bluetooth as the commu
 
 ## Single-Path Design
 
-Recovery always starts with automatic BLE reconnection. If that fails—or if the user wants to skip the wait—a QR/code scan fallback is available at every stage.
-
-This avoids branching logic. The system doesn't need to know whether this phone has previously connected to the device. It just tries the fast path first and offers the manual path as an escape hatch.
+Recovery always starts with a QR scanner. If the phone already has a BLE connection to the device (iOS remembered it), the scanner auto-advances to WiFi setup. Otherwise, the user scans the QR code on the device's e-ink display.
 
 | Scenario | What Happens |
 | :--- | :--- |
-| **Phone knows the device** | Auto-reconnect succeeds → WiFi setup |
-| **Phone doesn't know the device** | Auto-reconnect fails → user taps "Scan QR Code" → WiFi setup |
-| **User is impatient** | Taps "Scan QR Code" during reconnecting → WiFi setup |
+| **Phone remembers the device** | Scanner opens, BLE auto-connects, advances to WiFi setup |
+| **Phone doesn't remember** | User scans QR code → BLE connects → WiFi setup |
+| **Device belongs to another account** | "This Distiller is not registered to your account" → dismiss |
 
 ---
 
@@ -32,84 +30,60 @@ This avoids branching logic. The system doesn't need to know whether this phone 
 
 <Mermaid chart={`
 flowchart TD
-    Start([Device Offline Alert]) --> Tap["User taps 'Recover via Bluetooth'"]
+    Start([Device Offline]) --> Tap["User taps 'Recover via Bluetooth'"]
 
-    Tap --> Connecting[Reconnecting...]
-    Connecting --> ScanEscape["'Or scan QR code on device'"]
-    ScanEscape -->|User taps| Scan[QR / Code Scan Screen]
+    Tap --> Scan[QR Scanner Sheet]
 
-    Connecting --> BLEResult{BLE Connection}
+    Scan --> AutoConnect{Phone remembers\ndevice?}
+    AutoConnect -->|Yes| WiFiList[WiFi Network List]
+    AutoConnect -->|No| UserScan[User scans QR / enters code]
 
-    BLEResult -->|Failed| RetryPrompt[Connection failed]
-    RetryPrompt --> FailChoice{User choice}
-    FailChoice -->|Try Again| Connecting
-    FailChoice -->|Scan QR Code| Scan
-    FailChoice -->|Cancel| End([Return to app])
+    UserScan --> AccountCheck{Device on\nsame account?}
+    AccountCheck -->|Yes| WiFiList
+    AccountCheck -->|No| Denied[Not your Distiller] --> End([Dismiss])
 
-    Scan --> ScanConnect[Inline connecting...]
-    ScanConnect --> ScanResult{Connected?}
-    ScanResult -->|No| ScanFailed[Inline error]
-    ScanFailed -->|Try Again| ScanConnect
-    ScanFailed -->|Scan Different| Scan
-    ScanResult -->|Yes| WiFiList
+    UserScan --> ScanFailed[Connection failed]
+    ScanFailed -->|Scan again| UserScan
 
-    BLEResult -->|Success| WiFiList[WiFi Network Selection]
+    WiFiList --> EnterPass[WiFi password sheet]
+    EnterPass --> WiFiResult{WiFi Connection}
 
-    WiFiList --> SelectNetwork[User selects network]
-    SelectNetwork --> EnterPass[Enter WiFi password]
-    EnterPass --> Sending[Sending credentials...]
-
-    Sending --> WiFiResult{WiFi Connection}
-
-    WiFiResult -->|Wrong Password| PassError[Password incorrect]
+    WiFiResult -->|Wrong Password| PassError[Inline error]
     PassError --> EnterPass
 
-    WiFiResult -->|Timeout| TimeoutError[Connection failed]
-    TimeoutError --> TimeoutChoice{User choice}
-    TimeoutChoice -->|Try Again| Sending
-    TimeoutChoice -->|Different Network| WiFiList
+    WiFiResult -->|Timeout| TimeoutAlert[Connection Timed Out]
+    TimeoutAlert -->|Try Again| EnterPass
+    TimeoutAlert -->|Different Network| WiFiList
 
-    WiFiResult -->|Success| Complete[Recovery Complete]
-    Complete --> Done([Device back online])
+    WiFiResult -->|Success| Done([Sheet dismisses — device online])
 
     style Start fill:#ffebee
     style Done fill:#e1f5e1
-    style Complete fill:#d4edff
     style End fill:#fff4e6
-    style RetryPrompt fill:#ffebee
+    style Denied fill:#ffebee
     style PassError fill:#ffebee
-    style TimeoutError fill:#ffebee
+    style TimeoutAlert fill:#ffebee
+    style ScanFailed fill:#ffebee
     style Scan fill:#e3f2fd
-    style ScanEscape fill:#e3f2fd
 `} />
 
-### Step 1: Reconnecting
+### Step 1: QR Scan
 
-The app immediately attempts to establish a Bluetooth connection with the known device. The user sees a "Connecting via Bluetooth..." spinner with the device name.
-
-Below the spinner, a **"Or scan QR code on device"** link is always visible. This is the early escape hatch—users don't have to wait for failure to reach the scanner.
+The recovery sheet opens with a QR scanner — same pairing screen as onboarding and add-device, with an X button to dismiss. If the phone already has a BLE connection to the device (iOS remembered it), the scanner auto-advances to WiFi setup.
 
 <div className="flex justify-center my-8">
   <img
-    src="/docs/ios/recovery-reconnecting.png"
-    alt="Reconnecting spinner state with scan QR code link"
+    src="/docs/ios/recovery-pairing.png"
+    alt="Recovery QR scanner"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
 
-### Step 1b: Scan Fallback (if needed)
+**Account validation:** When the phone connects to a Distiller, the app checks whether the device belongs to the signed-in account. If not, the user sees "This Distiller is not registered to your account" and can only dismiss. The user can scan any of their offline devices — recovery is not locked to the specific device they tapped on.
 
-If auto-reconnect fails or the user taps the scan link, they see a QR/code scan screen—the same dark-background pairing experience as onboarding, but using the recovery flow's own state machine.
+### Step 2: WiFi Setup
 
-- **QR viewfinder** — point at the device's QR code
-- **4-digit code entry** — manual fallback with a Connect button
-- **Inline connecting/failed states** — no navigation away; errors resolve in-place
-
-This screen is identical in visual language to the onboarding `DevicePairingView` but is self-contained within the recovery sheet.
-
-### Step 2: WiFi Selection
-
-Once Bluetooth is established (via auto-reconnect or scan), the device reports available WiFi networks. The user selects a network. The back button is hidden since going back to the reconnecting spinner is meaningless—Cancel in the toolbar dismisses the sheet.
+Once BLE is established, the device scans for nearby networks. Same WiFi list, password sheet, and connection results as onboarding.
 
 <div className="flex justify-center my-8">
   <img
@@ -119,29 +93,7 @@ Once Bluetooth is established (via auto-reconnect or scan), the device reports a
   />
 </div>
 
-### Step 3: Credential Entry
-
-The user enters the WiFi password in a bottom sheet. The app sends credentials via Bluetooth to the device.
-
-<div className="flex justify-center my-8">
-  <img
-    src="/docs/ios/recovery-wifi-password.png"
-    alt="WiFi password entry screen"
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
-
-### Step 4: Completion
-
-On success, the user sees a "Back Online" screen with a checkmark animation and the device name. Tapping "Done" dismisses the recovery sheet.
-
-<div className="flex justify-center my-8">
-  <img
-    src="/docs/ios/recovery-complete.png"
-    alt="Recovery complete screen showing device back online"
-    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
-  />
-</div>
+On successful WiFi connection, the recovery sheet dismisses automatically — no completion screen.
 
 ---
 
@@ -167,12 +119,10 @@ Sharing a view forced recovery through irrelevant states (Welcome screen flash, 
 
 ```swift
 enum Step: Hashable {
-    case reconnecting   // Root: auto-connect via BLE
-    case failed         // BLE connection failed
-    case scanning       // QR / code pairing fallback
+    case scanning       // QR / code pairing (entry point)
     case wifiList       // Select WiFi network
     case wifiConnecting // Connecting to WiFi
-    case complete       // Done — device is back online
+    // No completion step — sheet dismisses on WiFi success
 }
 ```
 

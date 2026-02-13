@@ -31,8 +31,9 @@ Device Pairing → WiFi Setup → Claude Setup → Setup Complete
 | **QR scanner nav bar** | User email (centered) + "Not you?" button | No email, no "Not you?" — user is already authenticated |
 | **Skip option on pairing** | "Skip" text link — goes to empty projects page | Not available — user chose to add a device, no reason to skip |
 | **Setup Complete headline** | "[Device Name] is ready!" | "[Device Name] is ready!" (same) |
-| **Setup Complete CTA** | "Go to [Device Name]" → Projects page | "Done" — dismisses the sheet |
-| **Back button** | Standard iOS back | Standard iOS back. On the first screen (QR scanner), back dismisses the sheet entirely. |
+| **Setup Complete CTA** | "Go to [Device Name]" → Projects page | "Go to [Device Name]" — dismisses sheet and switches to the new device's home page |
+| **X button** | Not present | Appears on Step 1 (pairing) and Step 4 (complete). Dismisses the sheet without switching devices — user stays on the device they were on. |
+| **Back button** | Standard iOS back | Standard iOS back for intermediate steps (WiFi, Claude setup) |
 | **Fallback checkpoints** | Same | Same — BLE lost → back to pairing, WiFi fails → stays in WiFi screens |
 | **Error alerts** | Same | Same — "Connection Lost" and "Connection Timed Out" alerts work identically |
 
@@ -44,13 +45,23 @@ Device Pairing → WiFi Setup → Claude Setup → Setup Complete
 
 Same as [Onboarding Step 3](/docs/build/ios/onboarding#step-3-device-pairing-qr-scanner), with these changes:
 
-| Element | Change from onboarding |
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/add-device-pairing.png"
+    alt="Add device — QR scanner"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
 | :--- | :--- |
-| **User email** | Not shown |
-| **"Not you?"** | Not shown |
-| **"Skip"** | Not shown |
+| **X button** | Top-left — dismisses the sheet entirely |
+| **Headline** | "Scan the QR code on your Distiller" |
+| **Subtitle** | "Or enter the 4-digit code shown on the device" |
+| **QR viewfinder** | Same as onboarding |
+| **Torch toggle** | Same — with "Torch" label |
 | **"Enter code manually"** | Same — opens manual code entry half-sheet |
-| **Torch toggle** | Same |
+| **User email / "Not you?" / "Skip"** | Not shown |
 | **QR frame states** | Same (Scanning → Connecting → Connected → Failed) |
 
 ### Step 2: WiFi Setup
@@ -65,8 +76,17 @@ Same as [Onboarding Step 5](/docs/build/ios/onboarding#step-5-claude-code-setup)
 
 Same as [Onboarding Step 6](/docs/build/ios/onboarding#step-6-setup-complete), except:
 
-| Element | Change from onboarding |
-| :--- | :--- |
-| **CTA** | "Done" — dismisses the sheet (instead of "Go to [Device Name]") |
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/add-device-complete.png"
+    alt="Add device — setup complete"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
 
-After dismissal, the main app should have the new device available in the device selector.
+| Element | Detail |
+| :--- | :--- |
+| **X button** | Top-left — dismisses the sheet without switching devices. User stays on the device they were on. |
+| **CTA** | "Go to [Device Name]" — dismisses the sheet and switches to the new device's home page |
+
+The X and the CTA both dismiss the sheet, but the CTA also switches the active device.

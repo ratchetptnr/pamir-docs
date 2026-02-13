@@ -20,6 +20,8 @@ When you connect to a Distiller device, the app:
 
 This means when Claude Code starts a dev server on port 3000 on the Distiller, within seconds `http://localhost:3000` works on your machine. No manual setup.
 
+**Smart port remapping:** If a remote port (e.g. 3000) is already occupied locally, the app automatically assigns the next available local port (e.g. 3001). The user sees the actual local port in the services list — no confusion.
+
 ```
 Your Machine                         Distiller Device
 ┌──────────────┐    SSH Tunnel     ┌──────────────────┐
@@ -51,68 +53,49 @@ Connected · 22ms · 3 tunnels
 
 ### 2. Access
 
-The SSH connection itself. One copyable hostname that works everywhere.
+One-click actions to connect to the device. No copy-pasting.
 
 ```
 ── Access ──────────────────────────
 
->_ SSH Host
-   ┌──────────────────────────────┐
-   │ distiller-8x29          [📋]│
-   └──────────────────────────────┘
-   Use this host in any IDE with SSH
-   remote support.
+   [ 🖥  Open in VS Code ]
+
+   [ >_  SSH Terminal     ]
 ```
 
-The app manages `~/.ssh/config` behind the scenes so that `ssh distiller-8x29` just works. VS Code Remote SSH, Cursor, JetBrains Gateway — they all read from `~/.ssh/config`. No IDE-specific buttons, no URI schemes. One host, works everywhere.
+- **Open in VS Code** — launches VS Code with an SSH remote connection to the device. One click, no configuration.
+- **SSH Terminal** — opens a terminal session to the device.
+
+The app manages `~/.ssh/config` behind the scenes so that `ssh distiller-8x29` just works. VS Code Remote SSH picks it up automatically.
 
 <Callout type="info">
-  The SSH host is the primary value of the app. The user copies it, pastes it into their tool of choice, and they're connected. No detection of installed IDEs, no maintenance of URI schemes.
+  The app writes SSH config entries behind the scenes, so `ssh distiller-8x29` also works from any terminal or IDE. But the primary path is the one-click button — no copy-paste needed.
 </Callout>
 
 ### 3. Services
 
-Auto-discovered services running on the device.
+Auto-discovered services running on the device. All tunnelling is automatic — no manual port configuration.
 
 ```
 ── Services ────────────────────────
 
-🟢 Web Dev (3000)        [📋] [↗]
+🟢 Web Dev (3000)
    http://localhost:3000
 
-🟢 API Server (8080)     [📋] [↗]
+🟢 API Server (8080)
    http://localhost:8080
 
-🟢 PostgreSQL (5432)     [📋]
+🟢 PostgreSQL (5432)
    localhost:5432
 
-🟢 Redis (6379)          [📋]
+🟢 Redis (6379)
    localhost:6379
 ```
 
 Each service shows:
 - **Status indicator** — green when tunnel is active, yellow when connecting, red when the remote service stopped
-- **Friendly name** — auto-labeled from well-known ports, user-renamable
-- **Local address** — what to use on your machine
-- **Copy** (📋) — copies the local address to clipboard
-- **Open** (↗) — for HTTP services, opens in default browser. Not shown for non-HTTP services (databases, etc.)
-
-### 4. Custom Tunnel
-
-Collapsed by default. For when auto-detection misses a port or you need specific local port mapping.
-
-```
-── Custom ──────────────────────────
-[+ Add port forward]
-```
-
-Expands to:
-
-```
-Name (optional):  [My Service      ]
-Local port:       [9000] → Remote port: [9000]
-                              [Add]
-```
+- **Friendly name** — auto-labeled from well-known ports
+- **Local address** — what to use on your machine. If the default local port is occupied, the app auto-assigns the next available port.
 
 ---
 
@@ -122,20 +105,20 @@ The app queries the device for listening ports over the SSH connection and class
 
 ### Well-Known Port Labels
 
-| Port(s) | Auto-label | Icon | Actions |
-| :--- | :--- | :--- | :--- |
-| 22 | SSH | Terminal icon | Always present in Access section |
-| 80, 443 | Web Server | Globe | Copy, Open in browser |
-| 3000, 3001, 4000, 5173, 5174, 8000 | Web Dev | Globe | Copy, Open in browser |
-| 8080, 8443 | App Server | Globe | Copy, Open in browser |
-| 5432 | PostgreSQL | Database icon | Copy |
-| 3306 | MySQL | Database icon | Copy |
-| 27017 | MongoDB | Database icon | Copy |
-| 6379 | Redis | Database icon | Copy |
-| 11211 | Memcached | Database icon | Copy |
-| Any other | Port XXXX | Generic icon | Copy |
+| Port(s) | Auto-label | Icon |
+| :--- | :--- | :--- |
+| 22 | SSH | Terminal icon |
+| 80, 443 | Web Server | Globe |
+| 3000, 3001, 4000, 5173, 5174, 8000 | Web Dev | Globe |
+| 8080, 8443 | App Server | Globe |
+| 5432 | PostgreSQL | Database icon |
+| 3306 | MySQL | Database icon |
+| 27017 | MongoDB | Database icon |
+| 6379 | Redis | Database icon |
+| 11211 | Memcached | Database icon |
+| Any other | Port XXXX | Generic icon |
 
-Unknown ports appear as "Port XXXX" and can be renamed by the user. Renames persist across sessions.
+Unknown ports appear as "Port XXXX".
 
 ### Detection Behavior
 
@@ -146,7 +129,7 @@ Unknown ports appear as "Port XXXX" and can be renamed by the user. Renames pers
 - **User-renamed services**: Persist even after the service stops and restarts
 
 <Callout type="info">
-  Auto-detection means the `+` button from the current app is no longer the primary path. Users don't need to manually add tunnels — they just start a service on the device and it appears. The custom tunnel form exists only as an escape hatch.
+  All tunnelling is automatic. Users don't manually add tunnels — they start a service on the device and it appears. Port conflicts are resolved automatically by assigning the next available local port.
 </Callout>
 
 ---
@@ -185,12 +168,10 @@ App detects new listener (polling)
           │
           ▼
 App creates SSH port forward: localhost:3000 → device:3000
+(if 3000 occupied locally, auto-remaps to 3001)
           │
           ▼
 "Web Dev (3000)" appears in Services section
-          │
-          ▼
-User copies http://localhost:3000 or clicks [↗] to open in browser
           │
           ▼
 User works in their browser / IDE normally
@@ -211,11 +192,7 @@ Service doesn't restart → tunnel removed from list
 
 Each device maintains its own set of tunnels. When you switch devices via the selector, the panel shows that device's tunnels. Only the active device's tunnels are forwarded to localhost.
 
-<Callout type="warn">
-  **Port conflicts**: If Distiller 1 uses port 3000 and Distiller 2 also uses port 3000, switching to Distiller 2 will remap its port 3000 to the next available local port (e.g., 3001). The app shows the actual local port clearly.
-</Callout>
-
-Future consideration: simultaneous multi-device connections where all devices' tunnels are active at once, with automatic port remapping to avoid conflicts. Not in initial scope.
+Port conflicts between devices are handled the same way as local conflicts — smart remapping to the next available port.
 
 ---
 

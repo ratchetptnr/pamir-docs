@@ -17,7 +17,7 @@ import { Callout } from 'fumadocs-ui/components/callout'
 | :--- | :--- |
 | **SSH tunnel establishment** | Connects to the Distiller device over SSH and maintains the connection |
 | **Auto port discovery** | Detects services running on the device and creates local port forwards automatically |
-| **Manual port forwarding** | Users can add custom tunnels for ports the auto-detection misses |
+| **Smart port remapping** | If a local port is occupied, the app auto-assigns the next available port |
 | **Connection monitoring** | Live latency display, connection status, automatic reconnection |
 | **Multi-device support** | Pair and switch between multiple Distiller devices |
 
@@ -26,18 +26,17 @@ import { Callout } from 'fumadocs-ui/components/callout'
 | Feature | What it does |
 | :--- | :--- |
 | **Device selector** | Dropdown showing all paired devices with connection status |
-| **Access section** | SSH connection details with one-click "Open in IDE" buttons |
-| **Services section** | Auto-populated list of forwarded ports with copy and open-in-browser actions |
-| **Custom tunnel** | Expandable form to add manual port forwards |
+| **Access section** | One-click "Open in VS Code" and "SSH Terminal" buttons |
+| **Services section** | Auto-populated list of forwarded ports with smart port remapping |
 | **Status line** | Connection state, latency, tunnel count — always visible |
 
 ### SSH Access
 
 | Feature | What it does |
 | :--- | :--- |
-| **SSH host** | A copyable hostname (e.g. `distiller-8x29`) that works in any IDE with SSH remote support |
-| **SSH config management** | App writes and maintains `~/.ssh/config` entries so `ssh distiller-8x29` just works |
-| **Copy to clipboard** | One-click copy of the SSH host for pasting into VS Code, Cursor, JetBrains, or any tool |
+| **One-click VS Code** | "Open in VS Code" button launches VS Code with SSH remote to the device |
+| **SSH Terminal** | "SSH Terminal" button opens a terminal session to the device |
+| **SSH config management** | App writes and maintains `~/.ssh/config` entries so `ssh distiller-8x29` also works from any terminal |
 
 ### Device Management
 

@@ -1,0 +1,95 @@
+---
+title: Recovery
+description: Reconnecting an offline Distiller to WiFi via Bluetooth.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+When a Distiller loses internet, it enters recovery mode (BLE on, QR code on the e-ink display). The user's phone becomes the rescue tool — scan the device, pick a WiFi network, done.
+
+**Entry points:**
+- Device offline alert → "Recover via Bluetooth"
+- Device selector → tap an offline device
+- Settings → offline banner at top
+
+**Presentation:** Sheet over the main app.
+
+**Steps:**
+```
+QR Scan → WiFi Setup → Sheet dismisses
+```
+
+<Callout>
+  Recovery reuses the same WiFi screens as [Onboarding](/docs/build/ios/onboarding). This page only documents what's different. For WiFi password sheet details, connection results, and error alerts, see the onboarding doc.
+</Callout>
+
+**Key difference from onboarding:** No auth, no Claude setup, no completion screen. The device is already set up — it just needs WiFi back. Once WiFi connects successfully, the sheet dismisses automatically.
+
+---
+
+## Account Validation
+
+When the phone connects to a Distiller via BLE, the app checks whether the device is registered to the signed-in account.
+
+| Result | What happens |
+| :--- | :--- |
+| **Device belongs to this account** | Proceed to WiFi setup |
+| **Device belongs to a different account** | Show message: "This Distiller is not registered to your account." Dismiss only — no action needed. |
+
+The user can scan **any** of their offline devices — recovery is not locked to the specific device they tapped on. If they tapped Device A but scan Device B (also on their account), it works.
+
+---
+
+## Flow
+
+### Step 1: Device Pairing (QR Scanner)
+
+Sheet opens with the QR scanner. Same camera view as [Add Device](/docs/build/ios/add-device) — headline, subtitle, X to dismiss.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-pairing.png"
+    alt="Recovery — QR scanner"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **X button** | Top-left — dismisses the recovery sheet |
+| **Headline** | "Scan the QR code on your Distiller" |
+| **Subtitle** | "Or enter the 4-digit code shown on the device" |
+| **QR viewfinder** | Same as onboarding — frame states: Scanning → Connecting → Connected → Failed |
+| **Torch toggle** | Same |
+| **"Enter code manually"** | Same — opens manual code entry half-sheet |
+| **Not shown** | User email, "Not you?", "Skip" |
+
+**Auto-connect:** If the phone already has a BLE connection to the device (iOS remembered it), the scanner auto-advances to WiFi setup. The user may see the scanner for a brief moment before it transitions.
+
+### Step 2: WiFi Setup
+
+Same as [Onboarding Step 4](/docs/build/ios/onboarding#step-4-wifi-setup). The device scans for nearby networks and the app displays them.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/recovery-wifi-list.png"
+    alt="Recovery — WiFi network list"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+WiFi password sheet, connection results, and timeout alerts are all identical to onboarding. On successful WiFi connection, the recovery sheet dismisses automatically — no completion screen.
+
+---
+
+## Error Alerts
+
+Same alerts as onboarding — they appear as system alerts over the recovery sheet.
+
+| Error | What user sees | Recovery |
+| :--- | :--- | :--- |
+| **BLE connection failed** | Orange frame + error in QR scanner | "Scan again" |
+| **Account mismatch** | "This Distiller is not registered to your account." | Dismiss |
+| **Wrong WiFi password** | Inline error in password sheet | Re-enter password |
+| **WiFi timeout** | Alert: "Connection Timed Out" | "Try Again" or "Different Network" |
+| **BLE lost during WiFi setup** | Alert: "Connection Lost" | "Start Over" → back to QR scanner |

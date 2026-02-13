@@ -19,26 +19,23 @@ The tray panel has four sections, top to bottom:
 │   Connected · 22ms · 3 tunnels  │
 ├──────────────────────────────────┤
 │ ACCESS                           │
-│ ┌──────────────────────────────┐ │
-│ │ >_ SSH Host                  │ │
-│ │ distiller-8x29          [📋]│ │  ← The universal link
-│ │                              │ │
-│ │ Use this host in any IDE ... │ │
-│ └──────────────────────────────┘ │
+│                                  │
+│  [ 🖥  Open in VS Code ]        │  ← One-click launch
+│                                  │
+│  [ >_  SSH Terminal     ]        │
+│                                  │
 ├──────────────────────────────────┤
 │ SERVICES                         │
 │ ┌──────────────────────────────┐ │
-│ │ 🟢 Web Dev (3000)    📋  ↗  │ │
+│ │ 🟢 Web Dev (3000)            │ │
 │ │    http://localhost:3000     │ │
 │ │──────────────────────────────│ │
-│ │ 🟢 API Server (8080) 📋  ↗  │ │
+│ │ 🟢 API Server (8080)        │ │
 │ │    http://localhost:8080     │ │
 │ │──────────────────────────────│ │
-│ │ 🟢 PostgreSQL (5432) 📋     │ │
+│ │ 🟢 PostgreSQL (5432)        │ │
 │ │    localhost:5432            │ │
 │ └──────────────────────────────┘ │
-├──────────────────────────────────┤
-│ + Add port forward               │  ← Custom tunnel
 └──────────────────────────────────┘
 ```
 
@@ -82,19 +79,18 @@ Clicking the device name opens a dropdown:
 
 ## Access Section
 
-This is the core of the product. One copyable SSH hostname that works everywhere.
+This is the core of the product. One-click actions to connect to the device.
 
 ```
 ACCESS
 
->_ SSH Host
-┌──────────────────────────────┐
-│ distiller-8x29          [📋]│
-└──────────────────────────────┘
-Use this host in any IDE with SSH remote
-support — VS Code, Cursor, JetBrains,
-or plain ssh distiller-8x29
+[ 🖥  Open in VS Code ]
+
+[ >_  SSH Terminal     ]
 ```
+
+- **Open in VS Code** — launches VS Code with an SSH remote connection to the device. One click, user is coding on the Distiller.
+- **SSH Terminal** — opens a terminal session to the device.
 
 The app manages `~/.ssh/config` behind the scenes:
 
@@ -108,38 +104,36 @@ Host distiller-8x29
 # ── End Distiller ────────────────────
 ```
 
-This means `ssh distiller-8x29` just works. VS Code Remote SSH picks it up. Cursor picks it up. JetBrains Gateway picks it up. No URI schemes, no IDE detection, no special buttons. One host, paste it anywhere.
+This means `ssh distiller-8x29` also works from any terminal or IDE manually. But the primary path is the one-click button — no copy-paste needed.
 
 <Callout type="info">
-  **Why not IDE-specific buttons?** Because the actual technology is just SSH. The app writes an SSH config entry, and every tool that supports SSH remotes reads from `~/.ssh/config`. Adding "Open in VS Code" buttons would mean detecting installed IDEs, maintaining URI schemes, and breaking the moment a new IDE ships. The SSH host approach works with every tool, forever.
+  **v1 ships with VS Code only.** The SSH config means other IDEs (Cursor, JetBrains) work via manual `ssh distiller-8x29`, but the one-click button targets VS Code. More IDE buttons can be added later if users request them.
 </Callout>
 
 ---
 
 ## Services Section
 
-Auto-discovered services running on the device, forwarded to localhost.
+Auto-discovered services running on the device, forwarded to localhost. All tunnelling is automatic — no manual configuration.
 
 ```
 SERVICES
 
-🟢 Web Dev (3000)          📋 ↗
+🟢 Web Dev (3000)
    http://localhost:3000
 
-🟢 API Server (8080)       📋 ↗
+🟢 API Server (8080)
    http://localhost:8080
 
-🟢 PostgreSQL (5432)       📋
+🟢 PostgreSQL (5432)
    localhost:5432
 ```
 
 Each row shows:
 - **Status dot** — green (tunnel active), yellow (connecting), red (service stopped on device)
-- **Friendly name** — auto-labeled from well-known ports (see [Tunnels](/docs/desktop-app/tunnels#well-known-port-labels))
+- **Friendly name** — auto-labeled from well-known ports
 - **Port number** in parentheses
-- **Local address** — what to use on the user's machine
-- **📋 Copy** — copies local address to clipboard
-- **↗ Open** — HTTP services only, opens in default browser. Not shown for databases.
+- **Local address** — what to use on the user's machine. If the default local port is occupied, the app auto-assigns the next available port.
 
 ### Empty State
 
@@ -166,22 +160,6 @@ The app queries the device for listening ports over the SSH connection.
 
 ---
 
-## Custom Tunnel
-
-```
-+ Add port forward
-```
-
-Collapsed by default. Escape hatch for when auto-detection misses a port or the user needs a specific local port mapping. Clicking expands to a small form:
-
-- Name (optional)
-- Local port → Remote port
-- "Add" button
-
-Most users will never need this. Auto-detection handles the common cases.
-
----
-
 ## Connection States
 
 The tray panel adapts its header based on connection state:
@@ -199,9 +177,8 @@ The tray panel adapts its header based on connection state:
 ## What to Build — Order
 
 1. **Header** with device name, status dot, status line, gear icon
-2. **Access section** with SSH host in a copyable code block
-3. **Services section** with mock service list (static data first)
-4. **Custom tunnel** collapsed link
-5. **Device dropdown** with switching and "Add Device"
-6. **Connection states** (start with "connected" only, add others as needed)
-7. **Auto-detection** (polling, service lifecycle) — requires device connection, build last
+2. **Access section** with "Open in VS Code" and "SSH Terminal" buttons
+3. **Services section** with auto-detected service list
+4. **Device dropdown** with switching and "Add Device"
+5. **Connection states** (start with "connected" only, add others as needed)
+6. **Auto-detection** (polling, service lifecycle, smart port remapping) — requires device connection, build last

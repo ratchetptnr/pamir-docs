@@ -8,7 +8,7 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
       tree={source.getPageTree()}
       {...baseOptions()}
       sidebar={{
-        defaultOpenLevel: 1,
+        defaultOpenLevel: 0,
         tabs: [
           {
             title: 'Build',
@@ -18,7 +18,7 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
           {
             title: 'Architecture',
             description: 'Design docs and schematics',
-            url: '/docs/getting-started',
+            url: '/docs',
           },
         ],
       }}
