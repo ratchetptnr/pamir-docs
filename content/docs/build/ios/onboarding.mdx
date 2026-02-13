@@ -1,0 +1,310 @@
+---
+title: Onboarding
+description: Step-by-step onboarding flow — from app launch to projects page.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+The full first-launch experience. Covers every screen the user sees from opening the app for the first time to landing on the projects page.
+
+**Presentation:** Full-screen flow. This is the only device setup flow that isn't a sheet.
+
+**Steps:**
+```
+Welcome → Sign In → Device Pairing → WiFi Setup → Claude Setup → Setup Complete
+```
+
+**Global rules that apply to every screen:**
+- All CTA buttons use system prominent capsule style (Liquid Glass on iOS 26). Consistent sizing and vertical positioning — the button never jumps between screens.
+- Haptic feedback on every primary action: selection haptics for toggles, impact haptics for navigation, notification haptics for errors.
+- Back button follows standard iOS behavior (shows previous screen title).
+
+**Fallback checkpoints:** The flow has two recovery points. If something fails, the user falls back to the nearest checkpoint — never to the beginning.
+
+| Failure | Checkpoint | What happens |
+| :--- | :--- | :--- |
+| **BLE connection lost** (at any point) | → **Step 3: Device Pairing** | User re-scans QR or re-enters code to re-establish BLE |
+| **WiFi fails** (wrong password, timeout, etc.) | → **Step 4: WiFi Setup** | User stays in / returns to WiFi screens to retry |
+
+---
+
+## Step 1: Welcome
+
+The first screen the user sees. Sets the tone and handles legal compliance.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-welcome.png"
+    alt="Welcome screen"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Headline** | "Welcome to Pamir" (or product-appropriate welcome copy) |
+| **Subhead** | Brief value proposition |
+| **CTA** | "Continue" — navigates to sign-in |
+| **Fine print** | "By continuing, you agree to our Terms of Service and Privacy Policy" — below the CTA button. Both are tappable links. |
+| **Back button** | None (first screen) |
+
+---
+
+## Step 2: Sign In
+
+Standard Apple/Google authentication.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-signin.png"
+    alt="Sign in screen"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Options** | Sign in with Apple, Sign in with Google |
+| **Behavior** | Tapping either button opens an in-app Safari sheet for the auth provider. User completes sign-in in the Safari sheet, which dismisses automatically on success. |
+| **On success** | App creates or fetches the user's account, then checks for registered devices |
+
+**After sign-in:**
+
+| Condition | What happens |
+| :--- | :--- |
+| Account has registered devices | Skip the entire onboarding flow → **Projects page** |
+| Account has no devices | → **Step 3: Device Pairing** |
+
+---
+
+## Step 3: Device Pairing (QR Scanner)
+
+Full-screen camera view for scanning the QR code on the device's e-ink display. Dark scrim over the camera feed.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-qr-scanner.png"
+    alt="QR scanner screen"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Layout
+
+| Element | Position | Detail |
+| :--- | :--- | :--- |
+| **User email** | Nav bar (centered) | Shows the signed-in user's email |
+| **"Not you?"** | Nav bar (trailing) | Button to switch accounts without leaving the scanner. For the case where someone picks up the wrong phone during group setup. |
+| **QR viewfinder** | Center | Corner frame overlay on camera feed. No placeholder graphic — clean scanning surface. |
+| **Torch toggle** | Below viewfinder | Native circular toggle button for flashlight. Useful when QR on e-ink is hard to scan in dim light. |
+| **"Enter code manually"** | Bottom | Text link — opens manual code entry half-sheet |
+| **"Skip"** | Below "Enter code manually" | Text link — skips pairing entirely, goes straight to projects page with empty state (no devices). User can pair later from Settings > Account. |
+
+### QR Frame States
+
+The QR frame itself communicates connection state. All transitions are animated.
+
+| State | Frame | Content inside frame |
+| :--- | :--- | :--- |
+| **Scanning** | White frame | Empty (camera feed visible) |
+| **Connecting** | Dimmed frame | Spinner + "Connecting to Distiller-8X29..." |
+| **Connected** | Green frame | Checkmark |
+| **Failed** | Orange frame | "Couldn't connect. Make sure your Distiller is powered on and nearby." |
+
+**On "Connected":** Brief pause (checkmark visible for ~1s), then auto-navigates to → **Step 4: WiFi Setup**.
+
+**On "Failed":** Single action — "Scan again" link below the frame. Resets scanner to scanning state.
+
+### What the QR code contains
+
+The QR on the device's e-ink display encodes the device ID + BLE MAC address. Scanning from the system Camera app opens/installs the Pamir app. Scanning inside the app identifies the device for BLE pairing.
+
+---
+
+## Step 3b: Manual Code Entry
+
+Half-sheet presented over the QR scanner. For when scanning won't work (bright lighting, damaged QR, etc.).
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-manual-code.png"
+    alt="Manual code entry"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Input field** | Capsule-shaped, 4-digit code, auto-capitalization on |
+| **Keyboard icon** | Decorative, with bounce animation on sheet appear |
+| **CTA** | "Connect" button — submits the code |
+| **On invalid code** | Wiggle animation on input field + notification haptic + inline error message below field |
+| **On valid code** | Dismisses sheet, QR frame transitions to "Connecting" state → same flow as QR scan |
+
+---
+
+## Step 4: WiFi Setup
+
+After BLE pairing, the app needs to get the device on WiFi.
+
+**If the device already has WiFi credentials** (migration from v2.1.1): the app silently verifies connectivity in the background. If WiFi works, this entire step is skipped — the user goes straight to **Step 5: Claude Code Setup**. If verification fails (network gone, password changed, etc.), the user lands on the network list below as if it were a fresh device.
+
+**If the device has no WiFi credentials** (fresh setup): the device scans for nearby networks and the app displays them.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-wifi-list.png"
+    alt="WiFi network list"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Layout
+
+| Element | Detail |
+| :--- | :--- |
+| **Section header** | "Available Networks" |
+| **Network rows** | Network name + lock icon (if secured) + chevron disclosure indicator. Matches system WiFi settings appearance. |
+| **"Network not listed"** | Text link at bottom — opens manual SSID entry |
+| **Back button** | Standard iOS back to pairing screen |
+
+**On tap:** Navigates to → **Step 4b: WiFi Password** for the selected network.
+
+### Edge case: No networks found
+
+| Element | Detail |
+| :--- | :--- |
+| **Message** | "No networks detected" |
+| **Actions** | "Scan Again" (retriggers device WiFi scan) and manual SSID entry link |
+| **Auto-retry** | Device re-scans automatically on a timer |
+
+---
+
+## Step 4b: WiFi Password
+
+Bottom sheet presented over the network list. User enters the password for the selected network.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-wifi-password.png"
+    alt="WiFi password entry"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Network name** | Shown at top of sheet so user knows which network they're joining |
+| **Password field** | Text input with eye toggle (show/hide password). Critical — WiFi passwords are often long and error-prone. |
+| **CTA** | "Join" — sends credentials to device via BLE |
+| **On tap "Join"** | Sheet stays open, CTA becomes spinner ("Connecting...") |
+
+### Connection results
+
+The user stays on this sheet while the device attempts WiFi. No separate screen.
+
+| Result | What happens |
+| :--- | :--- |
+| **Success** | Brief checkmark animation → auto-navigates to → **Step 5: Claude Code Setup** |
+| **Wrong password** | Inline error in password sheet. Field clears and refocuses. After 2 failed attempts, show helper text: "Password is case-sensitive." Notification haptic on each failure. |
+| **Timeout (30s)** | Show options: "Try Again" (resend same credentials) or "Different Network" (back to network list) |
+
+---
+
+## Step 5: Claude Code Setup
+
+Single-page provider setup. User connects their Anthropic account so Claude works on the device.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-claude-setup.png"
+    alt="Claude Code setup screen"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Layout
+
+| Element | Detail |
+| :--- | :--- |
+| **Icon** | Claude logo |
+| **Headline** | "Connect Claude Code" |
+| **Subtitle** | "Connect your Anthropic account to use Claude on [device name]" — device name always visible so user knows what they're configuring |
+| **CTA** | "Set Up" — opens OAuth sheet |
+| **Skip** | "I'll do this later" text link — skips directly to → **Step 6: Setup Complete** |
+
+### Button States
+
+This is a **single page** — connecting and ready states are handled inline via button transitions, not separate screens.
+
+| State | Button | Behavior |
+| :--- | :--- | :--- |
+| **Idle** | "Set Up" | Tappable. Opens an in-app Safari sheet for Anthropic OAuth. |
+| **Authenticating** | (OAuth sheet is open) | User signs in on Anthropic's website and authorizes Distiller. |
+| **Connecting** | Spinner replaces button text | OAuth sheet closed. App sending credentials to device via BLE. |
+| **Ready** | Green checkmark replaces spinner | Brief pause (~1s) then auto-navigates to → **Step 6** |
+| **Failed** | "Try Again" + "Skip" | OAuth failed or device config failed. User can retry or skip. |
+
+<Callout>
+  **No free trial option.** Claude requires the user's own Anthropic subscription. One action, no decision fatigue.
+</Callout>
+
+---
+
+## Step 6: Setup Complete
+
+The final screen before the user enters the app.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-complete.png"
+    alt="Setup complete screen"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+### Layout
+
+| Element | Detail |
+| :--- | :--- |
+| **Visual** | Distiller mascot image (not a generic checkmark) |
+| **Headline** | "[Device Name] is ready!" |
+| **Desktop URL** | Shows `distiller-XXXX.devices.pamir.ai` with a copy button. User can access their Distiller from a browser immediately. |
+| **Claude status** | If configured: Claude logo + "Claude Code connected". If skipped: info icon + "Claude not set up yet" — nudge to Settings. |
+| **CTA** | "Go to [Device Name]" — navigates to → **Projects page** |
+| **Back button** | Hidden. No going back from completion. |
+
+### Migration variant
+
+| Element | Change |
+| :--- | :--- |
+| **Headline** | "Your Distiller is updated!" instead of "ready" |
+| **Everything else** | Same |
+
+---
+
+## → Projects Page
+
+Onboarding is done. The user lands on the projects page with their newly registered device active.
+
+If the user **skipped pairing** at Step 3, they land on the projects page in an empty state — no devices, with a prompt to add one from Settings > Account.
+
+---
+
+## Error Summary
+
+Every error has a clear path forward. No dead ends.
+
+| Error | Screen | What user sees | Recovery |
+| :--- | :--- | :--- | :--- |
+| BLE connection failed | Step 3 (QR scanner) | Orange frame + error message | "Scan again" |
+| Bluetooth off or denied | Step 3 | System modal | "Open Settings" to enable Bluetooth |
+| Invalid manual code | Step 3b | Wiggle + inline error | Re-enter code |
+| BLE lost (at any point) | Any step after pairing | "Connection lost" | Falls back to Step 3 (pairing checkpoint) |
+| No WiFi networks | Step 4 | "No networks detected" | "Scan Again" or manual SSID |
+| Wrong WiFi password (< 2 attempts) | Step 4b | "Wrong password, try again" | Re-enter, network pre-selected |
+| Wrong WiFi password (>= 2) | Step 4b | + "Password is case-sensitive" helper | Re-enter with guidance |
+| WiFi timeout (30s) | Step 4b | "Couldn't connect to [Network]" | "Try Again" or "Different Network" |
+| Migration WiFi failed | Step 4 | Silent check fails, user sees network list | Normal WiFi setup flow |
+| OAuth cancelled | Step 5 | Returns to idle state | Tap "Set Up" again or skip |
+| OAuth / config failed | Step 5 | "Try Again" + "Skip" | Retry or skip |

@@ -10,6 +10,60 @@ import { Mermaid } from '@/components/mermaid'
   This document is the single source of truth for onboarding in Distiller OS v3.0+. It replaces [Onboarding](/docs/archive/onboarding) (original spec) and [Changes to Onboarding](/docs/archive/onboarding-changes) (architecture additions). Those docs are archived for historical reference.
 </Callout>
 
+## App UX Polish (Feb 2026)
+
+The onboarding flow received a comprehensive visual and interaction pass. These changes apply to the iOS companion app.
+
+### Visual & Interaction Overhaul
+
+| Change | Detail |
+| :--- | :--- |
+| **Native iOS buttons** | All CTA buttons use the system prominent capsule style with Liquid Glass on iOS 26. Consistent sizing and vertical positioning across every step — the button never jumps between screens. |
+| **Haptic feedback on all CTAs** | Every primary action triggers tactile feedback. Selection actions use selection haptics, navigation actions use impact haptics, and error states (invalid manual code) use notification haptics. |
+| **Welcome page fine print** | "By continuing, you agree to our Terms of Service and Privacy Policy" appears below the Continue button. Legal compliance without interrupting the flow. |
+
+### Device Pairing (QR Scanner)
+
+| Change | Detail |
+| :--- | :--- |
+| **Visual cleanup** | Removed the QR placeholder graphic. Clean scanning surface with corner frame, torch toggle, and "Enter code manually" link. |
+| **Account switching** | User's email appears in the navigation bar with a "Not you?" button to switch accounts without leaving the scanner. Addresses the case where someone picks up the wrong phone during group setup. |
+| **Torch toggle** | Native circular toggle button for flashlight — useful in dim environments where the QR code on the e-ink display is hard to scan. |
+| **Better scan states** | The QR frame itself communicates state: **Scanning** (white frame, empty), **Connecting** (dimmed frame, spinner + "Connecting to Distiller-8X29..."), **Connected** (green frame, checkmark), **Failed** (orange frame, error message + retry/rescan actions). All transitions are animated. |
+| **Cleaner manual code entry** | Half-sheet with capsule input field, auto-capitalization, keyboard icon with bounce animation, and circular X/checkmark action buttons. Invalid codes trigger a wiggle animation + error haptic + inline error message. |
+
+### WiFi Setup
+
+| Change | Detail |
+| :--- | :--- |
+| **Password show/hide** | Eye toggle in the WiFi password field to reveal or hide the password. Small but critical — WiFi passwords are often long and error-prone. |
+| **Network list polish** | Section headers ("Available Networks"), lock icons for secured networks, chevron disclosure indicators. Matches system WiFi settings appearance. |
+
+### Claude Code Setup (New Step)
+
+Claude Code setup is now part of onboarding — previously, users had to configure it separately in Settings after setup was complete. This is the most significant UX addition.
+
+**The flow:**
+1. After WiFi connects, user sees a Claude Code setup screen with the Claude logo and "Connect your Anthropic account to use Claude on [device name]."
+2. **Setup path:** User taps "Setup" → OAuth sheet opens → sheet closes → spinner replaces button → green checkmark appears → auto-navigates to "device is ready" page.
+3. **Skip path:** "I'll do this later" skips directly to the completion page. Claude can be configured anytime in Settings.
+
+**Key decisions:**
+- **Single page, not three.** Connecting and ready states are handled inline with a button state machine rather than separate screens. Reduces perceived complexity.
+- **No free trial option.** Claude requires the user's own Anthropic subscription. One action, no decision fatigue.
+- **Device context always visible.** The subtitle shows which device is being configured (e.g., "Distiller-8X29") so the user always knows what they're setting up.
+
+### Setup Complete
+
+| Change | Detail |
+| :--- | :--- |
+| **Device mascot** | The Distiller mascot image anchors the completion screen instead of a generic checkmark. |
+| **Device identity** | "\[device name\] is ready!" headline + "Go to \[device name\]" CTA button. The user knows exactly which device they just set up. |
+| **Desktop access URL** | Shows the device's desktop URL (e.g., `distiller-8x29.devices.pamir.ai`) with a copy button. Users can access their Distiller from a browser immediately. |
+| **Claude status badge** | If Claude was configured: Claude logo + "Claude Code connected". If skipped: info icon + "Claude not set up yet" with nudge to Settings. |
+
+---
+
 ## What Changed in v3.0
 
 Distiller OS v3.0 is a platform reset. The update (`distiller-platform-update`) replaces the previous interface layer and makes the Pamir app the default interface.
@@ -105,11 +159,11 @@ flowchart TD
 
     BLEResult -->|Yes| WiFiCheck{Device has\nWiFi credentials?}
 
-    WiFiCheck -->|Yes - Migration| WiFiConfirm[Confirm existing WiFi\nor setup new]
+    WiFiCheck -->|Yes - Migration| WiFiVerify[Silent WiFi verification]
     WiFiCheck -->|No - Fresh| WiFiSetup
 
-    WiFiConfirm -->|Keep existing| ServiceSetup
-    WiFiConfirm -->|Setup new WiFi| WiFiSetup
+    WiFiVerify -->|WiFi works| ServiceSetup
+    WiFiVerify -->|WiFi fails| WiFiSetup
 
     WiFiSetup[WiFi Network Selection] --> NetworkChoice{User action}
     NetworkChoice -->|Select from list| SelectNetwork[Select network]
@@ -240,17 +294,17 @@ sequenceDiagram
 
 ## Phase 3: WiFi Setup
 
-After BLE connects, the app reads the device state. If the device already has WiFi credentials (v2.1.1 migration), the user can skip this phase entirely.
+After BLE connects, the app reads the device state. If the device already has WiFi credentials (v2.1.1 migration), the app silently verifies connectivity — if it works, WiFi setup is skipped entirely. The user never sees a WiFi screen unless they need one.
 
 <Mermaid chart={`
 flowchart TD
     BLEConnected([BLE Connected]) --> HasWiFi{Device has\nWiFi credentials?}
 
-    HasWiFi -->|Yes| Confirm[Show current network name\n+ confirm or change]
+    HasWiFi -->|Yes| Verify[Silent WiFi verification]
     HasWiFi -->|No| NetworkList
 
-    Confirm -->|Keep| ServiceSetup([Service Setup])
-    Confirm -->|Change| NetworkList
+    Verify -->|WiFi works| ServiceSetup([Service Setup])
+    Verify -->|WiFi fails| NetworkList
 
     NetworkList[App shows WiFi networks\nfrom device scan] --> Action{User action}
     Action -->|Select network| Password[Enter WiFi password]
@@ -278,7 +332,7 @@ flowchart TD
     style WrongPass fill:#ffebee
     style Timeout fill:#ffebee
     style Restart fill:#ffebee
-    style Confirm fill:#fef3c7
+    style Verify fill:#fef3c7
 `} />
 
 ### WiFi Provisioning (App ↔ Device detail)
@@ -447,13 +501,12 @@ sequenceDiagram
 
     Note over App: Device reports: has WiFi credentials
 
-    App->>User: "Device has WiFi configured.<br/>Keep current network or set up new?"
+    App->>Device: Silently verify WiFi connectivity
 
-    alt Keep existing WiFi
-        User->>App: Keep
-        App->>Device: Verify WiFi connectivity
+    alt WiFi still works
         Device-->>App: WiFi confirmed online
-    else Setup new WiFi
+        Note over App: Skip WiFi setup entirely
+    else WiFi fails
         Note over User,Device: Standard WiFi setup flow
     end
 
@@ -468,7 +521,7 @@ sequenceDiagram
 - The v3.0 update preserves WiFi credentials and user files but wipes Open-Claw (force-removed).
 - Device enters RECOVERING state after update (BLE on, QR showing) because it needs account registration.
 - Even though WiFi works, the user still needs to BLE-pair so the app can register the device to their account.
-- After BLE connects, the app reads device state and discovers existing WiFi — offers to keep or change.
+- After BLE connects, the app reads device state and discovers existing WiFi — silently verifies connectivity. If it works, WiFi setup is skipped. If it fails, user sees the standard WiFi setup flow.
 - Open-Claw can be re-installed as an optional service (now called "Clawdbot") during service setup.
 
 ---
@@ -530,7 +583,7 @@ All error states provide a clear path forward. No dead ends.
 
 | Error | What user sees | Recovery |
 | :--- | :--- | :--- |
-| **Existing WiFi no longer works** | WiFi verification fails after "Keep" | Falls back to standard WiFi setup flow |
+| **Existing WiFi no longer works** | Silent verification fails | Falls into standard WiFi setup flow |
 
 ---
 
