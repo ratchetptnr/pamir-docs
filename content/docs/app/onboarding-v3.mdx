@@ -59,8 +59,7 @@ Claude Code setup is now part of onboarding — previously, users had to configu
 | :--- | :--- |
 | **Device mascot** | The Distiller mascot image anchors the completion screen instead of a generic checkmark. |
 | **Device identity** | "\[device name\] is ready!" headline + "Go to \[device name\]" CTA button. The user knows exactly which device they just set up. |
-| **Desktop access URL** | Shows the device's desktop URL (e.g., `distiller-8x29.devices.pamir.ai`) with a copy button. Users can access their Distiller from a browser immediately. |
-| **Claude status badge** | If Claude was configured: Claude logo + "Claude Code connected". If skipped: info icon + "Claude not set up yet" with nudge to Settings. |
+| **Subtitle** | "You're all set. Let's get started." — clean, minimal completion message. |
 
 ---
 
@@ -112,7 +111,7 @@ flowchart TD
     style AddDevice fill:#e0e7ff
 `} />
 
-| Scenario | Auth | BLE Pairing | WiFi Setup | Services | Entry Point |
+| Scenario | Auth | BLE Pairing | WiFi Setup | Claude Code | Entry Point |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Fresh device, new user** | Yes | Yes | Yes | Yes (skippable) | First launch |
 | **v2.1.1 → v3.0 migration** | Yes (first time) | Yes | Skip (device has WiFi) | Yes (skippable) | First launch |
@@ -120,7 +119,7 @@ flowchart TD
 | **Add device from app** | Already signed in | Yes | Yes | Yes (skippable) | Settings > Account |
 
 <Callout type="info">
-  **Skip is always available.** Users can skip device pairing entirely during first launch (lands in empty state, add device later from Settings). Services are individually skippable. We never block the user.
+  **Skip is always available.** Users can skip device pairing entirely during first launch (lands in empty state, add device later from Settings). Claude Code setup is skippable. We never block the user.
 </Callout>
 
 ---
@@ -191,17 +190,13 @@ flowchart TD
 
     BLELost --> Pairing
 
-    ServiceSetup[Service Setup] --> ServiceChoice{User action}
-    ServiceChoice -->|Configure Claude Code| ClaudeSetup[Claude Code Setup]
-    ServiceChoice -->|Configure Clawdbot| ClawdbotSetup[Clawdbot Setup]
-    ServiceChoice -->|Skip| SetupComplete
+    ServiceSetup[Claude Code Setup] --> ServiceChoice{User action}
+    ServiceChoice -->|Setup| ClaudeAuth[OAuth flow]
+    ServiceChoice -->|I'll do this later| SetupComplete
 
-    ClaudeSetup --> MoreServices{Add another service?}
-    ClawdbotSetup --> MoreServices
-    MoreServices -->|Yes| ServiceSetup
-    MoreServices -->|No / Done| SetupComplete
+    ClaudeAuth --> SetupComplete[Setup Complete]
 
-    SetupComplete[Setup Complete] --> End([Main App])
+    SetupComplete --> End([Main App])
 
     style Start fill:#e1f5e1
     style End fill:#e1f5e1
@@ -212,9 +207,7 @@ flowchart TD
     style WiFiTimeout fill:#ffebee
     style BLELost fill:#ffebee
     style ServiceSetup fill:#4a9eff,color:#fff
-    style ClaudeSetup fill:#dbeafe
-    style ClawdbotSetup fill:#dbeafe
-    style WiFiConfirm fill:#fef3c7
+    style ClaudeAuth fill:#dbeafe
 `} />
 
 ---
@@ -393,34 +386,24 @@ sequenceDiagram
 
 ## Phase 4: Service Setup
 
-After WiFi is connected (or confirmed from migration), the user configures optional services. Both services are independent — user can enable both, one, or neither.
+After WiFi is connected (or confirmed from migration), the user configures Claude Code. This is a single-page setup — not a service chooser.
 
 <Mermaid chart={`
 flowchart TD
-    WiFiDone([WiFi Connected / Confirmed]) --> ServiceScreen[Service Setup Screen]
+    WiFiDone([WiFi Connected / Confirmed]) --> ClaudeScreen[Claude Code Setup]
 
-    ServiceScreen --> Claude[Claude Code]
-    ServiceScreen --> Clawdbot[Clawdbot]
-    ServiceScreen --> Skip[Skip All]
+    ClaudeScreen --> Setup[User taps Setup]
+    ClaudeScreen --> Skip[I'll do this later]
 
-    Claude --> ClaudeAuth[User connects Anthropic account\nvia OAuth]
+    Setup --> ClaudeAuth[User connects Anthropic account\nvia OAuth]
     ClaudeAuth --> ClaudeDone[Claude Code ready]
 
-    Clawdbot --> ClawdbotEnable[Distiller OS enables\nClawdbot daemon]
-    ClawdbotEnable --> ClawdbotDone[Clawdbot running\nWeb UI available]
-
-    ClaudeDone --> More{Configure another\nservice?}
-    ClawdbotDone --> More
-
-    More -->|Yes| ServiceScreen
-    More -->|Done| Complete
-
-    Skip --> Complete[Setup Complete]
+    ClaudeDone --> Complete[Setup Complete]
+    Skip --> Complete
 
     style WiFiDone fill:#e1f5e1
-    style ServiceScreen fill:#4a9eff,color:#fff
-    style Claude fill:#dbeafe
-    style Clawdbot fill:#dbeafe
+    style ClaudeScreen fill:#4a9eff,color:#fff
+    style Setup fill:#dbeafe
     style Complete fill:#d4edff
     style Skip fill:#f3f4f6
 `} />
@@ -428,10 +411,9 @@ flowchart TD
 | Service | What happens during setup | What it needs from user | Skippable? |
 | :--- | :--- | :--- | :--- |
 | **Claude Code** | OAuth flow to connect user's Anthropic subscription | Anthropic account credentials | Yes |
-| **Clawdbot** | Distiller OS starts the Clawdbot daemon, exposes web UI on device | Nothing (toggle on) | Yes |
 
 <Callout type="info">
-  Services can always be configured later from **Settings > Services** in the main app. Skipping during onboarding is zero commitment.
+  Claude Code can always be configured later from **Settings** in the main app. Skipping during onboarding is zero commitment.
 </Callout>
 
 ---
@@ -464,10 +446,10 @@ The completion screen adapts based on context:
 
 | | First-Time | Migration | Add Device |
 | :--- | :--- | :--- | :--- |
-| **Headline** | "Your Distiller is ready!" | "Your Distiller is updated!" | "[Device Name] is ready!" |
-| **Services shown** | Status of enabled services | Status of enabled services | Status of enabled services |
-| **Desktop URL** | Shown | Shown | Shown |
-| **Button** | "Continue to App" | "Continue to App" | "Done" (dismisses sheet) |
+| **Visual** | Distiller mascot | Distiller mascot | Distiller mascot |
+| **Headline** | "[Device Name] is ready!" | "Your Distiller is updated!" | "[Device Name] is ready!" |
+| **Subtitle** | "You're all set. Let's get started." | "You're all set. Let's get started." | "You're all set. Let's get started." |
+| **Button** | "Go to [Device Name]" | "Go to [Device Name]" | "Done" (dismisses sheet) |
 | **Back button** | Hidden | Hidden | Hidden |
 
 ---
@@ -510,8 +492,8 @@ sequenceDiagram
         Note over User,Device: Standard WiFi setup flow
     end
 
-    App->>User: Service Setup screen
-    Note over User,App: Claude Code / Clawdbot / Skip
+    App->>User: Claude Code Setup screen
+    Note over User,App: Setup / I'll do this later
 
     App->>User: Setup Complete
     App->>User: Navigate to Dashboard
@@ -522,7 +504,7 @@ sequenceDiagram
 - Device enters RECOVERING state after update (BLE on, QR showing) because it needs account registration.
 - Even though WiFi works, the user still needs to BLE-pair so the app can register the device to their account.
 - After BLE connects, the app reads device state and discovers existing WiFi — silently verifies connectivity. If it works, WiFi setup is skipped. If it fails, user sees the standard WiFi setup flow.
-- Open-Claw can be re-installed as an optional service (now called "Clawdbot") during service setup.
+- Open-Claw can be re-installed as an optional service later from Settings.
 
 ---
 
@@ -547,7 +529,7 @@ sequenceDiagram
 
     Note over App,Device: WiFi setup (unless migration)
 
-    App->>User: Service Setup
+    App->>User: Claude Code Setup
     App->>App: Register device to active account
 
     App->>User: "[Device Name] is ready!"
@@ -568,7 +550,7 @@ All error states provide a clear path forward. No dead ends.
 | :--- | :--- | :--- |
 | **Connection failed** | Inline error on pairing screen | "Try Again" or "Scan Different Device" |
 | **Bluetooth off / denied** | Modal prompt | "Open Settings" to enable Bluetooth |
-| **Connection lost during WiFi setup** | "Connection lost" message | Restart pairing from scratch |
+| **Connection lost during WiFi setup** | Alert: "Connection Lost" — "The connection to your Distiller was lost. You'll need to scan the QR code again." | "Start Over" → restart pairing |
 
 ### WiFi Errors
 
@@ -576,7 +558,7 @@ All error states provide a clear path forward. No dead ends.
 | :--- | :--- | :--- |
 | **Wrong password (< 2 attempts)** | "Wrong password, try again" | Re-enter password, network pre-selected |
 | **Wrong password (>= 2 attempts)** | Helper text ("Password is case-sensitive") + re-entry | Re-enter password with guidance |
-| **Connection timeout (30s)** | Timeout options | "Try Again" (resend) or "Different Network" |
+| **Connection timeout (30s)** | Alert: "Connection Timed Out" — "Your Distiller couldn't connect to this network." | "Try Again" (resend) or "Different Network" |
 | **No networks found** | "No networks detected" with auto-retry | "Scan Again" or manual SSID entry |
 
 ### Migration Errors

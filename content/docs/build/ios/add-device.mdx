@@ -1,0 +1,72 @@
+---
+title: Add Device
+description: Adding a new device from the main app — same pairing flow, presented as a sheet.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+Adding a device after the user is already signed in and using the app. This is the same core flow as [Onboarding](/docs/build/ios/onboarding) Steps 3–6, but presented as a sheet instead of a full-screen flow.
+
+**Entry point:** Settings > Account > Add Device
+
+**Presentation:** Full-height sheet over the main app. Not a full-screen flow.
+
+**Steps:**
+```
+Device Pairing → WiFi Setup → Claude Setup → Setup Complete
+```
+
+<Callout>
+  This flow reuses the same screens as onboarding. This page only documents the **differences**. For full screen details (QR frame states, WiFi password sheet, connection results, error alerts, etc.), see [Onboarding](/docs/build/ios/onboarding).
+</Callout>
+
+---
+
+## Differences from Onboarding
+
+| | Onboarding | Add Device |
+| :--- | :--- | :--- |
+| **Presentation** | Full-screen flow | Sheet over the main app |
+| **Auth** | User must sign in first (Steps 1–2) | Already signed in — skipped |
+| **QR scanner nav bar** | User email (centered) + "Not you?" button | No email, no "Not you?" — user is already authenticated |
+| **Skip option on pairing** | "Skip" text link — goes to empty projects page | Not available — user chose to add a device, no reason to skip |
+| **Setup Complete headline** | "[Device Name] is ready!" | "[Device Name] is ready!" (same) |
+| **Setup Complete CTA** | "Go to [Device Name]" → Projects page | "Done" — dismisses the sheet |
+| **Back button** | Standard iOS back | Standard iOS back. On the first screen (QR scanner), back dismisses the sheet entirely. |
+| **Fallback checkpoints** | Same | Same — BLE lost → back to pairing, WiFi fails → stays in WiFi screens |
+| **Error alerts** | Same | Same — "Connection Lost" and "Connection Timed Out" alerts work identically |
+
+---
+
+## Flow
+
+### Step 1: Device Pairing (QR Scanner)
+
+Same as [Onboarding Step 3](/docs/build/ios/onboarding#step-3-device-pairing-qr-scanner), with these changes:
+
+| Element | Change from onboarding |
+| :--- | :--- |
+| **User email** | Not shown |
+| **"Not you?"** | Not shown |
+| **"Skip"** | Not shown |
+| **"Enter code manually"** | Same — opens manual code entry half-sheet |
+| **Torch toggle** | Same |
+| **QR frame states** | Same (Scanning → Connecting → Connected → Failed) |
+
+### Step 2: WiFi Setup
+
+Same as [Onboarding Step 4](/docs/build/ios/onboarding#step-4-wifi-setup). No changes.
+
+### Step 3: Claude Code Setup
+
+Same as [Onboarding Step 5](/docs/build/ios/onboarding#step-5-claude-code-setup). No changes.
+
+### Step 4: Setup Complete
+
+Same as [Onboarding Step 6](/docs/build/ios/onboarding#step-6-setup-complete), except:
+
+| Element | Change from onboarding |
+| :--- | :--- |
+| **CTA** | "Done" — dismisses the sheet (instead of "Go to [Device Name]") |
+
+After dismissal, the main app should have the new device available in the device selector.

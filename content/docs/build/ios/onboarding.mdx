@@ -17,7 +17,7 @@ Welcome → Sign In → Device Pairing → WiFi Setup → Claude Setup → Setup
 **Global rules that apply to every screen:**
 - All CTA buttons use system prominent capsule style (Liquid Glass on iOS 26). Consistent sizing and vertical positioning — the button never jumps between screens.
 - Haptic feedback on every primary action: selection haptics for toggles, impact haptics for navigation, notification haptics for errors.
-- Back button follows standard iOS behavior (shows previous screen title).
+- Back button follows standard iOS behavior.
 
 **Fallback checkpoints:** The flow has two recovery points. If something fails, the user falls back to the nearest checkpoint — never to the beginning.
 
@@ -83,8 +83,8 @@ Full-screen camera view for scanning the QR code on the device's e-ink display. 
 
 <div className="flex justify-center my-8">
   <img
-    src="/docs/ios/onboarding-qr-scanner.png"
-    alt="QR scanner screen"
+    src="/docs/ios/onboarding-pairing-scanning.png"
+    alt="QR scanner — scanning state"
     className="w-full max-w-[320px] rounded-2xl border shadow-xl"
   />
 </div>
@@ -111,13 +111,27 @@ The QR frame itself communicates connection state. All transitions are animated.
 | **Connected** | Green frame | Checkmark |
 | **Failed** | Orange frame | "Couldn't connect. Make sure your Distiller is powered on and nearby." |
 
+<div className="flex justify-center gap-4 my-8 flex-wrap">
+  <img
+    src="/docs/ios/onboarding-pairing-connecting.png"
+    alt="QR scanner — connecting state"
+    className="w-full max-w-[200px] rounded-2xl border shadow-xl"
+  />
+  <img
+    src="/docs/ios/onboarding-pairing-connected.png"
+    alt="QR scanner — connected state"
+    className="w-full max-w-[200px] rounded-2xl border shadow-xl"
+  />
+  <img
+    src="/docs/ios/onboarding-pairing-failed.png"
+    alt="QR scanner — failed state"
+    className="w-full max-w-[200px] rounded-2xl border shadow-xl"
+  />
+</div>
+
 **On "Connected":** Brief pause (checkmark visible for ~1s), then auto-navigates to → **Step 4: WiFi Setup**.
 
 **On "Failed":** Single action — "Scan again" link below the frame. Resets scanner to scanning state.
-
-### What the QR code contains
-
-The QR on the device's e-ink display encodes the device ID + BLE MAC address. Scanning from the system Camera app opens/installs the Pamir app. Scanning inside the app identifies the device for BLE pairing.
 
 ---
 
@@ -137,9 +151,7 @@ Half-sheet presented over the QR scanner. For when scanning won't work (bright l
 | :--- | :--- |
 | **Input field** | Capsule-shaped, 4-digit code, auto-capitalization on |
 | **Keyboard icon** | Decorative, with bounce animation on sheet appear |
-| **CTA** | "Connect" button — submits the code |
-| **On invalid code** | Wiggle animation on input field + notification haptic + inline error message below field |
-| **On valid code** | Dismisses sheet, QR frame transitions to "Connecting" state → same flow as QR scan |
+| **CTA** | "Connect" button — dismisses sheet, QR frame transitions to "Connecting" state → same flow as QR scan |
 
 ---
 
@@ -163,20 +175,25 @@ After BLE pairing, the app needs to get the device on WiFi.
 
 | Element | Detail |
 | :--- | :--- |
+| **Nav title** | "Connect Distiller to Wi-Fi" |
 | **Section header** | "Available Networks" |
-| **Network rows** | Network name + lock icon (if secured) + chevron disclosure indicator. Matches system WiFi settings appearance. |
-| **"Network not listed"** | Text link at bottom — opens manual SSID entry |
+| **Network rows** | WiFi icon + network name + lock icon (if secured) + chevron. Matches system WiFi settings appearance. |
+| **"Other Network..."** | Plus icon + text link below the network list — opens manual SSID entry |
 | **Back button** | Standard iOS back to pairing screen |
 
 **On tap:** Navigates to → **Step 4b: WiFi Password** for the selected network.
 
 ### Edge case: No networks found
 
-| Element | Detail |
-| :--- | :--- |
-| **Message** | "No networks detected" |
-| **Actions** | "Scan Again" (retriggers device WiFi scan) and manual SSID entry link |
-| **Auto-retry** | Device re-scans automatically on a timer |
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-wifi-empty.png"
+    alt="WiFi list — no networks found"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+The network list is empty. A spinner next to "Available Networks" indicates the device is still scanning. "Other Network..." remains available so the user can enter an SSID manually. The device re-scans automatically on a timer.
 
 ---
 
@@ -194,10 +211,12 @@ Bottom sheet presented over the network list. User enters the password for the s
 
 | Element | Detail |
 | :--- | :--- |
-| **Network name** | Shown at top of sheet so user knows which network they're joining |
-| **Password field** | Text input with eye toggle (show/hide password). Critical — WiFi passwords are often long and error-prone. |
-| **CTA** | "Join" — sends credentials to device via BLE |
-| **On tap "Join"** | Sheet stays open, CTA becomes spinner ("Connecting...") |
+| **WiFi icon** | Animated blue WiFi symbol |
+| **Headline** | "Join \"[Network Name]\"" — user knows which network they're joining |
+| **Subtitle** | "Enter the password to connect your Distiller to this network." |
+| **Password field** | Capsule-shaped input with eye toggle (show/hide password). Critical — WiFi passwords are often long and error-prone. |
+| **Toolbar** | X (cancel) and checkmark (submit) — checkmark sends credentials to device via BLE |
+| **On submit** | Sheet stays open, WiFi icon animates while connecting |
 
 ### Connection results
 
@@ -208,6 +227,27 @@ The user stays on this sheet while the device attempts WiFi. No separate screen.
 | **Success** | Brief checkmark animation → auto-navigates to → **Step 5: Claude Code Setup** |
 | **Wrong password** | Inline error in password sheet. Field clears and refocuses. After 2 failed attempts, show helper text: "Password is case-sensitive." Notification haptic on each failure. |
 | **Timeout (30s)** | Show options: "Try Again" (resend same credentials) or "Different Network" (back to network list) |
+
+---
+
+## Step 4c: Manual WiFi Entry
+
+Sheet presented when the user taps "Other Network..." on the WiFi list. User enters the network name and password manually.
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-manual-wifi.png"
+    alt="Manual WiFi entry"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **WiFi icon** | Blue WiFi symbol |
+| **Headline** | "Join Wi-Fi Network" |
+| **Grouped form** | Name and Password fields in a single rounded card |
+| **Toolbar** | X (cancel) and checkmark (submit) — same behavior as Step 4b |
 
 ---
 
@@ -230,7 +270,7 @@ Single-page provider setup. User connects their Anthropic account so Claude work
 | **Icon** | Claude logo |
 | **Headline** | "Connect Claude Code" |
 | **Subtitle** | "Connect your Anthropic account to use Claude on [device name]" — device name always visible so user knows what they're configuring |
-| **CTA** | "Set Up" — opens OAuth sheet |
+| **CTA** | "Setup" — opens OAuth sheet |
 | **Skip** | "I'll do this later" text link — skips directly to → **Step 6: Setup Complete** |
 
 ### Button States
@@ -239,7 +279,7 @@ This is a **single page** — connecting and ready states are handled inline via
 
 | State | Button | Behavior |
 | :--- | :--- | :--- |
-| **Idle** | "Set Up" | Tappable. Opens an in-app Safari sheet for Anthropic OAuth. |
+| **Idle** | "Setup" | Tappable. Opens an in-app Safari sheet for Anthropic OAuth. |
 | **Authenticating** | (OAuth sheet is open) | User signs in on Anthropic's website and authorizes Distiller. |
 | **Connecting** | Spinner replaces button text | OAuth sheet closed. App sending credentials to device via BLE. |
 | **Ready** | Green checkmark replaces spinner | Brief pause (~1s) then auto-navigates to → **Step 6** |
@@ -269,8 +309,7 @@ The final screen before the user enters the app.
 | :--- | :--- |
 | **Visual** | Distiller mascot image (not a generic checkmark) |
 | **Headline** | "[Device Name] is ready!" |
-| **Desktop URL** | Shows `distiller-XXXX.devices.pamir.ai` with a copy button. User can access their Distiller from a browser immediately. |
-| **Claude status** | If configured: Claude logo + "Claude Code connected". If skipped: info icon + "Claude not set up yet" — nudge to Settings. |
+| **Subtitle** | "You're all set. Let's get started." |
 | **CTA** | "Go to [Device Name]" — navigates to → **Projects page** |
 | **Back button** | Hidden. No going back from completion. |
 
@@ -291,6 +330,45 @@ If the user **skipped pairing** at Step 3, they land on the projects page in an 
 
 ---
 
+## Error Alerts
+
+These are system alerts that can appear at any point in the flow after BLE pairing.
+
+### BLE Connection Lost
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-alert-ble-lost.png"
+    alt="BLE connection lost alert"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Title** | "Connection Lost" |
+| **Message** | "The connection to your Distiller was lost. You'll need to scan the QR code again." |
+| **Action** | "Start Over" — falls back to Step 3 (Device Pairing) |
+
+### WiFi Connection Timed Out
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/onboarding-alert-wifi-timeout.png"
+    alt="WiFi timeout alert"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Title** | "Connection Timed Out" |
+| **Message** | "Your Distiller couldn't connect to this network." |
+| **Primary action** | "Try Again" — resends the same credentials |
+| **Secondary action** | "Different Network" — dismisses sheet, back to network list |
+
+---
+
 ## Error Summary
 
 Every error has a clear path forward. No dead ends.
@@ -299,12 +377,11 @@ Every error has a clear path forward. No dead ends.
 | :--- | :--- | :--- | :--- |
 | BLE connection failed | Step 3 (QR scanner) | Orange frame + error message | "Scan again" |
 | Bluetooth off or denied | Step 3 | System modal | "Open Settings" to enable Bluetooth |
-| Invalid manual code | Step 3b | Wiggle + inline error | Re-enter code |
-| BLE lost (at any point) | Any step after pairing | "Connection lost" | Falls back to Step 3 (pairing checkpoint) |
-| No WiFi networks | Step 4 | "No networks detected" | "Scan Again" or manual SSID |
-| Wrong WiFi password (< 2 attempts) | Step 4b | "Wrong password, try again" | Re-enter, network pre-selected |
+| BLE lost (at any point) | Any step after pairing | Alert: "Connection Lost" | "Start Over" → Step 3 |
+| No WiFi networks | Step 4 | Empty list + spinner | "Other Network..." or wait for auto-retry |
+| Wrong WiFi password (< 2 attempts) | Step 4b | Inline error in password sheet | Re-enter, network pre-selected |
 | Wrong WiFi password (>= 2) | Step 4b | + "Password is case-sensitive" helper | Re-enter with guidance |
-| WiFi timeout (30s) | Step 4b | "Couldn't connect to [Network]" | "Try Again" or "Different Network" |
+| WiFi timeout (30s) | Step 4b | Alert: "Connection Timed Out" | "Try Again" or "Different Network" |
 | Migration WiFi failed | Step 4 | Silent check fails, user sees network list | Normal WiFi setup flow |
-| OAuth cancelled | Step 5 | Returns to idle state | Tap "Set Up" again or skip |
+| OAuth cancelled | Step 5 | Returns to idle state | Tap "Setup" again or skip |
 | OAuth / config failed | Step 5 | "Try Again" + "Skip" | Retry or skip |
