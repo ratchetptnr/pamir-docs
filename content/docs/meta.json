@@ -1,6 +1,5 @@
 {
-    "title": "Design Docs",
-    "root": true,
+    "title": "Architecture",
     "pages": [
         "getting-started",
         "app",
@@ -9,6 +8,7 @@
         "device",
         "design",
         "branding",
-        "archive"
+        "archive",
+        "build"
     ]
 }

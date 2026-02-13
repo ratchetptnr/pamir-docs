@@ -11,14 +11,14 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
         defaultOpenLevel: 0,
         tabs: [
           {
+            title: 'Architecture',
+            description: 'Tech, engineering, and schematics',
+            url: '/docs',
+          },
+          {
             title: 'Build',
             description: 'Implementation handoffs',
             url: '/docs/build',
-          },
-          {
-            title: 'Architecture',
-            description: 'Design docs and schematics',
-            url: '/docs',
           },
         ],
       }}
