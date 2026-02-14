@@ -1,0 +1,165 @@
+---
+title: AI Provider
+description: Setup, no-provider UX, settings page, and badge indicators.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+
+How the user connects an AI provider (Claude) and what happens when they don't. Covers the no-provider chat experience, the provider setup sheet, the Settings page, and badge indicators.
+
+For provider setup **during onboarding**, see [Onboarding Step 5](/docs/build/ios/onboarding#step-5-claude-code-setup). This page covers everything outside of onboarding.
+
+---
+
+## No Provider — Chat Experience
+
+When the user hasn't connected an AI provider, the chat looks identical to a connected state. No special empty state, no dimmed UI, no banners.
+
+### What Looks the Same
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/provider-chat-no-provider.png"
+    alt="Chat screen without a provider — identical to connected state"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | With provider | Without provider |
+| :--- | :--- | :--- |
+| **Empty state** | Standard empty state | Same — no difference |
+| **Input field** | Full opacity, same placeholder | Same — full opacity, same placeholder, same buttons |
+| **Suggestion chips** | Visible | Same — visible |
+
+### What Changes — Tapping the Input Field
+
+The input field is the single trigger. When there's no provider:
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/provider-sheet.png"
+    alt="Provider setup sheet triggered from chat input"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Behavior | Detail |
+| :--- | :--- |
+| **Trigger** | Tapping anywhere on the input field — text area, buttons, anything |
+| **What happens** | A sheet slides up prompting the user to connect a provider |
+| **Keyboard** | Never opens — the tap is caught before the keyboard activates |
+| **Suggestion chips** | Tapping a chip without a provider shows the same sheet |
+| **Dismissing** | Swipe down or tap outside — returns to chat, no side effects |
+
+<Callout>
+  The input field is never disabled or visually different. The user discovers they need a provider by trying to use it — not by reading a warning.
+</Callout>
+
+### Provider Sheet
+
+| Element | Detail |
+| :--- | :--- |
+| **Presentation** | Standard iOS sheet (`.medium` detent) |
+| **Content** | Provider tile with logo, name, and description. "Connect" button triggers OAuth. |
+| **OAuth flow** | Same as [Onboarding Step 5](/docs/build/ios/onboarding#step-5-claude-code-setup) — tapping Connect opens an in-app Safari sheet to the Anthropic authorization page. Standard `ASWebAuthenticationSession`. |
+| **On success** | Sheet dismisses. Input field now activates normally with keyboard. |
+| **On cancel/fail** | Returns to sheet. User can retry or dismiss. |
+
+---
+
+## Badge Indicators
+
+When no provider is configured, two red badge dots appear. They disappear the moment a provider is connected.
+
+### Gear Icon Badge
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/provider-gear-badge.png"
+    alt="Red badge dot on gear icon in project list toolbar"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Location** | Gear icon in the project list toolbar |
+| **Appearance** | Small red dot — same style used for device-offline indicator |
+| **Tapping** | Opens Settings (standard behavior — badge is just a visual cue) |
+
+### AI Provider Row Badge
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/provider-settings-badge.png"
+    alt="Red badge dot on AI Provider row in Settings"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Location** | AI Provider row inside Settings |
+| **Appearance** | Same red dot as gear icon |
+| **Tapping** | Opens AI Provider settings page |
+
+---
+
+## Settings > AI Provider
+
+Single-section layout. Hero tile at the top, configuration below.
+
+### Not Connected
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/provider-settings-disconnected.png"
+    alt="AI Provider settings — not connected"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Hero tile** | Provider logo, name ("Claude"), description |
+| **CTA** | "Connect" — triggers same OAuth flow as onboarding |
+| **Nav title** | "AI Provider" |
+
+### Connected
+
+<div className="flex justify-center my-8">
+  <img
+    src="/docs/ios/provider-settings-connected.png"
+    alt="AI Provider settings — connected"
+    className="w-full max-w-[320px] rounded-2xl border shadow-xl"
+  />
+</div>
+
+| Element | Detail |
+| :--- | :--- |
+| **Hero tile** | Same as not connected |
+| **Account** | Row showing connected email address |
+| **Default Model** | Picker — options like Haiku, Sonnet, Opus |
+| **Disconnect** | "Disconnect Account" — destructive action |
+
+### Disconnect Confirmation
+
+| Element | Detail |
+| :--- | :--- |
+| **Trigger** | Tapping "Disconnect Account" |
+| **Confirmation** | Alert: "Disconnect Claude? Chat will be unavailable until you connect a provider." |
+| **Confirm** | State returns to `none`. Badge dots reappear on gear icon and AI Provider row. |
+| **Cancel** | Nothing happens |
+
+---
+
+## Entry Points Summary
+
+The OAuth flow is the same everywhere — only the trigger changes.
+
+| Entry point | Context | After success |
+| :--- | :--- | :--- |
+| **Onboarding Step 5** | Full-screen onboarding flow | Auto-navigates to Setup Complete |
+| **Chat input tap** | Sheet from chat | Sheet dismisses, input activates normally |
+| **Settings > AI Provider** | Settings page | Page updates to connected state |
+

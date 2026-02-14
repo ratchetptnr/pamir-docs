@@ -139,71 +139,55 @@ When a user skips provider setup during onboarding (or hasn't set one up yet), t
 
 **Design principle: helpful when relevant, invisible otherwise.**
 
-### Tier 1 — Contextual
+### Contextual — Input field as trigger
 
-These appear **in the moment** the user tries to do something that needs a provider.
+The chat empty state is always the same whether the user has a provider or not. No special "connect provider" empty state. The input field also looks identical — same placeholder, same buttons, full opacity. The difference is what happens when the user interacts:
 
-**Chat empty state:**
-When a user opens a Chat tab with no provider configured, the chat area shows a setup prompt:
+- **Provider connected:** Input field activates normally — keyboard appears, user types.
+- **No provider:** Tapping anywhere on the input field (text area, buttons) presents a sheet to connect an AI provider. The tap is caught before the keyboard opens — the user never gets to type.
 
-- "Connect an AI provider to start chatting"
-- Description of what providers power (Chat, AI features)
-- List of available providers to connect
-- "Set up later in Settings" text link
+Starter suggestion chips also appear regardless of provider status. Tapping a suggestion without a provider shows the same provider setup sheet.
 
-**Chat input guard:**
-If the user reaches the message input (e.g. restored an old chat), tapping send shows:
-- Alert: **"AI Provider Required"**
-- Body: "Connect a provider to use Chat."
-- Actions: "Set Up" (opens Settings > Providers) | "Cancel"
+The sheet is lightweight — just a prompt to connect a provider with a list of available options. Dismissing returns the user to the chat. No alerts, no blocking, no extra empty state code.
 
-### Tier 2 — Proactive
-
-A **dismissible sheet** presented once after the user enters the main app, if they skipped provider setup during onboarding. This follows standard iOS patterns for subscription/setup prompts.
-
-The sheet shows:
-- Available providers with brief descriptions
-- What AI features are unlocked by connecting
-- "Connect" button for each provider
-- Dismiss action (swipe down or close button)
-
-**Once dismissed, the sheet never appears again** (persisted). This is a one-time prompt, not a recurring nag.
-
-### Tier 3 — Always Available
+### Always Available
 
 Zero-pressure, user-initiated.
 
-- **Settings > Providers** — full configuration page, always accessible
-- **Settings badge** — small dot indicator on the Providers row when no provider is configured. Subtle visual cue, no text.
+- **Settings > AI Provider** — full configuration page, always accessible
+- **Red badge dot** — appears in two places when no provider is configured:
+  - On the **AI Provider** row inside Settings
+  - On the **gear icon** in the project list toolbar (same dot used for device-offline indicator)
 
-### Nudge Placement Summary
+### Summary
 
 <Mermaid chart={`
 flowchart TD
     Skipped([User skips provider\nduring onboarding]) --> App[Enters main app]
 
-    App --> Sheet["Tier 2: Dismissible sheet\n(one-time, standard iOS pattern)"]
-    Sheet --> Dismiss[User dismisses]
-    Dismiss --> ProjectList
+    App --> ProjectList[Project List]
 
-    ProjectList[Project List] --> Workspace[Opens a project]
+    ProjectList --> Workspace[Opens a project]
     ProjectList --> Settings[Opens Settings]
 
     Workspace --> Chat[Opens Chat]
     Workspace --> Terminal[Opens Terminal]
     Workspace --> Editor[Opens Editor]
 
-    Chat --> ChatPrompt["Tier 1: Setup prompt\nin chat area\n(contextual, every time)"]
+    Chat --> TapInput[Taps input field]
+    TapInput --> ProviderSheet["Sheet: Connect AI provider\n(list of available providers)"]
 
     Terminal --> Nothing1[No nudge\nworks without provider]
     Editor --> Nothing2[No nudge\nworks without provider]
 
-    Settings --> Badge["Tier 3: Badge on\nProviders row"]
-    Badge --> SettingsPage["Settings > Providers\nFull configuration"]
+    ProjectList --> GearBadge["Red dot on\ngear icon"]
+    GearBadge --> Settings
+
+    Settings --> Badge["Red dot on\nAI Provider row"]
+    Badge --> SettingsPage["Settings > AI Provider\nFull configuration"]
 
     style Skipped fill:#fef3c7
-    style ChatPrompt fill:#dbeafe
-    style Sheet fill:#e0e7ff
+    style ProviderSheet fill:#dbeafe
     style Badge fill:#f3f4f6
     style SettingsPage fill:#f3f4f6
     style Nothing1 fill:#e1f5e1
@@ -212,6 +196,9 @@ flowchart TD
 
 ### What We Don't Do
 
+- No special empty state for "no provider" — chat empty state is always the same
+- No disabled or dimmed input field — it looks identical with or without a provider
+- No modals or alerts blocking input
 - No modals on app launch
 - No blocking the workspace or project list
 - No recurring notifications or reminders
@@ -241,7 +228,8 @@ stateDiagram-v2
 
     note right of skipped
         User deferred setup.
-        Nudges active (Tier 1-3).
+        Chat input triggers provider sheet.
+        Settings badge visible.
     end note
 
     note right of connected
@@ -254,8 +242,8 @@ stateDiagram-v2
 | State | Meaning | How user gets here | App behavior |
 | :--- | :--- | :--- | :--- |
 | `none` | Not configured | Fresh device, hasn't reached provider setup yet | Same behavior as `skipped` |
-| `skipped` | User deferred | Tapped "I'll do this later" during onboarding | Tier 1-3 nudges active. Chat shows setup prompt. |
-| `connected` | Provider linked | Completed OAuth (onboarding, Settings, or Chat prompt) | Full Chat functionality. No nudges. Account info in Settings. |
+| `skipped` | User deferred | Tapped "I'll do this later" during onboarding | Tapping chat input shows provider sheet. Settings badge visible. |
+| `connected` | Provider linked | Completed OAuth (onboarding, Settings, or chat input sheet) | Full Chat functionality. No nudges. Account info in Settings. |
 
 ---
 
@@ -272,27 +260,25 @@ This matters because power users and developers may prefer terminal-based config
 
 ---
 
-## Settings > Providers
+## Settings > AI Provider
 
-<Callout type="warn" title="WIP">
-  Settings > Providers is being designed. The structure below is directional.
-</Callout>
+Located at **Settings > AI Provider**. This is the always-accessible entry point — never pushy.
 
-Located at **Settings > Providers**. This is the Tier 3 entry point — always accessible, never pushy.
+Single section layout (iOS Wi-Fi settings style) with a hero tile at the top showing the provider logo, name, and description.
 
 ### When Not Configured (`none` / `skipped`)
 
-- List of available providers (Claude Code, OpenAI when supported)
-- "Connect" button per provider — triggers the same OAuth flow as onboarding
-- Brief description of what each provider enables
+- Hero tile with provider logo + description
+- **"Connect"** button — triggers the same OAuth flow as onboarding
 
 ### When Connected
 
-- Provider name + status: **"Connected"** with green badge
-- Connected account info (e.g. email)
-- **"Disconnect"** action
-  - Confirmation: "Disconnect [Provider]? Chat will be unavailable until you connect a provider."
-  - Confirm → state returns to `none`, nudges reactivate
+- Hero tile (same as above)
+- **Account** row showing connected email
+- **Default Model** picker (e.g. Haiku, Sonnet, Opus for Claude)
+- **"Disconnect Account"** action
+  - Confirmation: "Disconnect Claude? Chat will be unavailable until you connect a provider."
+  - Confirm → state returns to `none`, badge dots reappear
 
 ### Items Under Consideration
 
@@ -300,7 +286,6 @@ Located at **Settings > Providers**. This is the Tier 3 entry point — always a
   The following are listed for awareness. **No design decisions have been made** on these yet.
 </Callout>
 
-- **Model selection** — letting user pick a default model per provider (e.g. Haiku, Sonnet, Opus for Claude). Not yet designed.
 - **Usage display** — showing token usage or costs. Likely useful, design TBD.
 - **Subscription status** — showing active/expired/payment status from the provider. No decision taken.
 - **Multi-device** — managing one provider subscription across multiple Distillers. No decision taken.

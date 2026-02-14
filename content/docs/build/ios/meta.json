@@ -1,4 +1,4 @@
 {
   "title": "iOS",
-  "pages": ["index", "onboarding", "add-device", "recovery"]
+  "pages": ["index", "onboarding", "add-device", "recovery", "ai-provider"]
 }
